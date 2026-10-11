@@ -11,13 +11,13 @@ export function SifreInput({ className, ...props }: Omit<React.InputHTMLAttribut
 
   return (
     <div className="relative">
-      <input {...props} type={goster ? 'text' : 'password'} className={cn(inputSinifi, 'pr-10', className)} />
+      <input {...props} type={goster ? 'text' : 'password'} className={cn(inputSinifi, 'pr-12', className)} />
       <button
         type="button"
         onClick={() => setGoster((g) => !g)}
         aria-label={goster ? 'Şifreyi gizle' : 'Şifreyi göster'}
         title={goster ? 'Şifreyi gizle' : 'Şifreyi göster'}
-        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-ink-3 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-link/30"
+        className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-lg text-ink-3 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
       >
         {goster ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
       </button>

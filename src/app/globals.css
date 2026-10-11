@@ -1,26 +1,40 @@
 @import "tailwindcss";
 
 /*
- * HYMF tema katmanı. Token'lar ve kullanım kuralları: docs/DESIGN.md §2.
- * Açık tema varsayılan; koyu tema işletim sistemi tercihine göre gelir.
+ * HYMF tema katmanı. Token'lar ve kullanım kuralları: docs/DESIGN.md.
+ *
+ * Tema üç kipli: Sistem (varsayılan), Açık, Koyu. Seçim <html data-theme="light|dark"> ile gelir
+ * (layout.tsx'teki satır içi betik boyamadan önce ayarlar). Öznitelik yoksa işletim sistemi
+ * tercihi geçerlidir. Koyu değerler iki yerde durur (medya sorgusu ve data-theme="dark");
+ * ikisini birlikte değiştirin.
  */
 :root {
   color-scheme: light;
 
-  --hymf-paper: #f5f6f8;
+  /* Zemin ve çizgiler */
+  --hymf-paper: #f3f6fa;
   --hymf-surface: #ffffff;
-  --hymf-sunken: #eceef2;
-  --hymf-line: #d9dde4;
-  --hymf-line-strong: #b6bdc9;
-  --hymf-control: #868f9e;
+  --hymf-sunken: #e9eef5;
+  --hymf-line: #dae1eb;
+  --hymf-line-strong: #bcc6d5;
+  --hymf-control: #78849a;
 
-  --hymf-ink: #17202e;
-  --hymf-ink-2: #414b5c;
-  --hymf-ink-3: #5b6577;
-  --hymf-link: #23488f;
-  --hymf-primary: #1e2a42;
+  /* Metin */
+  --hymf-ink: #0e1628;
+  --hymf-ink-2: #384358;
+  --hymf-ink-3: #546075;
+
+  /* Marka vurgusu: birincil buton, aktif gezinti, odak */
+  --hymf-accent: #0b65b0;
+  --hymf-accent-strong: #09539a;
+  --hymf-accent-soft: #e1effb;
+  --hymf-accent-ink: #0a5393;
+  --hymf-on-accent: #ffffff;
+  --hymf-link: #0a5393;
+  --hymf-primary: #0b65b0;
   --hymf-on-primary: #ffffff;
 
+  /* Durum renkleri */
   --hymf-pen: #9a2232;
   --hymf-pen-soft: #fbeef0;
   --hymf-info: #1f4f8c;
@@ -33,25 +47,36 @@
   --hymf-review-soft: #f0ebf9;
   --hymf-danger: #ae2318;
   --hymf-danger-soft: #fcebe9;
+
+  /* Gölge ve sayfa tepesindeki hafif ışıma */
+  --hymf-shadow-panel: 0 1px 2px rgb(16 24 40 / 0.05), 0 1px 3px rgb(16 24 40 / 0.07);
+  --hymf-shadow-pop: 0 14px 34px -10px rgb(16 24 40 / 0.22), 0 2px 8px rgb(16 24 40 / 0.08);
+  --hymf-glow: rgb(11 101 176 / 0.075);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --hymf-paper: #111418;
-    --hymf-surface: #181c22;
-    --hymf-sunken: #1f242c;
-    --hymf-line: #2b313a;
-    --hymf-line-strong: #3d4552;
-    --hymf-control: #666f7e;
+    --hymf-paper: #0a0e15;
+    --hymf-surface: #121823;
+    --hymf-sunken: #1a2230;
+    --hymf-line: #262f3f;
+    --hymf-line-strong: #364258;
+    --hymf-control: #66748c;
 
-    --hymf-ink: #e6e8ec;
-    --hymf-ink-2: #b3b9c4;
-    --hymf-ink-3: #8e96a3;
-    --hymf-link: #94b2ec;
-    --hymf-primary: #d4ddee;
-    --hymf-on-primary: #111418;
+    --hymf-ink: #e8ecf4;
+    --hymf-ink-2: #b4becf;
+    --hymf-ink-3: #8a96ab;
+
+    --hymf-accent: #5ab0f5;
+    --hymf-accent-strong: #7dc0f8;
+    --hymf-accent-soft: #112b45;
+    --hymf-accent-ink: #86c5fa;
+    --hymf-on-accent: #06121f;
+    --hymf-link: #86c5fa;
+    --hymf-primary: #5ab0f5;
+    --hymf-on-primary: #06121f;
 
     --hymf-pen: #ee98a3;
     --hymf-pen-soft: #33191f;
@@ -65,7 +90,52 @@
     --hymf-review-soft: #261f38;
     --hymf-danger: #f19a90;
     --hymf-danger-soft: #3a1a17;
+
+    --hymf-shadow-panel: 0 1px 2px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.015);
+    --hymf-shadow-pop: 0 18px 40px -10px rgb(0 0 0 / 0.65), 0 2px 8px rgb(0 0 0 / 0.4);
+    --hymf-glow: rgb(90 176 245 / 0.09);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --hymf-paper: #0a0e15;
+  --hymf-surface: #121823;
+  --hymf-sunken: #1a2230;
+  --hymf-line: #262f3f;
+  --hymf-line-strong: #364258;
+  --hymf-control: #66748c;
+
+  --hymf-ink: #e8ecf4;
+  --hymf-ink-2: #b4becf;
+  --hymf-ink-3: #8a96ab;
+
+  --hymf-accent: #5ab0f5;
+  --hymf-accent-strong: #7dc0f8;
+  --hymf-accent-soft: #112b45;
+  --hymf-accent-ink: #86c5fa;
+  --hymf-on-accent: #06121f;
+  --hymf-link: #86c5fa;
+  --hymf-primary: #5ab0f5;
+  --hymf-on-primary: #06121f;
+
+  --hymf-pen: #ee98a3;
+  --hymf-pen-soft: #33191f;
+  --hymf-info: #9dbceb;
+  --hymf-info-soft: #1a2738;
+  --hymf-warn: #e3b465;
+  --hymf-warn-soft: #33270f;
+  --hymf-ok: #8fcb9c;
+  --hymf-ok-soft: #16291b;
+  --hymf-review: #bfa8ea;
+  --hymf-review-soft: #261f38;
+  --hymf-danger: #f19a90;
+  --hymf-danger-soft: #3a1a17;
+
+  --hymf-shadow-panel: 0 1px 2px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.015);
+  --hymf-shadow-pop: 0 18px 40px -10px rgb(0 0 0 / 0.65), 0 2px 8px rgb(0 0 0 / 0.4);
+  --hymf-glow: rgb(90 176 245 / 0.09);
 }
 
 @theme inline {
@@ -79,6 +149,12 @@
   --color-ink: var(--hymf-ink);
   --color-ink-2: var(--hymf-ink-2);
   --color-ink-3: var(--hymf-ink-3);
+
+  --color-accent: var(--hymf-accent);
+  --color-accent-strong: var(--hymf-accent-strong);
+  --color-accent-soft: var(--hymf-accent-soft);
+  --color-accent-ink: var(--hymf-accent-ink);
+  --color-on-accent: var(--hymf-on-accent);
   --color-link: var(--hymf-link);
   --color-primary: var(--hymf-primary);
   --color-on-primary: var(--hymf-on-primary);
@@ -96,29 +172,71 @@
   --color-danger: var(--hymf-danger);
   --color-danger-soft: var(--hymf-danger-soft);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+  --shadow-panel: var(--hymf-shadow-panel);
+  --shadow-pop: var(--hymf-shadow-pop);
+
+  /* Gilroy'da ₺, Ψ ve ✓ yok; bu işaretler sistem yazı tipine düşer. */
+  --font-sans: var(--font-gilroy), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-serif: var(--font-gilroy), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
+/*
+ * Gilroy'un x-yüksekliği Inter'den yaklaşık %8 küçük (0,50 ve 0,546). Okunabilirlik için
+ * kök boyut %6,25 büyütülür; rem tabanlı her ölçü birlikte ölçeklenir. Tarayıcının yazı boyutu
+ * ayarına saygı gösterir (yüzde, piksel değil).
+ */
 html {
+  font-size: 106.25%;
   scroll-behavior: smooth;
+  accent-color: var(--hymf-accent);
 }
 
 body {
   background-color: var(--hymf-paper);
+  background-image: radial-gradient(70rem 22rem at 50% -7rem, var(--hymf-glow), transparent 72%);
+  background-repeat: no-repeat;
   color: var(--hymf-ink);
 }
 
-.font-serif {
-  font-optical-sizing: auto;
-  letter-spacing: -0.01em;
+@layer base {
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.015em;
+  }
+
+  h1,
+  h2 {
+    text-wrap: balance;
+  }
+
+  /* Açılır liste oku: tema renginde, sistem okunun yerine. */
+  select:not([multiple]):not([size]) {
+    appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--hymf-ink-3) 50%),
+      linear-gradient(135deg, var(--hymf-ink-3) 50%, transparent 50%);
+    background-position:
+      calc(100% - 1.2rem) 52%,
+      calc(100% - 0.85rem) 52%;
+    background-size: 0.35rem 0.35rem;
+    background-repeat: no-repeat;
+    padding-right: 2.5rem;
+  }
 }
 
-/* Newsreader kalın kesimde ağır duruyor; serif başlıklar orta kalınlıkta kalır. */
-.font-serif.font-bold,
-.font-serif.font-semibold {
-  font-weight: 500;
+/* Başlıklar Gilroy Bold. `font-serif` eski adıyla kaldı; sınıfı taşıyan her başlık kalın gelir. */
+@layer components {
+  .font-serif {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Gilroy'un italik kesimi yok; sahte eğik yazı yerine düz bırakılır. */
+.font-serif.italic {
+  font-style: normal;
 }
 
 a {
@@ -126,11 +244,11 @@ a {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--hymf-link) 22%, transparent);
+  background: color-mix(in oklab, var(--hymf-accent) 28%, transparent);
 }
 
 :focus-visible {
-  outline: 2px solid var(--hymf-link);
+  outline: 2px solid var(--hymf-accent);
   outline-offset: 2px;
 }
 

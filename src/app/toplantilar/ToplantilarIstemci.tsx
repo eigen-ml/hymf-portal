@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { Download, FileText, Plus, Trash2, User } from 'lucide-react';
-import { BosDurum, Button, Panel, Rozet, SayfaBasligi, Uyari } from '@/components/ui';
+import Link from 'next/link';
+import { CalendarDays, Download, FileText, Plus, Trash2, User } from 'lucide-react';
+import { BosDurum, Button, Panel, Rozet, SayfaBasligi, Uyari, buttonClass } from '@/components/ui';
 import { kisaTarih, tarihSaat } from '@/lib/zaman';
 import type { ProfileSummary } from '@/types/database';
 import { toplantiEkle, toplantiSil } from './actions';
@@ -92,6 +93,7 @@ interface ToplantilarIstemciProps {
 
 const BASLIK_MAX = 200;
 const NOT_MAX = 5000;
+const TEKRAR_MAX = 20;
 const inputSinifi =
   'w-full px-3 py-2 bg-sunken border border-control rounded-md text-ink placeholder-ink-3 focus:outline-none focus-visible:border-link focus-visible:ring-2 focus-visible:ring-link/30';
 
@@ -105,15 +107,21 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
   const [meetingDate, setMeetingDate] = useState('');
   const [notes, setNotes] = useState('');
   const [presentationUrl, setPresentationUrl] = useState('');
+  const [tekrarHafta, setTekrarHafta] = useState('0');
   const [formHata, setFormHata] = useState<string | null>(null);
   const [silHata, setSilHata] = useState<string | null>(null);
   const [islemde, startTransition] = useTransition();
+
+  // Yardım metni için: geçerli ve 1'den büyükse kaç hafta ekleneceği, değilse 0.
+  const tekrarSayisi = Number(tekrarHafta);
+  const tekrarOnizleme = Number.isInteger(tekrarSayisi) && tekrarSayisi >= 1 && tekrarSayisi <= TEKRAR_MAX ? tekrarSayisi : 0;
 
   function formuSifirla() {
     setTitle('');
     setMeetingDate('');
     setNotes('');
     setPresentationUrl('');
+    setTekrarHafta('0');
     setFormHata(null);
   }
 
@@ -149,7 +157,14 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
       return;
     }
 
-    const meeting_date = new Date(meetingDate).toISOString();
+    const tekrar = Number(tekrarHafta === '' ? '0' : tekrarHafta);
+    if (!Number.isInteger(tekrar) || tekrar < 0 || tekrar > TEKRAR_MAX) {
+      setFormHata(`Tekrar sayısı 0 ile ${TEKRAR_MAX} arasında bir tam sayı olmalıdır.`);
+      return;
+    }
+
+    // Saat her zaman İstanbul saati olarak yorumlanır (yurt dışındaki tarayıcıda da kaymasın).
+    const meeting_date = new Date(`${meetingDate.length === 16 ? meetingDate + ':00' : meetingDate}+03:00`).toISOString();
 
     startTransition(async () => {
       const sonuc = await toplantiEkle({
@@ -157,6 +172,7 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
         meeting_date,
         notes: notes.trim(),
         presentation_url: url,
+        tekrar_hafta: tekrar,
       });
       if (!sonuc.ok) {
         setFormHata(sonuc.error);
@@ -182,10 +198,16 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
         baslik="Toplantılar"
         aciklama="Haftalık grup toplantısı notları, seminer sunumları, TRUBA değerlendirmeleri ve alınan kararlar."
         eylemler={
-          <Button variant="primary" size="sm" onClick={() => setModalAcik(true)}>
-            <Plus className="w-4 h-4" />
-            <span>Toplantı notu ekle</span>
-          </Button>
+          <>
+            <Link href="/takvim" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+              <CalendarDays className="w-4 h-4" />
+              <span>Takvimde gör</span>
+            </Link>
+            <Button variant="primary" size="sm" onClick={() => setModalAcik(true)}>
+              <Plus className="w-4 h-4" />
+              <span>Toplantı notu ekle</span>
+            </Button>
+          </>
         }
       />
 
@@ -256,6 +278,31 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
                   onChange={(e) => setMeetingDate(e.target.value)}
                   className={inputSinifi}
                 />
+              </div>
+
+              <div>
+                <label htmlFor="toplanti-tekrar" className="block text-ink font-semibold mb-1">
+                  Her hafta tekrarla
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="toplanti-tekrar"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={TEKRAR_MAX}
+                    step={1}
+                    value={tekrarHafta}
+                    onChange={(e) => setTekrarHafta(e.target.value)}
+                    className={`${inputSinifi} w-24`}
+                  />
+                  <span className="text-ink-2">hafta</span>
+                </div>
+                <p className="mt-1 text-ink-3">
+                  {tekrarOnizleme >= 1
+                    ? `Aynı gün ve saatte ${tekrarOnizleme} hafta daha eklenir, toplam ${tekrarOnizleme + 1} toplantı.`
+                    : '0 = tek toplantı'}
+                </p>
               </div>
 
               <div>

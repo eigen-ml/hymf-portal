@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { GECICI_OTURUM_CEREZI, oturumSecenekleri } from './hatirla';
 
 // Girişsiz ziyaretçi yalnız ana sayfayı, giriş sayfasını ve e-posta bağlantısı dönüşünü görür;
-// geri kalan her yol girişe yönlendirilir.
-const ACIK_YOLLAR = ['/giris', '/auth'];
+// geri kalan her yol girişe yönlendirilir. Takvim akışı oturumsuz çağrılır, kendi anahtarını
+// veritabanında doğrular.
+const ACIK_YOLLAR = ['/giris', '/auth', '/takvim-akisi'];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

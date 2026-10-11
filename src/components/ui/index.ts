@@ -14,3 +14,4 @@ export { SifreInput } from './SifreInput';
 export { Sekmeler } from './Sekmeler';
 export { ErisimEngellendi } from './ErisimEngellendi';
 export { OrnekVeriNotu } from './OrnekVeriNotu';
+export { MarkaIsareti } from './MarkaIsareti';

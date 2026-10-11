@@ -332,3 +332,69 @@ export interface Meeting {
   created_at: string;
   creator?: Profile;
 }
+
+// Görevler ve takvim: supabase/migrations/20261011000000_gorev_takvim.sql, sözleşme docs/PLAN_TAKVIM.md.
+
+export type GorevDurum = 'acik' | 'teslim_edildi' | 'tamamlandi';
+export const GOREV_DURUMLARI: readonly GorevDurum[] = ['acik', 'teslim_edildi', 'tamamlandi'];
+
+export interface GroupTask {
+  id: string;
+  title: string;
+  description: string | null;
+  assignee_id: string;
+  assigned_by: string;
+  meeting_id: string | null;
+  /** YYYY-MM-DD */
+  due_date: string | null;
+  status: GorevDurum;
+  assignee_note: string | null;
+  completed_at: string | null;
+  completed_by: string | null;
+  created_at: string;
+  updated_at: string;
+  assignee?: ProfileSummary | null;
+  assigner?: ProfileSummary | null;
+  meeting?: Pick<Meeting, 'id' | 'title' | 'meeting_date'> | null;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  starts_at: string;
+  ends_at: string | null;
+  all_day: boolean;
+  location: string | null;
+  notes: string | null;
+  creator_id: string;
+  created_at: string;
+  creator?: ProfileSummary | null;
+}
+
+export type TakvimOgesiTuru = 'toplanti' | 'etkinlik' | 'gorev';
+
+/** Takvim ekranında tek tip öğe: toplantı, etkinlik veya görevin son tarihi. */
+export interface TakvimOgesi {
+  /** `${tur}:${kayıt id}` */
+  anahtar: string;
+  tur: TakvimOgesiTuru;
+  kayitId: string;
+  baslik: string;
+  /** ISO zaman damgası; tumGun ise YYYY-MM-DD. */
+  baslangic: string;
+  bitis: string | null;
+  tumGun: boolean;
+  /** İstanbul saatine göre YYYY-MM-DD (gruplama için). */
+  gun: string;
+  aciklama: string | null;
+  yer: string | null;
+  /** Ekleyen (toplantı/etkinlik) veya görevi veren. */
+  ekleyenId: string;
+  ekleyenAd: string | null;
+  /** Yalnız görevde: görevi alan kişi ve durum. */
+  sorumluId?: string;
+  sorumluAd?: string | null;
+  gorevDurum?: GorevDurum;
+  /** Görüntüleyen bu öğeyi silebilir mi (sunucu hesaplar, asıl koruma RLS). */
+  silebilir: boolean;
+}

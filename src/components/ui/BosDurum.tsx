@@ -13,10 +13,10 @@ export function BosDurum({
   className?: string;
 }) {
   return (
-    <div className={cn('rounded-lg border border-dashed border-line-strong px-5 py-8 sm:px-6', className)}>
-      <p className="text-base font-medium text-ink">{baslik}</p>
-      {aciklama && <p className="mt-1 max-w-prose text-sm text-ink-2">{aciklama}</p>}
-      {eylem && <div className="mt-4">{eylem}</div>}
+    <div className={cn('rounded-xl border border-dashed border-line-strong bg-surface/60 px-5 py-8 sm:px-6 sm:py-10', className)}>
+      <p className="text-lg font-bold text-ink">{baslik}</p>
+      {aciklama && <p className="mt-1 max-w-prose text-base text-ink-2">{aciklama}</p>}
+      {eylem && <div className="mt-5">{eylem}</div>}
     </div>
   );
 }

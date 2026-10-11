@@ -22,7 +22,13 @@ export function Rozet({
   children: React.ReactNode;
 }) {
   return (
-    <span className={cn('inline-flex items-center whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-medium', tonlar[tone], className)}>
+    <span
+      className={cn(
+        'inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ring-current/15',
+        tonlar[tone],
+        className
+      )}
+    >
       {children}
     </span>
   );

@@ -12,6 +12,8 @@ export interface ToplantiGirdisi {
   meeting_date: string;
   notes: string;
   presentation_url: string;
+  /** 0: tek toplantı. 1–20: aynı gün ve saatte bu kadar hafta daha eklenir. */
+  tekrar_hafta?: number;
 }
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -19,6 +21,7 @@ const URL_REGEX = /^https?:\/\//i;
 const BASLIK_MAX = 200;
 const NOT_MAX = 5000;
 const URL_MAX = 2000;
+const TEKRAR_MAX = 20;
 
 export async function toplantiEkle(input: ToplantiGirdisi): Promise<ActionSonucu> {
   try {
@@ -43,18 +46,31 @@ export async function toplantiEkle(input: ToplantiGirdisi): Promise<ActionSonucu
       }
     }
 
-    const sb = await createClient();
-    const { error } = await sb.from('meetings').insert({
+    const tekrar = input.tekrar_hafta ?? 0;
+    if (!Number.isInteger(tekrar) || tekrar < 0 || tekrar > TEKRAR_MAX) {
+      return { ok: false, error: `Tekrar en fazla ${TEKRAR_MAX} hafta olabilir.` };
+    }
+
+    // Haftalık tekrar: her hafta ayrı kayıt, böylece her toplantının notu ayrı tutulur ve tek
+    // tek silinebilir. Saat UTC'de 7 gün eklenerek korunur (Türkiye'de yaz saati yok).
+    const ilk = new Date(input.meeting_date).getTime();
+    const HAFTA = 7 * 24 * 60 * 60 * 1000;
+    const satirlar = Array.from({ length: tekrar + 1 }, (_, i) => ({
       title,
-      meeting_date: new Date(input.meeting_date).toISOString(),
+      meeting_date: new Date(ilk + i * HAFTA).toISOString(),
       notes: notes || null,
       presentation_url: presentationUrl || null,
       creator_id: ben.id,
-    });
+    }));
+
+    const sb = await createClient();
+    const { error } = await sb.from('meetings').insert(satirlar);
 
     if (error) return { ok: false, error: 'Kaydedilemedi: ' + error.message };
 
     revalidatePath('/toplantilar');
+    revalidatePath('/takvim');
+    revalidatePath('/');
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Beklenmeyen bir hata oluştu.' };
@@ -74,6 +90,8 @@ export async function toplantiSil(id: string): Promise<ActionSonucu> {
     if ((data ?? []).length === 0) return { ok: false, error: 'Bu kaydı silme yetkiniz yok.' };
 
     revalidatePath('/toplantilar');
+    revalidatePath('/takvim');
+    revalidatePath('/');
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Beklenmeyen bir hata oluştu.' };

@@ -15,8 +15,8 @@ export function ErisimEngellendi({
 }) {
   return (
     <div className="max-w-prose py-12">
-      <h1 className="font-serif text-2xl text-ink sm:text-4xl">{baslik}</h1>
-      <p className="mt-3 text-base text-ink-2">{aciklama}</p>
+      <h1 className="font-serif text-3xl text-ink sm:text-4xl">{baslik}</h1>
+      <p className="mt-3 text-lg text-ink-2">{aciklama}</p>
       <Link href={donusHref} className={buttonClass({ variant: 'secondary', className: 'mt-6' })}>
         {donusEtiketi}
       </Link>

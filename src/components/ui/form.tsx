@@ -1,12 +1,13 @@
 import React from 'react';
 import { cn } from '@/lib/cn';
 
+// 16 px ve üstü: iOS Safari alana odaklanınca sayfayı yakınlaştırmaz.
 export const inputSinifi =
-  'block w-full rounded-md border border-control bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-3 focus-visible:border-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-link/30 disabled:bg-sunken disabled:text-ink-3';
+  'block w-full rounded-lg border border-control bg-surface px-3.5 py-2.5 text-base leading-6 text-ink shadow-panel placeholder:text-ink-3 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 disabled:bg-sunken disabled:text-ink-3 disabled:shadow-none';
 
-export const textareaSinifi = cn(inputSinifi, 'min-h-24 leading-6');
+export const textareaSinifi = cn(inputSinifi, 'min-h-28');
 
-export const selectSinifi = cn(inputSinifi, 'pr-8');
+export const selectSinifi = cn(inputSinifi, 'pr-10');
 
 /** Etiket + alan + yardım/hata metni. `htmlFor`, içerideki alanın id'si olmalı. */
 export function Alan({
@@ -26,7 +27,7 @@ export function Alan({
 }) {
   return (
     <div className={cn('space-y-1.5', className)}>
-      <label htmlFor={htmlFor} className="block text-sm font-medium text-ink">
+      <label htmlFor={htmlFor} className="block text-sm font-semibold text-ink">
         {etiket}
       </label>
       {children}

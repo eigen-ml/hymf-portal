@@ -2,21 +2,22 @@ import React from 'react';
 import { cn } from '@/lib/cn';
 
 type Varyant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type Boyut = 'sm' | 'md';
+type Boyut = 'sm' | 'md' | 'lg';
 
 const temel =
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors disabled:pointer-events-none disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-[background-color,box-shadow,color] duration-150 active:translate-y-px disabled:pointer-events-none disabled:opacity-50';
 
 const varyantlar: Record<Varyant, string> = {
-  primary: 'bg-primary text-on-primary hover:bg-primary/90',
-  secondary: 'border border-line-strong bg-surface text-ink hover:bg-sunken',
+  primary: 'bg-accent text-on-accent shadow-panel hover:bg-accent-strong',
+  secondary: 'border border-line-strong bg-surface text-ink shadow-panel hover:bg-sunken',
   ghost: 'text-ink-2 hover:bg-sunken hover:text-ink',
-  danger: 'bg-danger text-on-primary hover:bg-danger/90',
+  danger: 'bg-danger text-on-primary shadow-panel hover:bg-danger/90',
 };
 
 const boyutlar: Record<Boyut, string> = {
-  sm: 'h-8 px-3 text-sm',
-  md: 'h-10 px-4 text-sm',
+  sm: 'h-9 px-3.5 text-sm',
+  md: 'h-11 px-5 text-sm',
+  lg: 'h-12 px-6 text-base',
 };
 
 export interface ButtonStili {

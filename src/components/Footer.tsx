@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 import { getMevcutProfil } from '@/lib/auth/dal';
 import { isMember } from '@/lib/yetki';
+import { MarkaIsareti } from '@/components/ui';
 
 const grupBaglantilari = [
   { href: '/kilavuzlar', etiket: 'TRUBA ve VASP kılavuzları' },
@@ -22,24 +23,27 @@ export async function Footer() {
   const uye = isMember(await getMevcutProfil());
 
   return (
-    <footer className="mt-16 border-t border-line text-sm">
+    <footer className="mt-16 border-t border-line bg-surface text-sm">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
         <div>
-          <p className="font-serif text-lg text-ink">HYMF Portal</p>
-          <p className="mt-2 max-w-xs text-ink-2">
+          <p className="flex items-center gap-2.5 font-serif text-lg text-ink">
+            <MarkaIsareti className="size-8" />
+            HYMF Portal
+          </p>
+          <p className="mt-3 max-w-xs leading-6 text-ink-2">
             Ankara Üniversitesi Hesaplamalı Yoğun Madde Fiziği araştırma grubunun iç portalı.
           </p>
         </div>
 
         {uye && (
           <nav aria-labelledby="footer-grup">
-            <h2 id="footer-grup" className="font-medium text-ink">
+            <h2 id="footer-grup" className="font-bold text-ink">
               Grup
             </h2>
             <ul className="mt-3 space-y-2">
               {grupBaglantilari.map((b) => (
                 <li key={b.href}>
-                  <Link href={b.href} className="text-ink-2 hover:text-ink hover:underline">
+                  <Link href={b.href} className="text-ink-2 hover:text-accent-ink hover:underline">
                     {b.etiket}
                   </Link>
                 </li>
@@ -49,7 +53,7 @@ export async function Footer() {
         )}
 
         <nav aria-labelledby="footer-dis">
-          <h2 id="footer-dis" className="font-medium text-ink">
+          <h2 id="footer-dis" className="font-bold text-ink">
             Bağlantılar
           </h2>
           <ul className="mt-3 space-y-2">
@@ -59,7 +63,7 @@ export async function Footer() {
                   href={b.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-ink-2 hover:text-ink hover:underline"
+                  className="inline-flex items-center gap-1.5 text-ink-2 hover:text-accent-ink hover:underline"
                 >
                   {b.etiket}
                   <ExternalLink className="size-3.5" aria-hidden="true" />
