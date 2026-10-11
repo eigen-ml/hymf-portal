@@ -1,0 +1,74 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>Sık kullanılan komutlar</title><link rel="stylesheet" href="sablon.css">
+<style>
+table { table-layout: fixed; font-size: 9pt; margin: 2pt 0 4pt; }
+td, th { padding: 2.5pt 5pt; }
+td code { white-space: normal; overflow-wrap: anywhere; word-break: normal; font-size: 8.4pt; }
+td.k { color: var(--ink-3); font-size: 8.4pt; }
+h2 { margin: 11pt 0 3pt; font-size: 13pt; }
+.kapak { margin-bottom: 8pt; padding-bottom: 7pt; }
+.kapak h1 { font-size: 22pt; margin: 2pt 0 4pt; }
+p { margin-bottom: 5pt; }
+</style></head><body>
+
+<div class="kapak"><div class="ust">HYMF · VASP kılavuzu</div><h1>Sık kullanılan komutlar</h1><p class="ozet">Grubun kılavuzlarında geçen komutlar ve vaspkit kodları, hangi kılavuzdan geldikleriyle birlikte.</p><div class="kunye">Hazırlayan: HYMF grubu · Düzenleme: Ekim 2026</div></div>
+
+<p>Bu sayfada yalnızca grubun kılavuzlarında geçen komutlar toplanmıştır. "Kılavuz" sütunu, komutun geçtiği kılavuzu gösterir.</p>
+
+<h2><span class="no">1</span>İş gönderme ve çalıştırma</h2>
+<table>
+<colgroup><col style="width:40%"><col style="width:39%"><col style="width:21%"></colgroup>
+<tr><th>Komut</th><th>Açıklama</th><th>Kılavuz</th></tr>
+<tr><td><code>sbatch walk_std</code></td><td>Hesabı gönderir. İşi atarken <code>walk_std</code> kullanılmalıdır.</td><td class="k">Bant yapısı, Fonon, Bader</td></tr>
+<tr><td><code>./walk_z</code></td><td><strong>Sakın yazmayın.</strong> <code>./</code> bir dosyayı doğrudan çalıştırır.</td><td class="k">Fonon</td></tr>
+<tr><td><code>./</code> + dosya adı (<code>./vaspkit</code>, <code>./phonopy</code>, <code>./chgsum.pl</code>, <code>./bader</code>)</td><td>Klasördeki çalıştırılabilir (executable) dosyayı çalıştırır.</td><td class="k">Fonon, Bant yapısı, Bader</td></tr>
+<tr><td><code>chmod a+x</code></td><td>Dosyayı çalıştırılabilir (executable) yapar. <code>a+x</code> ile <code>777</code> aynıdır.</td><td class="k">Fonon</td></tr>
+<tr><td><code>%</code> işareti</td><td>Kaynakta "% demek hiçbir şey koymamak demek" notu vardır; komutların başındaki <code>%</code> işaretini yazmayın.</td><td class="k">Fonon</td></tr>
+</table>
+
+<h2><span class="no">2</span>Dosya işlemleri</h2>
+<table>
+<colgroup><col style="width:40%"><col style="width:39%"><col style="width:21%"></colgroup>
+<tr><td><code>mv SPOSCAR POSCAR</code></td><td>phonopy'nin oluşturduğu <code>SPOSCAR</code>'ı <code>POSCAR</code> yapar; ardından <code>sbatch walk_std</code>.</td><td class="k">Fonon</td></tr>
+<tr><td>CONTCAR → POSCAR</td><td>İlk hesabın <code>CONTCAR</code>'ını sonraki hesabın <code>POSCAR</code>'ı yapın.</td><td class="k">Bant yapısı, Optik</td></tr>
+<tr><td>CHGCAR taşıma</td><td>İlk hesabın (SC, step 1) <code>CHGCAR</code> dosyasını sonraki hesabın klasörüne aktarın.</td><td class="k">Bant yapısı, DOS</td></tr>
+<tr><td>WAVECAR taşıma</td><td>1. hesabın <code>WAVECAR</code> dosyasını 2. adıma atın.</td><td class="k">Optik</td></tr>
+<tr><td>CHGCAR → <code>.vasp</code></td><td>VESTA için <code>CHGCAR</code> dosyalarının türünü <code>.vasp</code> yapın (örn. <code>CHGCAR_F.vasp</code>).</td><td class="k">Yük yoğunluğu farkı</td></tr>
+</table>
+
+<h2><span class="no">3</span>POTCAR</h2>
+<table>
+<colgroup><col style="width:40%"><col style="width:39%"><col style="width:21%"></colgroup>
+<tr><td><code>grep TITEL POTCAR</code></td><td><code>POTCAR</code> içindeki <code>TITEL</code> satırlarını (her atom türünün <code>PAW_PBE</code> tanımı) listeler.</td><td class="k">Önemli komutlar</td></tr>
+<tr><td>ZVAL değerleri</td><td><code>POTCAR</code>'da <code>PAW_PBE</code> arayın, ZVAL eşitliklerini bulun; bileşikte değerleri toplayın (Se 6 + S 6 + Sn 4 = 16).</td><td class="k">Bader</td></tr>
+</table>
+
+<h2><span class="no">4</span>phonopy</h2>
+<table>
+<colgroup><col style="width:40%"><col style="width:39%"><col style="width:21%"></colgroup>
+<tr><td><code>./phonopy <span style="white-space:nowrap">-d --dim 4 4 1</span> <span style="white-space:nowrap">-c POSCAR-unitcell</span></code></td><td>POSCAR-unitcell'den 4×4×1 süper hücre hazırlar; sonra <code>mv SPOSCAR POSCAR</code> ve <code>sbatch walk_std</code>.</td><td class="k">Fonon</td></tr>
+<tr><td><code>phonopy <span style="white-space:nowrap">-d --dim="3 3 1"</span> <span style="white-space:nowrap">-c POSCAR-unitcell</span> band.conf</code></td><td>band.conf ekran görüntüsündeki komut. Klasörde <code>band.conf</code> bulunmalıdır.</td><td class="k">Fonon</td></tr>
+<tr><td><code>./phonopy --fc vasprun.xml</code></td><td>İş bitince çalıştırılır; force constants oluşur.</td><td class="k">Fonon</td></tr>
+<tr><td><code>./phonopy <span style="white-space:nowrap">--dim="4 4 1"</span> <span style="white-space:nowrap">-c POSCAR-unitcell</span> band.conf</code></td><td>Veriyi alır. 3×3×1 hücrede <code>phonopy <span style="white-space:nowrap">--dim="3 3 1"</span> <span style="white-space:nowrap">-c POSCAR-unitcell</span> band.conf</code>. <code>dim</code> 3 3 1 olmazsa 5 5 1 alın (band.conf içi dahil).</td><td class="k">Fonon</td></tr>
+<tr><td><code>./phonopy-bandplot band.yaml <span style="white-space:nowrap">--gnuplot</span> &gt; SnSSebottombridge_br_441.txt</code></td><td>Metin dosyasını üretir (genel biçim: <code><span style="white-space:nowrap">&gt; malzeme_adı.txt</span></code>); dosya doğrudan OriginLab'a atılır.</td><td class="k">Fonon</td></tr>
+</table>
+
+<h2><span class="no">5</span>vaspkit kodları</h2>
+<table>
+<colgroup><col style="width:40%"><col style="width:39%"><col style="width:21%"></colgroup>
+<tr><td><code>./vaspkit</code></td><td>VASPKIT'i açar; menüde kodu yazın.</td><td class="k">Bant yapısı</td></tr>
+<tr><td><code>302</code></td><td>Yüksek simetri yolunda KPOINTS (K-Path, Line-Mode; örnek yol GAMMA–M–K–GAMMA).</td><td class="k">Bant yapısı</td></tr>
+<tr><td><code>211</code> (menüde <code>21</code> → <code>211</code>)</td><td>Band-Structure. NSC hesap sonrası klasörde <code>BAND.dat</code>, <code>BAND_GAP</code>, <code>KLINES.dat</code>, <code>REFORMATTED_BAND_UP.dat</code>, <code>REFORMATTED_BAND_DW.dat</code> görülür.</td><td class="k">Bant yapısı</td></tr>
+<tr><td><code>11</code> → <code>111</code></td><td>DOS verisi: <code>TDOS.DAT</code> çizdirilir.</td><td class="k">DOS</td></tr>
+<tr><td><code>71</code> → <code>710</code> → <code>1</code> (eV)</td><td>Hesap sonrası çıkan <code>IMAG.in</code> dosyalarından grafik yapılır: x = 1. sütun (Energy (eV)), y = 3. sütun (ε2(ω), arb. units).</td><td class="k">Optik</td></tr>
+</table>
+<p class="kaynaklar">VASPKIT ana menüsünde (Bant yapısı kılavuzundaki ekran görüntüsü) ilgili başlıklar: 3 K-Path Generator, 11 Density-of-States, 21 DFT Band-Structure, 71 Optical-Properties.</p>
+
+<h2><span class="no">6</span>Bader</h2>
+<table>
+<colgroup><col style="width:40%"><col style="width:39%"><col style="width:21%"></colgroup>
+<tr><td><code>./chgsum.pl AECCAR0 AECCAR2 1.0 1.0</code></td><td>Çekirdek (<code>AECCAR0</code>) ve valans (<code>AECCAR2</code>) yük yoğunluklarını toplar; sonuç <code>CHGCAR_sum</code> dosyasındadır.</td><td class="k">Bader</td></tr>
+<tr><td><code>./bader CHGCAR -ref CHGCAR_sum</code></td><td>Bader analizini çalıştırır; Bader popülasyonu <code>ACF.dat</code> dosyasında yazar.</td><td class="k">Bader</td></tr>
+<tr><td>Bader net atomik yükü</td><td>= ZVAL (POTCAR) − Bader popülasyonu (ACF.dat).</td><td class="k">Bader</td></tr>
+</table>
+
+</body></html>

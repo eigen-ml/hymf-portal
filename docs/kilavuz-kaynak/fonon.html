@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Fonon hesabı</title>
+<link rel="stylesheet" href="sablon.css">
+</head>
+<body>
+
+<div class="kapak">
+  <div class="ust">HYMF · VASP kılavuzu</div>
+  <h1>Fonon (phonon) hesabı</h1>
+  <p class="ozet">VASP-DFPT ile kuvvet sabitlerini hesaplayıp phonopy ile fonon bant yapısını elde etme ve verileri OriginLab'a aktarma.</p>
+  <div class="kunye">Hazırlayan: HYMF grubu · Düzenleme: Ekim 2026</div>
+</div>
+
+<div class="kutu bilgi"><span class="etiket">Okuma notu</span>Kaynak belgede önemli olan yerler sarı ile işaretlenmişti. Bu kılavuzda aynı yerler sarı vurgu veya "Önemli" kutusu ile gösterilir. Komutların başındaki <code>%</code> işareti komut istemidir (prompt); komutu yazarken <code>%</code> koymayın.</div>
+
+<h2><span class="no">1</span>Hesap klasöründe olması gerekenler</h2>
+<div class="dosyalar"><span>POSCAR-unitcell</span><span>POSCAR</span><span>POTCAR</span><span>INCAR</span><span>KPOINTS</span><span>band.conf</span><span>walk_std</span><span>phonopy</span><span>phonopy-bandplot</span></div>
+
+<h2><span class="no">2</span>phonopy VASP-DFPT adımları</h2>
+<p>Aşağıdaki bağlantıdaki adımlar sırayla yapılır:</p>
+<p><a href="https://phonopy.github.io/phonopy/vasp-dfpt.html">https://phonopy.github.io/phonopy/vasp-dfpt.html</a></p>
+
+<table>
+<tr><th style="width:22%">Bağlantıdaki adım</th><th>Yapılacak</th></tr>
+<tr><td>1</td><td><code>POSCAR</code> dosyasını <code>POSCAR-unitcell</code> olarak kopyalayın.</td></tr>
+<tr><td>2</td><td>Hücreyi 3x3x1 seçin (süper hücre). KPOINTS'i 8x8x1 alın; hücre büyüdüyse 4x4x1 ya da 2x2x1 alabilirsiniz.</td></tr>
+<tr><td>3 → 4</td><td>3. adımı yapmadan 4. adıma geçin.</td></tr>
+<tr><td>5</td><td>INCAR bu adımda verilir. Sistem manyetikse <code>ISPIN</code> ve <code>MAGMOM</code> eklenir.</td></tr>
+<tr><td>6</td><td><code>phonopy --fc vasprun.xml</code> komutunu çalıştırın; kuvvet sabitleri (force constants) oluşur.</td></tr>
+</table>
+
+<h3>2. adım: KPOINTS</h3>
+<pre class="kod" data-baslik="KPOINTS (kaynaktaki ekran görüntüsü)">Automatic mesh
+0
+Gamma
+3    3    1
+0.0  0.0  0.0</pre>
+<div class="kutu bilgi"><span class="etiket">Kaynakta iki değer var</span>Metinde KPOINTS için 8x8x1 öneriliyor; ekran görüntüsündeki dosyada ağ <code>3 3 1</code>. İkisi de kaynaktaki gibi verilmiştir.</div>
+
+<h3>5. adım: INCAR</h3>
+<pre class="kod" data-baslik="INCAR (kaynaktaki örnek: BAs-CrP, 331mag)">System =BAs-CrP
+PREC = Accurate
+ENCUT  = 800
+EDIFF = 1E-08
+IALGO = 38
+IBRION = 8
+NSW = 1
+LREAL = .FALSE.
+LWAVE = .FALSE.
+ISMEAR = 0
+LCHARG = .FALSE.
+ADDGRID = .TRUE.
+SIGMA = 0.1
+ISPIN = 2
+MAGMOM = 18*0.0 9*3.0 9*0.0</pre>
+
+<table>
+<tr><th style="width:20%">Etiket</th><th style="width:22%">Değer</th><th>Anlamı</th></tr>
+<tr><td><code>System</code></td><td>BAs-CrP</td><td>Hesabın adı (yalnızca etiket).</td></tr>
+<tr><td><code>PREC</code></td><td>Accurate</td><td>Hassasiyet kipi; yüksek hassasiyet.</td></tr>
+<tr><td><code>ENCUT</code></td><td>800</td><td>Düzlem dalga taban kümesinin kesme enerjisi (eV).</td></tr>
+<tr><td><code>EDIFF</code></td><td>1E-08</td><td>Elektronik öz-tutarlı döngünün yakınsama ölçütü (eV).</td></tr>
+<tr><td><code>IALGO</code></td><td>38</td><td>Elektronik minimizasyon algoritması (38: Davidson).</td></tr>
+<tr><td><code>IBRION</code></td><td>8</td><td>Kuvvet sabitlerini DFPT ile (simetriden yararlanarak) hesaplar.</td></tr>
+<tr><td><code>NSW</code></td><td>1</td><td>İyon adımı sayısı.</td></tr>
+<tr><td><code>LREAL</code></td><td>.FALSE.</td><td>İzdüşümleri ters uzayda hesaplar.</td></tr>
+<tr><td><code>LWAVE</code></td><td>.FALSE.</td><td>WAVECAR yazılmaz.</td></tr>
+<tr><td><code>ISMEAR</code></td><td>0</td><td>Gauss yayılımı (smearing).</td></tr>
+<tr><td><code>LCHARG</code></td><td>.FALSE.</td><td>CHGCAR ve CHG yazılmaz.</td></tr>
+<tr><td><code>ADDGRID</code></td><td>.TRUE.</td><td>Ek ince ızgara kullanır (artırma yüklerinin hesabı için).</td></tr>
+<tr><td><code>SIGMA</code></td><td>0.1</td><td>Yayılım genişliği (eV).</td></tr>
+<tr><td><code>ISPIN</code></td><td>2</td><td>Spin kutuplu hesap. Yalnız manyetik sistemde eklenir.</td></tr>
+<tr><td><code>MAGMOM</code></td><td>18*0.0 9*3.0 9*0.0</td><td>Başlangıç manyetik momentleri (<code>n*değer</code>: n atom için aynı değer); örnekte 18 + 9 + 9 = 36 atom.</td></tr>
+</table>
+
+<h3>VASP çalıştıktan sonra</h3>
+<p>VASP çalıştıktan sonra, phonon hesabı bitince <code>DYNMAT</code> dosyası oluşur.</p>
+
+<h3>6. adım: kuvvet sabitleri</h3>
+<pre class="kod" data-baslik="Komut">phonopy --fc vasprun.xml</pre>
+<p>Bu komut çalıştırıldığında kuvvet sabitleri (force constants) oluşur.</p>
+
+<h3>band.conf</h3>
+<p><code>band.conf</code> adlı dosyayı bir metin düzenleyicide açın. İçeriği aşağıdaki gibidir.</p>
+<pre class="kod" data-baslik="band.conf">ATOM_NAME = BAs-CrP
+DIM =  3 3 1
+BAND = 0.00000  0.00000 0.00000 0.50000  0.50000 0.00000    0.33333  0.66667 0.00000 0.00000  0.00000 0.00000
+BAND_CONNECTION = .TRUE.
+FORCE_CONSTANTS = READ</pre>
+<table>
+<tr><th style="width:26%">Etiket</th><th>Anlamı</th></tr>
+<tr><td><code>ATOM_NAME</code></td><td>Atomların adını belirten etiket (kaynakta <code>BAs-CrP</code>).</td></tr>
+<tr><td><code>DIM</code></td><td>Süper hücre boyutu. Süper hücre oluşturulurken kullanılan değerle aynı olmalıdır.</td></tr>
+<tr><td><code>BAND</code></td><td>Bant yolunun q noktaları (ters uzay koordinatları, üçerli gruplar hâlinde). Tek satırda yazılır.</td></tr>
+<tr><td><code>BAND_CONNECTION</code></td><td>Bant bağlantısını (band connection) açar.</td></tr>
+<tr><td><code>FORCE_CONSTANTS</code></td><td><code>READ</code>: kuvvet sabitlerini dosyadan okur.</td></tr>
+</table>
+<ul>
+<li><code>band.conf</code>, simetri noktalarını belirlediğimiz dosyadır.</li>
+<li>phonopy kullanılarak konfigüre edilebilir.</li>
+<li>Yalnız halihazırda <code>band.conf</code> dosyasının bulunması gerekir.</li>
+</ul>
+
+<h3>Verileri alma ve OriginLab</h3>
+<p>Verileri alabilmek için şu iki komutu çalıştırın:</p>
+<pre class="kod" data-baslik="Komutlar (3x3x1 süper hücre)">phonopy --dim="3 3 1" -c POSCAR-unitcell band.conf
+phonopy-bandplot band.yaml --gnuplot &gt; malzeme_adı.txt</pre>
+<p><code>malzeme_adı</code> yerine kendi malzemenizin adını yazın. Oluşan metin dosyasını doğrudan OriginLab'a atıp grafiği düzenlemeye başlayabilirsiniz.</p>
+<div class="kutu bilgi"><span class="etiket">Kaynaktaki ekran görüntüsü</span>band.conf ekran görüntüsünün altındaki terminal satırında komut <code>phonopy -d --dim="3 3 1" -c POSCAR-unitcell band.conf</code> olarak (başında <code>-d</code> ile) görünüyor. Metindeki komutta <code>-d</code> yoktur; yukarıda metindeki hâli verilmiştir.</div>
+
+<h2><span class="no">3</span>Grubun çalışan tarifi</h2>
+<p>Aşağıdaki sıra grubun fiilen kullandığı tariftir (kaynakta sarı ile işaretli kısımlar). Burada süper hücre 4 4 1'dir.</p>
+
+<ol class="adimlar">
+<li>KPOINTS: <code>8 8 1</code> alın; hücre <code>3 3 1</code>.</li>
+<li><code>POTCAR</code> dosyasını klasöre koyun.</li>
+<li>INCAR: baştaki gibi alın (yukarıdaki 5. adımdaki INCAR).</li>
+<li><code>walk_z</code> dosyasını atın (klasöre koyun).</li>
+<li>Süper hücreyi oluşturun:
+<pre class="kod"><span class="vurgu">./phonopy -d --dim 4 4 1 -c POSCAR-unitcell</span></pre></li>
+<li>Oluşan <code>SPOSCAR</code> dosyasını <code>POSCAR</code> olarak yeniden adlandırın, sonra işi gönderin:
+<pre class="kod"><span class="vurgu">mv SPOSCAR POSCAR</span>
+<span class="vurgu">sbatch walk_std</span></pre></li>
+<li>İşlem bitince şu komutları çalıştırın:
+<pre class="kod"><span class="vurgu">./phonopy --fc vasprun.xml</span>
+<span class="vurgu">./phonopy --dim="4 4 1" -c POSCAR-unitcell band.conf</span>
+<span class="vurgu">./phonopy-bandplot band.yaml --gnuplot &gt; SnSSebottombridge_br_441.txt</span></pre>
+<code>SnSSebottombridge_br_441.txt</code> kaynaktaki örnek dosya adıdır; kendi malzeme adınıza göre değiştirin.</li>
+<li>phonopy dosyalarını klasöre atın (kaynaktaki not: "Bunları at"). Ekran görüntüsündeki listede <code>*phonopy</code> ve <code>*phonopy-bandplot</code> görünür.</li>
+</ol>
+
+<pre class="kod" data-baslik="Kaynaktaki dosya listesi görüntüsü (terminal)">*phonopy
+*phonopy-bandplot
+[kaynakta okunamadı: üçüncü satır görselde kesik]</pre>
+
+<div class="kutu bilgi"><span class="etiket">Hücre boyutu: 3 3 1 ve 4 4 1</span>Kaynakta iki farklı hücre boyutu geçer. İlk bölümde (phonopy öğretici adımları) <code>--dim="3 3 1"</code> ve <code>DIM = 3 3 1</code> kullanılır. Grup tarifinde ise <code>--dim 4 4 1</code> ve <code>--dim="4 4 1"</code> kullanılır; çıktı dosyasının adı da <code>_441</code> ile biter. İkisi de kaynaktaki gibi verilmiştir. Önemli olan, <code>--dim</code> değerinin oluşturulan süper hücreyle ve <code>band.conf</code> içindeki <code>DIM</code> ile aynı olmasıdır.</div>
+
+
+<h2><span class="no">4</span>Kısa kontrol listesi</h2>
+<div class="kutu onemli"><span class="etiket">Önemli: işlem sürecindeki kodların kısa özeti</span>
+<ol>
+<li><code>POSCAR</code> dosyasını <code>POSCAR-unitcell</code> yapın.</li>
+<li><code>dim 3 3 1</code> olmazsa <code>5 5 1</code> alın (<code>band.conf</code> içi dahil).</li>
+<li>KPOINTS <code>8 8 1</code> alın; şimdi <code>16 16 1</code> alın; olmazsa <code>32 32 1</code> alın (<code>5 5 1</code> ile).</li>
+<li>INCAR baştaki gibi.</li>
+<li><code>walk_std</code> dosyasını ayarlayın.</li>
+<li>phonopy dosyalarını atın.</li>
+</ol>
+</div>
+
+<h2><span class="no">5</span>Komut satırı uyarıları</h2>
+<div class="kutu uyari"><span class="etiket">Dikkat</span>
+<ul>
+<li><code>./walk_z</code> sakın yazmayın.</li>
+<li><code>./</code> bir çalıştırılabilir (executable) dosyayı çalıştırır.</li>
+<li>[kaynakta okunamadı: "Snarm makine"]</li>
+<li>chmod = change mode (kaynakta: "Change mod chmod a").</li>
+<li><code>%</code>: hiçbir şey koymamak demektir; komut istemidir (prompt), komutu yazarken yazılmaz.</li>
+<li>Dosyayı çalıştırılabilir (executable) yapmak için <code>chmod a+x</code> kullanılır. Kaynak notu: "chmod (a+x ve 777 aynı)".</li>
+</ul>
+</div>
+<div class="kutu bilgi"><span class="etiket">Kaynakta açıklanmamış</span>Kaynakta hem <code>walk_z</code> (atılacak dosya) hem <code>walk_std</code> (<code>sbatch</code> ile gönderilen dosya) geçer; ikisi arasındaki ilişki yazılmamıştır.</div>
+
+<h2><span class="no">6</span>Ek notlar</h2>
+<ul>
+<li>Dinamiksel ve yapısal kararlılık testleri yapılacak.</li>
+<li>Hem 1T hem de 2H fazı için yapılacak.</li>
+<li>Yapı için makale referansları da eklenecek.</li>
+<li>En son phonon analizleri sunuma konulacak.</li>
+<li>Kararlı olanlar üzerine fonksiyonelleştirme en son yapılacak (F, Cl, Br, I).</li>
+</ul>
+
+<h2><span class="no">7</span>Kaynaklar</h2>
+<div class="kaynaklar">
+<ul>
+<li>phonopy, VASP-DFPT öğreticisi: <a href="https://phonopy.github.io/phonopy/vasp-dfpt.html">https://phonopy.github.io/phonopy/vasp-dfpt.html</a></li>
+</ul>
+</div>
+
+</body>
+</html>

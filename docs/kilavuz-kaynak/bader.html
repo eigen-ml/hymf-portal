@@ -1,0 +1,83 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>Bader yük analizi</title><link rel="stylesheet" href="sablon.css"></head><body>
+
+<div class="kapak"><div class="ust">HYMF · VASP kılavuzu</div><h1>Bader yük analizi</h1><p class="ozet">Optimize edilmiş yapıda toplam yük yoğunluğunu (CHGCAR_sum) oluşturup Bader koduyla atomların net yükünü hesaplayın.</p><div class="kunye">Hazırlayan: HYMF grubu · Düzenleme: Ekim 2026</div></div>
+
+<h2><span class="no">1</span>Yapı ve araçlar</h2>
+<div class="kutu onemli"><span class="etiket">Önemli</span><strong>Geometrik olarak optimize edilmiş</strong> yapıları kullanın: ISIF3 hesabı, ardından ISIF2 hesabı; ISIF2 hesabının <code>CONTCAR</code>'ı yapıdır. Bader için gereken yük yoğunluğu verileri bu yapılara eklenir.</div>
+<ul>
+<li>Betikler (VTST Tools; <code>chgsum.pl</code> bu betiklerden biridir): <a href="https://theory.cm.utexas.edu/vtsttools/scripts.html">https://theory.cm.utexas.edu/vtsttools/scripts.html</a></li>
+<li>Bader kodu (<code>bader</code> programı): <a href="https://theory.cm.utexas.edu/henkelman/code/bader/">https://theory.cm.utexas.edu/henkelman/code/bader/</a></li>
+</ul>
+<p>Hesap klasöründe şu dosyalar bulunur:</p>
+<div class="dosyalar"><span>INCAR</span><span>POTCAR</span><span>walk_std</span><span>chgsum.pl</span><span>bader</span></div>
+
+<h2><span class="no">2</span>Elektronları minimize etmek için INCAR</h2>
+<p>Elektronları minimize etmek için aşağıdaki INCAR'ı kullanın.</p>
+<pre class="kod" data-baslik="INCAR">System = SnSSe
+ISPIN = 1
+ENCUT = 500
+EDIFF = 1E-06
+IBRION = 2
+NBANDS = 96
+ISMEAR = 0
+GGA = PE
+SIGMA = 0.01
+ALGO = Normal
+IVDW = 1
+<span class="vurgu">LCHARG = .TRUE.</span>
+<span class="vurgu">LAECHG = .TRUE.</span>
+<span class="vurgu">NPAR = 4</span>
+<span class="vurgu">NGXF = 320</span>
+<span class="vurgu">NGYF = 320</span>
+<span class="vurgu">NGZF = 50</span></pre>
+<div class="kutu onemli"><span class="etiket">Önemli</span>Vurgulu satırlar (kaynakta mavi) kesin kullandığımız parametrelerdir: <code>LCHARG</code>, <code>LAECHG</code>, <code>NPAR</code>, <code>NGXF</code>, <code>NGYF</code>, <code>NGZF</code>.</div>
+<table>
+<tr><th style="width:24%">Etiket</th><th style="width:16%">Değer</th><th>Anlamı</th></tr>
+<tr><td><code>System</code></td><td>SnSSe</td><td>Sistemin adı (başlık).</td></tr>
+<tr><td><code>ISPIN</code></td><td>1</td><td>Spin polarize olmayan hesap yapılır.</td></tr>
+<tr><td><code>ENCUT</code></td><td>500</td><td>Düzlem dalga taban kümesinin kesme enerjisi (eV).</td></tr>
+<tr><td><code>EDIFF</code></td><td>1E-06</td><td>Elektronik öz-tutarlı döngünün durma ölçütü (eV).</td></tr>
+<tr><td><code>IBRION</code></td><td>2</td><td>İyonları dengeye getiren eşlenik gradyan (conjugate gradient) algoritması.</td></tr>
+<tr><td><code>NBANDS</code></td><td>96</td><td>Hesaba katılan bant sayısı.</td></tr>
+<tr><td><code>ISMEAR</code></td><td>0</td><td>Kısmi dolulukların belirlenmesi: Gaussian smearing.</td></tr>
+<tr><td><code>GGA</code></td><td>PE</td><td>Genelleştirilmiş gradyan yaklaşımı türü: Perdew–Burke–Ernzerhof.</td></tr>
+<tr><td><code>SIGMA</code></td><td>0.01</td><td>Smearing genişliği (eV).</td></tr>
+<tr><td><code>ALGO</code></td><td>Normal</td><td>Elektronik minimizasyon algoritmasını seçer.</td></tr>
+<tr><td><code>IVDW</code></td><td>1</td><td>van der Waals düzeltmesi (DFT-D2).</td></tr>
+<tr><td><code>LCHARG</code></td><td>.TRUE.</td><td>Yük yoğunluğunu (<code>CHGCAR</code>) yazar.</td></tr>
+<tr><td><code>LAECHG</code></td><td>.TRUE.</td><td>Çekirdek (<code>AECCAR0</code>) ve valans (<code>AECCAR2</code>) yük yoğunluklarını yazar.</td></tr>
+<tr><td><code>NPAR</code></td><td>4</td><td>Bantlar üzerinde paralel hesap ayarı.</td></tr>
+<tr><td><code>NGXF</code>, <code>NGYF</code>, <code>NGZF</code></td><td>320, 320, 50</td><td>Yük yoğunluğunun hesaplandığı ince FFT ızgarasının x, y, z yönündeki nokta sayısı.</td></tr>
+</table>
+<div class="kutu bilgi"><span class="etiket">Örnek yapı</span>Yukarıdaki INCAR örneğinde sistem SnSSe'dir. Grubun SnSSe örnek yapısı (4×4 hücre, 48 atom) <code>POSCAR_SnSSe.vasp</code> adıyla ayrıca indirilebilir.</div>
+<div class="kutu bilgi"><span class="etiket">Kaynaktaki gizli satırlar</span>Kaynak belgede <code>EDIFF = 1E-06</code>, <code>IBRION = 2</code> ve <code>NBAND</code> satırları ayrıca beyaz (görünmez) metin olarak yazılıdır. INCAR görselinde bunların karşılığı <code>EDIFF = 1E-06</code>, <code>IBRION = 2</code> ve <code>NBANDS = 96</code>'dır.</div>
+
+<h2><span class="no">3</span>Hesabı çalıştırma ve yük yoğunluklarını toplama</h2>
+<ol class="adimlar">
+<li style="break-inside:avoid">Hesabı gönderin:
+<pre class="kod">sbatch walk_std</pre></li>
+<li style="break-inside:avoid">Çekirdek ve valans yük yoğunluklarını toplamak için komutları sırasıyla yazın. Önce <code>chgsum.pl</code> betiği iki yük yoğunluğu dosyasını toplar:
+<pre class="kod">./chgsum.pl AECCAR0 AECCAR2 1.0 1.0</pre></li>
+<li style="break-inside:avoid">Bu adımdan sonra <code>CHGCAR_sum</code> dosyasında yüklerimizin toplamı bulunur. Bader koduyla bu yüklerin hesabını yapabiliriz:
+<pre class="kod">./bader CHGCAR -ref CHGCAR_sum</pre></li>
+</ol>
+<figure class="kucuk"><img src="img/bader-1.png" alt="Çekirdek ve valans yük yoğunluklarının toplanması"><figcaption>Kaynak slayt, Adım 3: elektron yük yoğunluğu = çekirdek yük yoğunluğu + valans yük yoğunluğu. <code>CHGCAR_sum</code> = <code>AECCAR0</code> + <code>AECCAR2</code>; iki dosya <code>chgsum.pl</code> betiğiyle toplanır.</figcaption></figure>
+
+<h2><span class="no">4</span>ZVAL değerleri ve Bader net atomik yükü</h2>
+<p><code>POTCAR</code> dosyasında <code>PAW_PBE</code> ifadesini arayın ve ZVAL eşitliklerini bulun. Yapı bir bileşikse (compound) değerleri toplayın.</p>
+<pre class="kod" data-baslik="Örnek">Se = 6  +  S = 6  +  Sn = 4
+= 16 (ZVAL, varsayılan)</pre>
+<div class="kutu ipucu"><span class="etiket">İpucu</span><code>POTCAR</code> içindeki her atom türünün <code>PAW_PBE</code> satırını (TITEL) listelemek için <code>grep TITEL POTCAR</code> komutu kullanılır (bkz. Sık kullanılan komutlar).</div>
+<div class="kutu bilgi"><span class="etiket">Formüller (kaynakta slayt olarak verilmiştir)</span>atomic_number − num_frozen_core = <strong>ZVAL</strong> (POTCAR'da yazan değer)<br>
+Bader net atomik yükü = <strong>ZVAL</strong> − <strong>Bader popülasyonu</strong> (ACF.dat'ta yazan değer)</div>
+<p>Örnekte <code>ACF.dat</code> = 16'dır. Pristine yapıda ZVAL ile ACF.dat değerleri eşit çıktığı için Bader net atomik yükü 0'dır (16 − 16).</p>
+
+<h2><span class="no">5</span>Fonksiyonelleştirilmiş yapılar</h2>
+<div class="kutu onemli"><span class="etiket">Önemli</span>Fonksiyonelleştirilmiş yapılarda Bader değerleri, yük yoğunluğu farkı (charge density differences) analizinde yardımcı olur. Bkz. <strong>Yük yoğunluğu farkı hesabı</strong> kılavuzu.</div>
+
+<h2>Kaynaklar</h2>
+<div class="kaynaklar">
+<p>VTST Tools betikleri: <a href="https://theory.cm.utexas.edu/vtsttools/scripts.html">https://theory.cm.utexas.edu/vtsttools/scripts.html</a><br>
+Bader kodu: <a href="https://theory.cm.utexas.edu/henkelman/code/bader/">https://theory.cm.utexas.edu/henkelman/code/bader/</a></p>
+</div>
+</body></html>

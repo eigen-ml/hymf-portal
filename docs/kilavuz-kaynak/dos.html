@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>DOS hesabı</title>
+<link rel="stylesheet" href="sablon.css">
+</head>
+<body>
+
+<div class="kapak">
+  <div class="ust">HYMF · VASP kılavuzu</div>
+  <h1>DOS (durum yoğunluğu) hesabı</h1>
+  <p class="ozet">İki adımda yapılır: önce öz-tutarlı hesapla CHGCAR üretilir, sonra bu CHGCAR ve iki kat k-noktasıyla DOS hesabı yapılıp vaspkit ile TDOS.dat alınır; grafik Origin'de düzeltilir.</p>
+  <div class="kunye">Hazırlayan: M. Sencer Yılmaz + abozturk (10.12.2024) · Düzenleme: Ekim 2026</div>
+</div>
+
+<h2><span class="no">1</span>Adım 1: Öz-tutarlı hesap</h2>
+<p>1. adım klasöründe şu dosyalar bulunur:</p>
+<div class="dosyalar"><span>INCAR</span><span>POSCAR</span><span>KPOINTS</span></div>
+
+<h3>1.1 INCAR</h3>
+<pre class="kod" data-baslik="INCAR (adım 1)">System = graphene
+PREC = Normal
+ENCUT = 600
+ISMEAR = 0
+SIGMA = 0.01
+EDIFF = 1E-8
+ISPIN = 1
+IBRION = 2
+ALGO = Normal
+NBANDS = 32
+IVDW = 1</pre>
+<table>
+  <tr><th>Etiket</th><th>Değer</th><th>Anlamı</th></tr>
+  <tr><td><code>System</code></td><td>graphene</td><td>Hesaba verilen ad (etiket); hesabı etkilemez.</td></tr>
+  <tr><td><code>PREC</code></td><td>Normal</td><td>Hesabın genel kesinlik (precision) modu.</td></tr>
+  <tr><td><code>ENCUT</code></td><td>600</td><td>Düzlem dalga taban kümesi için kesme enerjisi (eV).</td></tr>
+  <tr><td><code>ISMEAR</code></td><td>0</td><td>Kısmi doluluğun belirlenme yöntemi; <code>0</code>: Gauss yayılması (Gaussian smearing).</td></tr>
+  <tr><td><code>SIGMA</code></td><td>0.01</td><td>Yayılmanın genişliği (eV).</td></tr>
+  <tr><td><code>EDIFF</code></td><td>1E-8</td><td>Elektronik SC döngüsünün durma ölçütü.</td></tr>
+  <tr><td><code>ISPIN</code></td><td>1</td><td>Spin polarize olmayan hesap.</td></tr>
+  <tr><td><code>IBRION</code></td><td>2</td><td>İyon gevşetmesi için eşlenik gradyan algoritması.</td></tr>
+  <tr><td><code>ALGO</code></td><td>Normal</td><td>Elektronik minimizasyon algoritması.</td></tr>
+  <tr><td><code>NBANDS</code></td><td>32</td><td>Hesaba katılan bant sayısı.</td></tr>
+  <tr><td><code>IVDW</code></td><td>1</td><td>Van der Waals düzeltmesi (DFT-D2 yöntemi).</td></tr>
+</table>
+<p>Kaynakta bu etiketler için ayrıca bir açıklama verilmemiştir; yukarıdaki anlamlar VASP belgesinden alınmıştır.</p>
+
+<h3>1.2 POSCAR</h3>
+<pre class="kod" data-baslik="POSCAR (adım 1)">New structure
+   1.00000000000000
+     3.7336931351147573    0.0000000000000562    0.0000000000000000
+    -1.8668465675072803    3.2334731048878185    0.0000000000000000
+     0.0000000000000000    0.0000000000000000   20.0000000000000000
+   S    Ga   Se
+     1     2     2
+Direct
+  0.6666669849999991  0.3333329860000021  0.5157403177336235
+  0.3333329860000021  0.6666669849999991  0.5906097720920584
+  0.6666669849999991  0.3333329860000021  0.4047997643535055
+  0.0000000000000000  0.0000000000000000  0.6548513598516337
+  0.0000000000000000  0.0000000000000000  0.3455987739691793
+
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00</pre>
+
+<h3>1.3 KPOINTS</h3>
+<pre class="kod" data-baslik="KPOINTS (adım 1)">k-points
+0
+Gamma
+16   16   1
+0.   0.   0.</pre>
+<p>Otomatik, Γ merkezli <code>16 × 16 × 1</code> k-noktası ızgarası.</p>
+
+<h2 class="yeni-sayfa"><span class="no">2</span>Adım 2: DOS hesabı</h2>
+<div class="kutu onemli"><span class="etiket">Önemli</span>Önce, 1. adımda elde ettiğiniz <code>CHGCAR</code> dosyasını 2. adım hesaplarını yapacağınız klasöre aktarın!</div>
+<p>2. adım klasöründe şu dosyalar bulunur:</p>
+<div class="dosyalar"><span>CHGCAR</span><span>INCAR</span><span>KPOINTS</span><span>POSCAR</span></div>
+
+<h3>2.1 INCAR</h3>
+<pre class="kod" data-baslik="INCAR (adım 2)">System = SnSSe
+PREC = Normal
+ISPIN = 1
+ENCUT = 520
+EDIFF = 1E-06
+IBRION = 2
+NEDOS = 4000
+LORBIT = 11
+ICHARG = 11
+NBANDS = 96
+ISMEAR = 0
+IVDW = 1
+ALGO = Normal
+SIGMA = 0.01</pre>
+<table>
+  <tr><th>1. adıma göre fark</th><th>Adım 1</th><th>Adım 2</th><th>Anlamı</th></tr>
+  <tr><td><code>ENCUT</code></td><td>600</td><td>520</td><td>Kesme enerjisi (eV).</td></tr>
+  <tr><td><code>EDIFF</code></td><td>1E-8</td><td>1E-06</td><td>SC döngüsünün durma ölçütü.</td></tr>
+  <tr><td><code>NBANDS</code></td><td>32</td><td>96</td><td>Bant sayısı.</td></tr>
+  <tr><td><code>NEDOS</code></td><td>(yok)</td><td>4000</td><td>DOS hesabında kullanılan enerji noktası sayısı.</td></tr>
+  <tr><td><code>LORBIT</code></td><td>(yok)</td><td>11</td><td>Atom ve lm-orbital bazında ayrıştırılmış çıktı (PROCAR, DOSCAR) yazdırır.</td></tr>
+  <tr><td><code>ICHARG</code></td><td>(yok)</td><td>11</td><td>Yük yoğunluğu <code>CHGCAR</code> dosyasından okunur ve sabit tutulur; yalnızca özdeğerler hesaplanır (öz-tutarlı olmayan hesap).</td></tr>
+  <tr><td><code>System</code></td><td>graphene</td><td>SnSSe</td><td>Yalnızca etiket.</td></tr>
+</table>
+<p>Diğer etiketler 1. adımla aynıdır: <code>PREC = Normal</code>, <code>ISPIN = 1</code>, <code>IBRION = 2</code>, <code>ISMEAR = 0</code>, <code>IVDW = 1</code>, <code>ALGO = Normal</code>, <code>SIGMA = 0.01</code>.</p>
+<div class="kutu bilgi"><span class="etiket">Not</span>Kaynakta 1. adımın INCAR'ında <code>ENCUT = 600</code>, 2. adımın INCAR'ında <code>ENCUT = 520</code> yazılıdır. İki değer de ekran görüntüsünden okunmuştur.</div>
+
+<h3>2.2 KPOINTS (2 katı)</h3>
+<pre class="kod" data-baslik="KPOINTS (adım 2)">k-points
+0
+Gamma
+32   32   1
+0.   0.   0.</pre>
+<p>Izgara, 1. adımdaki <code>16 16 1</code> değerinin iki katıdır (<code>32 32 1</code>).</p>
+
+<h3>2.3 POSCAR</h3>
+<p>1. adımdaki POSCAR ile aynıdır:</p>
+<pre class="kod" data-baslik="POSCAR (adım 2)">New structure
+   1.00000000000000
+     3.7336931351147573    0.0000000000000562    0.0000000000000000
+    -1.8668465675072803    3.2334731048878185    0.0000000000000000
+     0.0000000000000000    0.0000000000000000   20.0000000000000000
+   S    Ga   Se
+     1     2     2
+Direct
+  0.6666669849999991  0.3333329860000021  0.5157403177336235
+  0.3333329860000021  0.6666669849999991  0.5906097720920584
+  0.6666669849999991  0.3333329860000021  0.4047997643535055
+  0.0000000000000000  0.0000000000000000  0.6548513598516337
+  0.0000000000000000  0.0000000000000000  0.3455987739691793
+
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00</pre>
+
+<h3>2.4 VASPKIT ile TDOS.dat</h3>
+<p>Kaynaktaki not: <em>"VASPKIT: 11 111 yap TDOS.DAT çizdir"</em>. Yani vaspkit'te sırasıyla şu kodlar girilir ve toplam DOS verisi <code>TDOS.dat</code> dosyasına yazılır:</p>
+<ol class="adimlar">
+  <li>Ana menüde <code>11</code> (Density-of-States).</li>
+  <li>Açılan menüde <code>111</code>.</li>
+  <li>Oluşan <code>TDOS.dat</code> dosyasını grafik çizimi için kullanın.</li>
+</ol>
+
+<h2 class="yeni-sayfa"><span class="no">3</span>Origin'de smooth ve eksen adları</h2>
+<p>TDOS.dat verisi Origin'e aktarılır ve veriyi bozmayacak şekilde yumuşatılır (smooth).</p>
+<ol class="adimlar">
+  <li><code>TDOS.dat</code> verilerini Origin'e aktarın.</li>
+  <li>Menüden <code>Analysis → Signal Processing → Smooth</code> yolunu izleyin (aşağıdaki şekil).</li>
+  <li><em>Smooth: smooth</em> penceresinde aşağıdaki ayarları kullanın.</li>
+</ol>
+<figure class="kucuk"><img src="img/dos-1.png" alt="Origin Analysis menüsü"><figcaption>Origin: Analysis → Signal Processing → Smooth (kaynaktaki ekran görüntüsü)</figcaption></figure>
+
+<table>
+  <tr><th>Ayar</th><th>Değer</th></tr>
+  <tr><td>Recalculate</td><td>Manual</td></tr>
+  <tr><td>Input</td><td><code>[Graph1]1!1"TDOS"</code></td></tr>
+  <tr><td>Method</td><td>Adjacent-Averaging</td></tr>
+  <tr><td>Weighted Average</td><td>işaretsiz</td></tr>
+  <tr><td>Points of Window</td><td>20</td></tr>
+  <tr><td>Boundary Condition</td><td>None</td></tr>
+  <tr><td>Output</td><td><code>(&lt;input&gt;,[Book1]TDOS!C"TDOS")</code></td></tr>
+</table>
+<p>Pencere, "Performing smoothing of XY data to remove noise or irregularities" açıklamasıyla gelir.</p>
+<figure><img src="img/dos-2.png" alt="Origin Smooth penceresi"><figcaption>Origin: Smooth penceresi (kaynaktaki ekran görüntüsü)</figcaption></figure>
+
+<h3>Eksen adları</h3>
+<p>Grafiği düzelttikten sonra eksenler şöyle adlandırılır:</p>
+<table>
+  <tr><th>Eksen</th><th>Ad</th></tr>
+  <tr><td>Sol (y)</td><td>Density of States (DOS)</td></tr>
+  <tr><td>Alt (x)</td><td>Energy (eV)</td></tr>
+</table>
+
+<h2>Ek notlar</h2>
+<ul>
+  <li>Kaynakta <code>System</code> etiketi 1. adımda <code>graphene</code>, 2. adımda <code>SnSSe</code> yazılıdır; POSCAR'ın başlığı <em>New structure</em>, elementleri S, Ga, Se'dir. <code>System</code> yalnızca bir etikettir; hesabı etkilemez.</li>
+  <li>Kaynak dosyanın adında "(-5to5)" ifadesi geçer; slaytlarda bir enerji aralığı belirtilmemiştir.</li>
+  <li>Kaynakta POTCAR'dan ve işin gönderilmesinden söz edilmez.</li>
+</ul>
+
+<h2>Kaynaklar</h2>
+<div class="kaynaklar">
+  <ul>
+    <li>M. Sencer Yılmaz + abozturk, <em>DOS CALCULATION</em> (slaytlar, 10.12.2024).</li>
+    <li>VASP el kitabı (INCAR etiketleri): <a href="https://www.vasp.at/wiki">https://www.vasp.at/wiki</a></li>
+    <li>VASPKIT: <a href="https://vaspkit.com">https://vaspkit.com</a></li>
+  </ul>
+</div>
+
+</body>
+</html>

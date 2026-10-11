@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Optik hesapları</title>
+<link rel="stylesheet" href="sablon.css">
+</head>
+<body>
+
+<div class="kapak">
+  <div class="ust">HYMF · VASP kılavuzu</div>
+  <h1>Optik hesapları</h1>
+  <p class="ozet">İki klasörde yürütülen VASP hesabı (adım 1 ve adım 2), sonuçların VASPKIT ile alınması ve ε2(ω) grafiğinin çizimi.</p>
+  <div class="kunye">Hazırlayan: HYMF grubu · Düzenleme: Ekim 2026</div>
+</div>
+
+<h2><span class="no">1</span>Hesap klasörleri</h2>
+<h3>Adım 1 klasörü</h3>
+<div class="dosyalar"><span>INCAR</span><span>KPOINTS</span></div>
+<h3>Adım 2 klasörü</h3>
+<div class="dosyalar"><span>INCAR</span><span>KPOINTS</span><span>POSCAR (1. adımdaki CONTCAR)</span><span>WAVECAR (1. adımdan)</span></div>
+
+<h2><span class="no">2</span>Adım 1 (step 1 klasörü için hesap)</h2>
+
+<h3>INCAR</h3>
+<pre class="kod" data-baslik="INCAR (adım 1)">SYSTEM = 1T-SnSSe-O1
+ISTART = 1
+NBANDS = 96
+ISMEAR = 1
+SIGMA  = 0.01
+EDIFF  = 1.E-6
+EDIFFG =-0.005
+LREAL =.FALSE.
+ENCUT = 520
+ALGO = N
+NPAR = 4
+NSIM= 1
+LVDW = .TRUE.
+#ISYM = 0
+SYMPREC = 1E-9</pre>
+
+<h3>KPOINTS</h3>
+<pre class="kod" data-baslik="KPOINTS (adım 1): k noktaları Monkhorst-Pack ağı olarak alınır">k-points
+ 0
+M
+  45   45    1
+ 0.0  0.0  0.0</pre>
+
+<h2><span class="no">3</span>Adım 2 (2. klasör)</h2>
+
+<h3>Hesaptan önce</h3>
+<ol class="adimlar">
+<li>1. hesaptaki <code>CONTCAR</code> dosyasını 2. klasöre atıp <code>POSCAR</code> yapın.</li>
+<li><code>WAVECAR</code> dosyasını 2. adımın klasörüne atın.</li>
+</ol>
+
+<h3>INCAR</h3>
+<pre class="kod" data-baslik="INCAR (adım 2)">SYSTEM = BP_MoSSe
+ISTART = 1
+ENCUT = 520
+LREAL = .FALSE.
+ALGO = N
+NBANDS = 96
+LOPTICS = .TRUE. ; CSHIFT = 0.005
+LRPA = .FALSE.
+NEDOS = 4800
+NOMEGA = 2400
+OMEGAGAMIN = 0
+OMEGAMAX = 10
+ISMEAR = 1
+SIGMA = 0.01
+EDIFF = 1.E-6
+EDIFFG =-0.005
+NPAR = 4
+NSIM = 1
+LCHARG = .FALSE.
+LWAVE = .FALSE.
+LVDW = .TRUE.
+SYMPREC= 1.E-9</pre>
+
+<h3>KPOINTS</h3>
+<pre class="kod" data-baslik="KPOINTS (adım 2)">k-points
+ 0
+M
+ 73   73   1
+ 0.0  0.0  0.0</pre>
+
+<div class="kutu bilgi"><span class="etiket">Kaynaktaki görüntülerde farklar var</span>Adım 1 INCAR'ında <code>SYSTEM = 1T-SnSSe-O1</code>, adım 2 INCAR'ında <code>SYSTEM = BP_MoSSe</code> yazıyor. KPOINTS ağları da farklı: adım 1'de <code>45 45 1</code>, adım 2'de <code>73 73 1</code>. Her iki dosya da kaynaktaki gibi verilmiştir.</div>
+
+<div style="break-inside:avoid">
+<h2><span class="no">4</span>Sonuçları alma (VASPKIT)</h2>
+<p>Adım 2'deki hesap bittikten sonra VASPKIT'i açıp sırayla şunları seçin:</p>
+<ol class="adimlar">
+<li><code>71</code></li>
+<li><code>710</code></li>
+<li><code>1</code> (eV)</li>
+</ol>
+<p>En son çıkan <code>IMAG.in</code> dosyaları yapacağımız grafiklerdir.</p>
+</div>
+
+<h2><span class="no">5</span>Grafik çizimi</h2>
+<p>Grafikler <code>IMAG.in</code> dosyalarından çizilir. Eksenler için kaynaktaki notlar:</p>
+<table>
+<tr><th>Eksen</th><th>Sütun</th><th>Başlık</th><th>Kaynaktaki ifade</th></tr>
+<tr><td>y</td><td>3. sütun</td><td>ε2(ω) (arb. units)</td><td>"Frekans y"</td></tr>
+<tr><td>x (eV)</td><td>1. sütun</td><td>Energy (eV)</td><td>"eV x al"</td></tr>
+</table>
+<div class="kutu bilgi"><span class="etiket">Kaynaktaki not parçalı</span>Bu bölümün başında kaynakta "Ilk 3" yazıyor ve cümle tamamlanmamış: [kaynakta okunamadı: "Ilk 3"]. "Frekans y" ifadesi y ekseni olarak, "eV x al" ifadesi x ekseni olarak yorumlanmıştır.</div>
+
+<h2><span class="no">6</span>INCAR etiketlerinin anlamı</h2>
+<table>
+<colgroup><col style="width:17%"><col style="width:16%"><col style="width:14%"><col></colgroup>
+<tr><th>Etiket</th><th>Adım 1</th><th>Adım 2</th><th>Anlamı</th></tr>
+<tr><td><code>SYSTEM</code></td><td>1T-SnSSe-O1</td><td>BP_MoSSe</td><td>Hesabın adı (yalnızca etiket).</td></tr>
+<tr><td><code>ISTART</code></td><td>1</td><td>1</td><td>Dalga fonksiyonlarını <code>WAVECAR</code> dosyasından okuyarak başlatma ayarı.</td></tr>
+<tr><td><code>ENCUT</code></td><td>520</td><td>520</td><td>Düzlem dalga kesme enerjisi (eV).</td></tr>
+<tr><td><code>LREAL</code></td><td>.FALSE.</td><td>.FALSE.</td><td>İzdüşümleri ters uzayda hesaplar.</td></tr>
+<tr><td><code>ALGO</code></td><td>N</td><td>N</td><td>Elektronik minimizasyon algoritması (Normal).</td></tr>
+<tr><td><code>NBANDS</code></td><td>96</td><td>96</td><td>Bant sayısı.</td></tr>
+<tr><td><code>LOPTICS</code></td><td>-</td><td>.TRUE.</td><td>Frekansa bağlı dielektrik fonksiyonu hesaplar.</td></tr>
+<tr><td><code>CSHIFT</code></td><td>-</td><td>0.005</td><td>Dielektrik fonksiyon hesabında kullanılan karmaşık kayma.</td></tr>
+<tr><td><code>LRPA</code></td><td>-</td><td>.FALSE.</td><td>Yerel alan etkilerinin (RPA) ele alınışıyla ilgili ayar.</td></tr>
+<tr><td><code>NEDOS</code></td><td>-</td><td>4800</td><td>Durum yoğunluğu ve dielektrik fonksiyon için enerji (frekans) ızgarasındaki nokta sayısı.</td></tr>
+<tr><td><code>NOMEGA</code></td><td>-</td><td>2400</td><td>Frekans noktası sayısı.</td></tr>
+<tr><td><code>OMEGAGAMIN</code></td><td>-</td><td>0</td><td>Frekans aralığının alt sınırı (kaynakta <code>OMEGAGAMIN</code> yazıyor; VASP'taki etiket adı <code>OMEGAMIN</code>'dir, yazım hatası olabilir).</td></tr>
+<tr><td><code>OMEGAMAX</code></td><td>-</td><td>10</td><td>Frekans aralığının üst sınırı.</td></tr>
+<tr><td><code>ISMEAR</code></td><td>1</td><td>1</td><td>Methfessel-Paxton yayılımı (1. derece).</td></tr>
+<tr><td><code>SIGMA</code></td><td>0.01</td><td>0.01</td><td>Yayılım genişliği (eV).</td></tr>
+<tr><td><code>EDIFF</code></td><td>1.E-6</td><td>1.E-6</td><td>Elektronik yakınsama ölçütü (eV).</td></tr>
+<tr><td><code>EDIFFG</code></td><td>-0.005</td><td>-0.005</td><td>Negatif değer: kuvvet yakınsama ölçütü (eV/Å).</td></tr>
+<tr><td><code>NPAR</code></td><td>4</td><td>4</td><td>Bantlar üzerinde paralelleştirmede grup sayısı.</td></tr>
+<tr><td><code>NSIM</code></td><td>1</td><td>1</td><td>Aynı anda iyileştirilen bant sayısı.</td></tr>
+<tr><td><code>LCHARG</code></td><td>-</td><td>.FALSE.</td><td>CHGCAR ve CHG yazılmaz.</td></tr>
+<tr><td><code>LWAVE</code></td><td>-</td><td>.FALSE.</td><td>WAVECAR yazılmaz.</td></tr>
+<tr><td><code>LVDW</code></td><td>.TRUE.</td><td>.TRUE.</td><td>van der Waals düzeltmesini (Grimme DFT-D2) açar.</td></tr>
+<tr><td><code>#ISYM</code></td><td>0</td><td>-</td><td>Başında <code>#</code> olduğu için yorum satırıdır; etkisizdir.</td></tr>
+<tr><td><code>SYMPREC</code></td><td>1E-9</td><td>1.E-9</td><td>Simetri belirlemede tolerans.</td></tr>
+</table>
+<p>Tabloda "-" o etiketin ilgili INCAR'da bulunmadığını gösterir.</p>
+
+</body>
+</html>

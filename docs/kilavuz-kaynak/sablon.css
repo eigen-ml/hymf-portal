@@ -1,0 +1,88 @@
+/* HYMF kılavuz PDF şablonu. Ajanlar bu dosyayı değiştirmez; yalnız aşağıdaki sınıfları kullanır. */
+@font-face { font-family: Gilroy; font-weight: 400; src: url('../../src/app/fonts/Gilroy-Regular.woff2'); }
+@font-face { font-family: Gilroy; font-weight: 500; src: url('../../src/app/fonts/Gilroy-Medium.woff2'); }
+@font-face { font-family: Gilroy; font-weight: 700; src: url('../../src/app/fonts/Gilroy-Bold.woff2'); }
+@font-face { font-family: Gilroy; font-weight: 800; src: url('../../src/app/fonts/Gilroy-Heavy.woff2'); }
+
+@page {
+  size: A4;
+  margin: 18mm 17mm 20mm 17mm;
+  @bottom-left { content: "HYMF Portal · Hesap kılavuzları"; font: 400 8pt Gilroy, sans-serif; color: #6b7686; }
+  @bottom-right { content: counter(page) " / " counter(pages); font: 500 8pt Gilroy, sans-serif; color: #6b7686; }
+}
+
+:root { --accent: #0b65b0; --accent-soft: #e6f0fa; --ink: #142033; --ink-2: #3d4a5c; --ink-3: #6b7686; --line: #d8dee7;
+  --warn: #8a4b00; --warn-soft: #fdf2dc; --danger: #a82316; --danger-soft: #fcebe9; --ok: #2c6639; --ok-soft: #e5f2e8; --code: #f3f5f8; }
+
+* { box-sizing: border-box; }
+html { font: 400 10.5pt/1.55 Gilroy, -apple-system, 'Helvetica Neue', Arial, sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; }
+
+/* Kapak bloğu: her kılavuzun en üstünde bir kez */
+.kapak { border-bottom: 3px solid var(--accent); padding-bottom: 10pt; margin-bottom: 16pt; }
+.kapak .ust { font-weight: 700; color: var(--accent); font-size: 9pt; letter-spacing: .02em; }
+.kapak h1 { font-weight: 800; font-size: 24pt; line-height: 1.15; margin: 4pt 0 6pt; letter-spacing: -.01em; }
+.kapak .ozet { color: var(--ink-2); font-size: 11pt; margin: 0 0 8pt; }
+.kapak .kunye { color: var(--ink-3); font-size: 9pt; }
+
+h2 { font-weight: 700; font-size: 15pt; margin: 20pt 0 6pt; color: var(--ink); break-after: avoid; }
+h2 .no { display: inline-block; min-width: 22pt; color: var(--accent); }
+h3 { font-weight: 700; font-size: 11.5pt; margin: 14pt 0 4pt; break-after: avoid; }
+p { margin: 0 0 7pt; }
+ul, ol { margin: 0 0 8pt; padding-left: 16pt; }
+li { margin: 2pt 0; }
+a { color: var(--accent); text-decoration: none; word-break: break-all; }
+strong { font-weight: 700; }
+
+/* Dosya adı, komut, parametre: satır içi */
+code { font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 8.8pt; background: var(--code); border-radius: 3pt; padding: 0 3pt; }
+
+/* Dosya içeriği veya komut bloğu. data-baslik ile başlık: <pre class="kod" data-baslik="INCAR"> */
+pre.kod { font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; font-size: 8.6pt; line-height: 1.45; background: var(--code);
+  border: 1px solid var(--line); border-left: 3pt solid var(--accent); border-radius: 4pt; padding: 8pt 10pt; margin: 4pt 0 10pt;
+  white-space: pre-wrap; word-break: break-word; break-inside: avoid; }
+pre.kod[data-baslik]::before { content: attr(data-baslik); display: block; font-family: Gilroy, sans-serif; font-weight: 700; font-size: 8.5pt;
+  color: var(--accent); margin-bottom: 4pt; }
+pre.kod .yorum { color: var(--ink-3); }
+pre.kod .sil-kirmizi { color: var(--danger); font-weight: 700; }
+pre.kod .sil-mavi { color: var(--accent); font-weight: 700; }
+pre.kod .vurgu { background: #fff1b8; }
+
+/* Parametre tablosu */
+table { width: 100%; border-collapse: collapse; margin: 4pt 0 12pt; font-size: 9.5pt; break-inside: auto; }
+th { text-align: left; font-weight: 700; color: var(--ink-2); border-bottom: 1.5pt solid var(--line); padding: 4pt 6pt; }
+td { border-bottom: 1px solid var(--line); padding: 4pt 6pt; vertical-align: top; }
+tr { break-inside: avoid; }
+td code { white-space: nowrap; }
+
+/* Kutular */
+.kutu { border-radius: 5pt; padding: 8pt 10pt; margin: 6pt 0 10pt; break-inside: avoid; font-size: 10pt; }
+.kutu > :last-child { margin-bottom: 0; }
+.kutu .etiket { font-weight: 700; display: block; margin-bottom: 2pt; }
+.kutu.bilgi { background: var(--accent-soft); }
+.kutu.bilgi .etiket { color: var(--accent); }
+.kutu.onemli { background: var(--warn-soft); }
+.kutu.onemli .etiket { color: var(--warn); }
+.kutu.uyari { background: var(--danger-soft); }
+.kutu.uyari .etiket { color: var(--danger); }
+.kutu.ipucu { background: var(--ok-soft); }
+.kutu.ipucu .etiket { color: var(--ok); }
+
+/* Adım listesi: <ol class="adimlar"><li>…</li></ol> */
+ol.adimlar { list-style: none; counter-reset: adim; padding-left: 0; }
+ol.adimlar > li { counter-increment: adim; position: relative; padding-left: 24pt; margin: 6pt 0; }
+ol.adimlar > li::before { content: counter(adim); position: absolute; left: 0; top: 0; width: 16pt; height: 16pt; border-radius: 50%;
+  background: var(--accent); color: #fff; font-weight: 700; font-size: 8.5pt; text-align: center; line-height: 16pt; }
+
+/* Görsel */
+figure { margin: 6pt 0 12pt; break-inside: avoid; text-align: center; }
+figure img { max-width: 100%; max-height: 105mm; border: 1px solid var(--line); border-radius: 4pt; }
+figure.kucuk img { max-height: 60mm; }
+figcaption { font-size: 8.5pt; color: var(--ink-3); margin-top: 3pt; }
+
+/* Dosya listesi (hesap klasöründe olması gerekenler) */
+.dosyalar { display: flex; flex-wrap: wrap; gap: 4pt; margin: 4pt 0 10pt; }
+.dosyalar span { font-family: 'JetBrains Mono', Menlo, monospace; font-size: 8.5pt; background: var(--accent-soft); color: var(--accent); border-radius: 10pt; padding: 1pt 7pt; font-weight: 600; }
+
+.kaynaklar { font-size: 9pt; color: var(--ink-2); }
+.yeni-sayfa { break-before: page; }

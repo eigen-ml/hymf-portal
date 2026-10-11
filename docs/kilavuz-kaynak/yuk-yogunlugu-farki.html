@@ -1,0 +1,116 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>Yük yoğunluğu farkı hesabı</title><link rel="stylesheet" href="sablon.css"></head><body>
+
+<div class="kapak"><div class="ust">HYMF · VASP kılavuzu</div><h1>Yük yoğunluğu farkı hesabı</h1><p class="ozet">Florlanmış 2H-TiSSe örneğinde, üç CHGCAR dosyasından VESTA ile yük yoğunluğu farkı haritasını elde edin.</p><div class="kunye">Hazırlayan: Mert Çağlar Bulduk (9.12.2024) · Düzenleme: Ekim 2026</div></div>
+
+<h2><span class="no">1</span>Gerekli CHGCAR dosyaları</h2>
+<p>Yük yoğunluğu farkı için ilgili tüm konfigürasyonların CHGCAR dosyaları gerekir. Örnek sistem: florlanmış (fluorinated) 2H-TiSSe.</p>
+<div class="kutu uyari"><span class="etiket">Dikkat</span><strong>VESTA'nın yük farklarını hesaplayabilmesi için tüm CHGCAR dosyalarının 3B ızgarası (mesh grid) aynı olmalıdır.</strong></div>
+<p>F-2H-TiSSe için üç CHGCAR dosyası gerekir: <strong>florlanmış TiSSe</strong> (fluorinated TiSSe), <strong>pristine TiSSe</strong> ve <strong>fluorene</strong> (yalnız F atomu).</p>
+<p>Bu CHGCAR dosyalarını elde etmek ve 3B ızgarayı tutarlı tutmak için üç POSCAR dosyasının üçü de <strong>aynı POSCAR'dan</strong> türetilmelidir. F-2H-TiSSe olası tüm konfigürasyonları içerdiğinden diğer iki POSCAR dosyası ondan elde edilir.</p>
+
+<h2><span class="no">2</span>POSCAR dosyalarını hazırlama</h2>
+<pre class="kod" data-baslik="Florlanmış 2H-TiSSe POSCAR dosyası">2H-TiSSe
+   1.00000000000000
+     3.5690847323603263    0.0000000000000000    0.0000000000000000
+     1.7845423661801632    3.0909180464087322    0.0000000000000000
+     0.0000000000000000    0.0000000000000000   30.0000000000000000
+   <span class="sil-mavi">Ti   S    Se</span>   <span class="sil-kirmizi">F</span>
+     <span class="sil-mavi">1     1     1</span>    <span class="sil-kirmizi">1</span>
+Direct
+  <span class="sil-mavi">0.0000000000000000  0.0000000000000000  0.5066384472992098</span>
+  <span class="sil-mavi">0.3333329860000021  0.3333329860000021  0.5491935922537721</span>
+  <span class="sil-mavi">0.3333329860000021  0.3333329860000021  0.4569639609570686</span>
+  <span class="sil-kirmizi">0.3333329860000021  0.3333329860000021  0.6043669714899380</span>
+
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+
+<span class="sil-kirmizi">KIRMIZI SATIRLARI SİLİN: PRISTINE 2H-TiSSe POSCAR'ı elde edilir</span>
+<span class="sil-mavi">MAVİ SATIRLARI SİLİN: FLUORENE (yalnız F) POSCAR'ı elde edilir</span></pre>
+<table>
+<tr><th style="width:34%">Yapı</th><th>POSCAR nasıl elde edilir</th></tr>
+<tr><td>Florlanmış 2H-TiSSe (F-2H-TiSSe)</td><td>Yukarıdaki POSCAR olduğu gibi kullanılır.</td></tr>
+<tr><td>Pristine 2H-TiSSe</td><td>Kırmızı satırlar silinir (F türü, F sayısı ve F koordinatı).</td></tr>
+<tr><td>Fluorene (yalnız F)</td><td>Mavi satırlar silinir (Ti, S, Se türleri, sayıları ve koordinatları).</td></tr>
+</table>
+
+<h2><span class="no">3</span>CHGCAR hesabı</h2>
+<div class="kutu onemli"><span class="etiket">Önemli</span>Üç konfigürasyon için de CHGCAR'ı <strong>kendi POTCAR dosyalarını</strong> kullanarak hesaplayın.</div>
+<pre class="kod" data-baslik="Örnek INCAR">System = 2H-TiSSe
+PREC = Normal
+ISTART = 0
+ENCUT = 800
+EDIFF = 1E-06
+EDIFFG = -0.01
+ISIF = 2
+IBRION = 2
+NSW = 200
+POTIM = .1
+ISYM = 1
+NPAR = 4
+IVDW = 1
+<span class="yorum">#NBANDS = 8</span>
+LREAL = .FALSE.
+LWAVE = .FALSE.
+ISMEAR = 0
+LCHARG = .TRUE.</pre>
+<table>
+<tr><th style="width:22%">Etiket</th><th style="width:16%">Değer</th><th>Anlamı</th></tr>
+<tr><td><code>System</code></td><td>2H-TiSSe</td><td>Sistemin adı (başlık).</td></tr>
+<tr><td><code>PREC</code></td><td>Normal</td><td>Hesap duyarlılığı (precision) modu.</td></tr>
+<tr><td><code>ISTART</code></td><td>0</td><td>Dalga fonksiyonlarını okumadan, sıfırdan başlar.</td></tr>
+<tr><td><code>ENCUT</code></td><td>800</td><td>Düzlem dalga taban kümesinin kesme enerjisi (eV).</td></tr>
+<tr><td><code>EDIFF</code></td><td>1E-06</td><td>Elektronik öz-tutarlı döngünün durma ölçütü (eV).</td></tr>
+<tr><td><code>EDIFFG</code></td><td>-0.01</td><td>İyonik relaksasyonun durma ölçütü; negatif değer kuvvet ölçütüdür (eV/Å).</td></tr>
+<tr><td><code>ISIF</code></td><td>2</td><td>İyon konumları relaksasyona girer, hücre sabit kalır.</td></tr>
+<tr><td><code>IBRION</code></td><td>2</td><td>İyonları relaksasyona sokan eşlenik gradyan (conjugate gradient) algoritması.</td></tr>
+<tr><td><code>NSW</code></td><td>200</td><td>En çok iyonik adım sayısı.</td></tr>
+<tr><td><code>POTIM</code></td><td>.1</td><td>İyonik adım boyutu çarpanı.</td></tr>
+<tr><td><code>ISYM</code></td><td>1</td><td>Simetri kullanımı açık.</td></tr>
+<tr><td><code>NPAR</code></td><td>4</td><td>Bantlar üzerinde paralel hesap ayarı.</td></tr>
+<tr><td><code>IVDW</code></td><td>1</td><td>van der Waals düzeltmesi (DFT-D2).</td></tr>
+<tr><td><code>#NBANDS</code></td><td>8</td><td>Satır <code>#</code> ile yorum yapılmıştır; hesaba katılmaz.</td></tr>
+<tr><td><code>LREAL</code></td><td>.FALSE.</td><td>Projeksiyon işlemleri ters uzayda yapılır.</td></tr>
+<tr><td><code>LWAVE</code></td><td>.FALSE.</td><td><code>WAVECAR</code> yazılmaz.</td></tr>
+<tr><td><code>ISMEAR</code></td><td>0</td><td>Kısmi dolulukların belirlenmesi: Gaussian smearing.</td></tr>
+<tr><td><code>LCHARG</code></td><td>.TRUE.</td><td>Yük yoğunluğunu (<code>CHGCAR</code>) yazar.</td></tr>
+</table>
+
+<h2><span class="no">4</span>CHGCAR dosyalarını VESTA ile çıkarma</h2>
+<ol class="adimlar">
+<li style="break-inside:avoid">CHGCAR dosyalarının dosya türünü <code>.vasp</code> yapın (örneğin <code>CHGCAR_F.vasp</code>). Böylece dosyalar VESTA/.vasp dosyalarına dönüşür.</li>
+<li style="break-inside:avoid"><strong>AB sistemini</strong> VESTA'da açın. Bu örnekte AB sistemi florlanmış 2H-TiSSe'dir.</li>
+<li style="break-inside:avoid"><code>Edit → Edit Data → Volumetric data</code> sekmesine girin.</li>
+<li style="break-inside:avoid"><code>Import…</code> ile diğer CHGCAR dosyalarını (pristine 2H-TiSSe ve fluorene) içe aktarın.</li>
+<li style="break-inside:avoid">Açılan pencerede <code>Subtract from current data</code> seçeneğini işaretleyin.</li>
+<li style="break-inside:avoid">Ortaya çıkan model, yük yoğunluğu farkı haritasını verir.</li>
+</ol>
+<div style="display:flex;gap:8pt;align-items:flex-start">
+<figure style="flex:0 0 34%;margin:6pt 0 8pt"><img src="img/yuk-yogunlugu-farki-1.png" alt="VESTA'ya aktarılmış florlanmış 2H-TiSSe CHGCAR"><figcaption>Florlanmış 2H-TiSSe CHGCAR dosyasının VESTA'ya aktarılmış hali (adım 2).</figcaption></figure>
+<figure style="flex:0 0 60%;margin:6pt 0 8pt"><img src="img/yuk-yogunlugu-farki-2.png" alt="VESTA Edit Data penceresi, Volumetric data sekmesi"><figcaption>Edit Data penceresi, Volumetric data sekmesi: Isosurfaces listesinin yanındaki <code>Import…</code> düğmesi (adım 3 ve 4).</figcaption></figure>
+</div>
+<figure><img style="max-height:75mm" src="img/yuk-yogunlugu-farki-3.png" alt="VESTA Choose operations penceresi"><figcaption>Choose operations penceresi: <code>Subtract from current data</code> seçili; birim dönüşümü <code>Raw Data (do nothing)</code> (adım 5).</figcaption></figure>
+
+<h2><span class="no">5</span>Sonuç ve örnek</h2>
+<p>Ortaya çıkan model yük yoğunluğu farkı haritasını verir. Örnek haritalar aşağıdaki makaleden alınmıştır: Zengin, Y., R. Caglayan ve Y. Mogulkoc (2023), SnSSe tek katmanı üzerinde küçük gaz moleküllerinin adsorpsiyonu.</p>
+<figure><img src="img/yuk-yogunlugu-farki-4.png" alt="Zengin vd. (2023), Şekil 5"><figcaption>Zengin vd. (2023), Şekil 5: monolayer SnSSe üzerinde (a) CO, (b) NO, (c) NO<sub>2</sub>, (d) NH<sub>3</sub> ve (e) O<sub>2</sub> için yük yoğunluğu farkı grafikleri. Sarı bölgeler yük birikimini, mavi bölgeler yük azalmasını gösterir.</figcaption></figure>
+
+<h3>VESTA ekran görüntüleri (kaynaktaki notlu görseller)</h3>
+<p>Kaynakta, makaledeki örnekten sonra iki ek VESTA ekran görüntüsü verilmiştir; üzerlerinde kırmızı okla işaretlemeler vardır.</p>
+<ul>
+<li><strong>Boundary…</strong> düğmesi (kırmızı okla işaretli) ve Boundary penceresi: x(min) = −1, x(max) = 2, y(min) = −1, y(max) = 2, z(min) = 0, z(max) = 1.</li>
+<li><strong>Properties…</strong> düğmesi → <strong>Isosurfaces</strong> sekmesi: izoyüzey seviyesi (level) <code>0.003</code>, mod <code>Positive and negative</code>. Volumetric data altında <code>Show isosurfaces</code> işaretli, <code>Show sections</code> işaretsizdir (kaynaktaki el yazısı not: kapalı).</li>
+</ul>
+<div style="display:flex;gap:8pt;align-items:flex-start">
+<figure style="flex:1;margin:6pt 0 8pt"><img src="img/yuk-yogunlugu-farki-5.png" alt="VESTA Boundary penceresi"><figcaption>VESTA Style paneli ve Boundary penceresi (kırmızı ok: <code>Boundary…</code> düğmesi).</figcaption></figure>
+<figure style="flex:1;margin:6pt 0 8pt"><img src="img/yuk-yogunlugu-farki-6.png" alt="VESTA Properties, Isosurfaces sekmesi"><figcaption>Properties penceresi, Isosurfaces sekmesi: level 0.003, mode Positive and negative. Kırmızı oklar: <code>Show sections</code> (kapalı), <code>Properties…</code> düğmesi, <code>Isosurfaces</code> sekmesi ve level değeri.</figcaption></figure>
+</div>
+
+<h2>Kaynaklar</h2>
+<div class="kaynaklar">
+<p>Zengin, Y., R. Caglayan, and Y. Mogulkoc. "Adsorption of small gas molecules onto the two-dimensional Janus SnSSe monolayer." <em>Computational Condensed Matter</em> 36 (2023): e00815.<br>
+<a href="https://www.sciencedirect.com/science/article/pii/S2352214323000321">https://www.sciencedirect.com/science/article/pii/S2352214323000321</a></p>
+</div>
+</body></html>

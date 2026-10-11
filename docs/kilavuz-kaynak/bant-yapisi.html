@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Bant yapısı hesabı</title>
+<link rel="stylesheet" href="sablon.css">
+</head>
+<body>
+
+<div class="kapak">
+  <div class="ust">HYMF · VASP kılavuzu</div>
+  <h1>Bant yapısı hesabı</h1>
+  <p class="ozet">Önce öz-tutarlı (SC) hesap, ardından yüksek simetri yolunda öz-tutarlı olmayan (NSC) hesap yapılır; sonuç vaspkit ile bant verisine dönüştürülür.</p>
+  <div class="kunye">Hazırlayan: HYMF grubu · Düzenleme: Ekim 2026</div>
+</div>
+
+<h2><span class="no">1</span>Genel akış</h2>
+<p>Bant yapısı hesabı iki ayrı VASP çalıştırmasından oluşur:</p>
+<ol class="adimlar">
+  <li><strong>Standart öz-tutarlı (SC) hesap.</strong> INCAR, KPOINTS, POSCAR ve POTCAR ile yapılır.</li>
+  <li><strong>Öz-tutarlı olmayan (NSC) hesap.</strong> INCAR, KPOINTS (yüksek simetri yolu), POSCAR (SC hesabının CONTCAR'ı), POTCAR ve CHGCAR (SC hesabından gelen) ile yapılır.</li>
+  <li><strong>Son işlem (post-process).</strong> NSC hesabının çıktısı vaspkit ile bant verisine çevrilir ve grafik çizilir.</li>
+</ol>
+
+<h2><span class="no">2</span>Standart öz-tutarlı (SC) hesap</h2>
+<p>SC hesap klasöründe şu dosyalar olmalıdır:</p>
+<div class="dosyalar"><span>INCAR</span><span>KPOINTS</span><span>POSCAR</span><span>POTCAR</span><span>walk_std</span></div>
+
+<h3>2.1 INCAR</h3>
+<pre class="kod" data-baslik="INCAR (SC)">SYSTEM = Antimonene
+#Electronic minimization
+ENCUT = 600
+ISMEAR = 0
+SIGMA = 0.01
+EDIFF = 1E-8
+ISPIN = 1
+IBRION = 2
+ALGO = Normal
+NBANDS = 96
+GGA = PE</pre>
+
+<table>
+  <tr><th>Etiket</th><th>Değer</th><th>Anlamı</th></tr>
+  <tr><td><code>SYSTEM</code></td><td>Antimonene</td><td>Hesaba verilen ad (etiket). Yalnızca bir başlıktır; hesabı etkilemez.</td></tr>
+  <tr><td><code>ENCUT</code></td><td>600</td><td>Düzlem dalga taban kümesi için kesme enerjisi (eV).</td></tr>
+  <tr><td><code>ISMEAR</code></td><td>0</td><td>Her orbital için kısmi doluluğun (partial occupancy) nasıl belirleneceğini seçer. <code>ISMEAR = 0</code>: Gauss yayılması (Gaussian smearing).</td></tr>
+  <tr><td><code>SIGMA</code></td><td>0.01</td><td>Yayılmanın (smearing) genişliği, eV cinsinden.</td></tr>
+  <tr><td><code>EDIFF</code></td><td>1E-8</td><td>Elektronik SC döngüsünün genel durma ölçütü.</td></tr>
+  <tr><td><code>ISPIN</code></td><td>1</td><td>Spin polarizasyonunu belirler. <code>ISPIN = 1</code>: spin polarize olmayan hesap yapılır.</td></tr>
+  <tr><td><code>IBRION</code></td><td>2</td><td>İyonları anlık taban durumlarına gevşetmek için eşlenik gradyan (conjugate-gradient) algoritması kullanılır.</td></tr>
+  <tr><td><code>ALGO</code></td><td>Normal</td><td>Elektronik minimizasyon algoritmasını seçmenin pratik yolu.</td></tr>
+  <tr><td><code>NBANDS</code></td><td>96</td><td>Hesaba katılan bant sayısı. (Kaynakta bu etiket için açıklama yoktur.)</td></tr>
+  <tr><td><code>GGA</code></td><td>PE</td><td>Kullanılacak genelleştirilmiş gradyan yaklaşımı (GGA) türü. <code>PE</code>: Perdew-Burke-Ernzerhof.</td></tr>
+</table>
+<div class="kutu bilgi"><span class="etiket">Not</span>Kaynaktaki SC INCAR'da <code>SYSTEM = Antimonene</code>, NSC INCAR'da <code>SYSTEM = "Silicene"</code> yazar. Aynı örneğin iki adımında ad farklı olsa da <code>SYSTEM</code> yalnızca bir etikettir; sonucu değiştirmez. Kaynaktaki POSCAR ve grafik de silisen (Si) içindir.</div>
+
+<h3>2.2 KPOINTS</h3>
+<p>KPOINTS dosyası, k-noktalarının koordinatlarını ve ağırlıklarını ya da k-noktası ızgarasının boyutunu içermelidir.</p>
+<pre class="kod" data-baslik="KPOINTS (SC)">k-points
+ 0
+Gamma
+ 16   16    1
+ 0.0  0.0  0.0</pre>
+<table>
+  <tr><th>Satır</th><th>Anlamı</th></tr>
+  <tr><td><code>k-points</code></td><td>Başlık (açıklama) satırı.</td></tr>
+  <tr><td><code>0</code></td><td>Otomatik k-noktası ızgarası oluşturulur.</td></tr>
+  <tr><td><code>Gamma</code></td><td>Izgara Γ noktasını merkez alır (Γ merkezli ızgara).</td></tr>
+  <tr><td><code>16 16 1</code></td><td>Izgaranın üç yöndeki bölüm sayısı.</td></tr>
+  <tr><td><code>0.0 0.0 0.0</code></td><td>Izgaranın kayma değeri.</td></tr>
+</table>
+
+<h3 class="yeni-sayfa">2.3 POSCAR</h3>
+<p>POSCAR dosyası örgü geometrisini ve iyon konumlarını içerir.</p>
+<pre class="kod" data-baslik="POSCAR (SC)">Silicene
+   1.00000000000000
+     3.8679843500000000    0.0000000000000000    0.0000000000000000
+    -1.9339921750000000    3.3497727089999998    0.0000000000000000
+     0.0000000000000000    0.0000000000000000   20.0000000000000000
+   Si
+     2
+Direct
+  0.3328312623913273  0.6661685526086847  0.4887690584204025
+  0.6661687446086721  0.3328311993913185  0.5112309415795975
+
+  0.00000000E+00  0.00000000E+00  0.00000000E+00
+  0.00000000E+00  0.00000000E+00  0.00000000E+00</pre>
+<figure class="kucuk"><img src="img/bant-yapisi-1.png" alt="Silisen yapısı, üstten ve yandan görünüm"><figcaption>POSCAR'daki yapı: üstten ve yandan görünüm (kaynaktaki şekiller).</figcaption></figure>
+
+<h3>2.4 POTCAR</h3>
+<p>POTCAR dosyası, hesapta kullanılan her atom türü için pseudopotansiyeli içerir. Kaynaktaki örnek, silisyum (Si) için PAW_PBE POTCAR'ının başlangıcıdır (dosyanın ilk satırları belgenin sonundaki Ek bölümündedir).</p>
+
+<h3>2.5 İşi gönderme</h3>
+<div class="kutu onemli"><span class="etiket">Önemli</span>İş gönderilirken <code>walk_std</code> kullanılmalıdır.</div>
+
+
+<h2 class="yeni-sayfa"><span class="no">3</span>Öz-tutarlı olmayan (NSC) hesap</h2>
+<p>NSC hesap klasöründe şu dosyalar olmalıdır:</p>
+<div class="dosyalar"><span>INCAR</span><span>KPOINTS</span><span>POSCAR</span><span>POTCAR</span><span>CHGCAR</span></div>
+<div class="kutu onemli"><span class="etiket">Önemli</span>
+<code>POSCAR</code>, SC hesabının <code>CONTCAR</code> dosyasıdır; <code>CHGCAR</code> da SC hesabından gelir.</div>
+<ol class="adimlar">
+  <li>SC hesabının <code>CONTCAR</code> dosyasını NSC klasörüne <code>POSCAR</code> olarak kopyalayın.</li>
+  <li>SC hesabının <code>CHGCAR</code> dosyasını NSC klasörüne kopyalayın.</li>
+  <li><code>POTCAR</code> dosyasını NSC klasörüne koyun.</li>
+  <li>Aşağıdaki <code>INCAR</code> dosyasını yazın.</li>
+  <li><code>KPOINTS</code> dosyasını VASPKIT 302 ile üretin (bölüm 3.2).</li>
+</ol>
+
+<h3>3.1 INCAR</h3>
+<pre class="kod" data-baslik="INCAR (NSC)">SYSTEM = "Silicene"
+
+#Electronic minimization
+ENCUT = 600
+ISMEAR = 0
+SIGMA = 0.01
+EDIFF = 1E-6
+<span class="vurgu"># LORBIT = 11</span>
+<span class="vurgu">ICHARG = 11</span>
+ISPIN = 1
+IBRION = 2
+ALGO = Normal
+NBANDS = 96
+GGA = PE</pre>
+<p>Kaynakta sarı vurgu yoktur; <code># LORBIT = 11</code> ve <code>ICHARG = 11</code> satırları kalın yazılmıştır. Yukarıda bu iki satır işaretlenmiştir.</p>
+<table>
+  <tr><th>SC INCAR'a göre fark</th><th>SC</th><th>NSC</th><th>Anlamı</th></tr>
+  <tr><td><code>EDIFF</code></td><td>1E-8</td><td>1E-6</td><td>SC döngüsünün durma ölçütü NSC hesapta gevşetilmiştir.</td></tr>
+  <tr><td><code>ICHARG</code></td><td>(yok)</td><td>11</td><td>Yük yoğunluğu <code>CHGCAR</code> dosyasından okunur ve hesap boyunca sabit tutulur; yalnızca özdeğerler hesaplanır (öz-tutarlı olmayan hesap).</td></tr>
+  <tr><td><code># LORBIT</code></td><td>(yok)</td><td>11</td><td>Satır başında <code>#</code> olduğu için yorumdur. <code>LORBIT = 11</code> etkin olsaydı atom ve lm-orbital bazında ayrıştırılmış çıktı (PROCAR, DOSCAR) yazdırırdı.</td></tr>
+</table>
+<p><code>SYSTEM</code> etiketi farklıdır (SC: Antimonene, NSC: "Silicene"); yalnızca etikettir. Diğer etiketler SC INCAR ile aynıdır: <code>ENCUT = 600</code>, <code>ISMEAR = 0</code>, <code>SIGMA = 0.01</code>, <code>ISPIN = 1</code>, <code>IBRION = 2</code>, <code>ALGO = Normal</code>, <code>NBANDS = 96</code>, <code>GGA = PE</code>.</p>
+
+<h3>3.2 KPOINTS (yüksek simetri noktaları)</h3>
+<p>Bant yapısı, Brillouin bölgesindeki yüksek simetri noktalarını birleştiren yol boyunca hesaplanır. Altıgen örgü için Brillouin bölgesi ve yüksek simetri noktaları (Γ, M, K, A, L, H) aşağıdadır.</p>
+<figure class="kucuk"><img src="img/bant-yapisi-2.png" alt="Altıgen Brillouin bölgesi"><figcaption>Altıgen Brillouin bölgesi ve yüksek simetri noktaları (kaynaktaki şekil)</figcaption></figure>
+<p>Bu örnekte yol Γ → M → K → Γ'dır. KPOINTS dosyasını <strong>VASPKIT = 302</strong> ile üretin:</p>
+<pre class="kod" data-baslik="KPOINTS (NSC, VASPKIT 302 çıktısı)">K-Path Generated by VASPKIT.
+   20
+Line-Mode
+Reciprocal
+   0.0000000000   0.0000000000   0.0000000000     GAMMA
+   0.5000000000   0.0000000000   0.0000000000     M
+
+   0.5000000000   0.0000000000   0.0000000000     M
+   0.3333333333   0.3333333333   0.0000000000     K
+
+   0.3333333333   0.3333333333   0.0000000000     K
+   0.0000000000   0.0000000000   0.0000000000     GAMMA</pre>
+<table>
+  <tr><th>Satır</th><th>Anlamı</th></tr>
+  <tr><td><code>K-Path Generated by VASPKIT.</code></td><td>Başlık satırı.</td></tr>
+  <tr><td><code>20</code></td><td>Her doğru parçası üzerindeki k-noktası sayısı.</td></tr>
+  <tr><td><code>Line-Mode</code></td><td>K-noktaları, verilen iki uç nokta arasındaki doğru parçaları boyunca üretilir.</td></tr>
+  <tr><td><code>Reciprocal</code></td><td>Koordinatlar ters örgü vektörleri cinsindendir.</td></tr>
+  <tr><td>Satır çiftleri</td><td>Her çift bir doğru parçasının başlangıç ve bitiş noktasıdır: GAMMA → M, M → K, K → GAMMA. Çiftler boş satırla ayrılır; son sütun nokta adıdır.</td></tr>
+</table>
+
+<h2 class="yeni-sayfa"><span class="no">4</span>Son işlem: vaspkit ile bant verisi</h2>
+<p>Bant verisi, NSC hesabının klasöründe vaspkit çalıştırılarak elde edilir.</p>
+<ol class="adimlar">
+  <li>NSC klasöründe <code>./vaspkit</code> komutunu çalıştırın. Ana menü açılır (aşağıdaki şekil).</li>
+  <li>İstemde <code>21</code> (DFT Band-Structure) yazın. <em>Band Options</em> menüsü açılır.</li>
+  <li><code>211</code> (Band-Structure) seçeneğini girin.</li>
+</ol>
+<figure><img src="img/bant-yapisi-3.png" alt="vaspkit ana menüsü"><figcaption>vaspkit ana menüsü (VASPKIT sürüm 1.12, 01 Mar. 2020). Kaynaktaki ekran görüntüsünde komut, <em>nscf</em> adlı klasörde çalıştırılmıştır.</figcaption></figure>
+
+<p>Band Options menüsü (kaynaktaki ekran görüntüsünden):</p>
+<table>
+  <tr><th>Kod</th><th>Seçenek</th></tr>
+  <tr><td><code>211</code></td><td>Band-Structure <strong>(kaynakta kullanılan: VASPKIT = 211)</strong></td></tr>
+  <tr><td><code>212</code></td><td>Projected Band-Structure for Selected Atom</td></tr>
+  <tr><td><code>213</code></td><td>Projected Band-Structure for Each Element</td></tr>
+  <tr><td><code>214</code></td><td>The Sum of Projected Band-Structure for Selected Atoms</td></tr>
+  <tr><td><code>215</code></td><td>Projected Band-Structure by Element Weight</td></tr>
+  <tr><td><code>0</code></td><td>Quit</td></tr>
+  <tr><td><code>9</code></td><td>Back</td></tr>
+</table>
+
+<h3>4.1 Çıktı dosyaları</h3>
+<p>vaspkit çalıştırıldıktan sonra klasörün içeriği aşağıdaki gibidir. Kaynakta kırmızı ile işaretlenen dosyalar: <code>BAND.dat</code>, <code>KLINES.dat</code>, <code>REFORMATTED_BAND_DW.dat</code>, <code>REFORMATTED_BAND_UP.dat</code>. Listede ayrıca <code>BAND_GAP</code>, <code>FERMI_ENERGY</code> ve <code>KLABELS</code> dosyaları da vardır.</p>
+<figure><img src="img/bant-yapisi-4.png" alt="vaspkit sonrası klasör içeriği"><figcaption>vaspkit sonrası klasör içeriği (kaynaktaki ekran görüntüsü)</figcaption></figure>
+
+<h3>4.2 BAND.dat</h3>
+<p>Kaynaktaki örnek <code>BAND.dat</code> çıktısının ilk satırları (NKPTS = 180, NBANDS = 96; hem Spin-Up hem Spin-Down sütunu vardır):</p>
+<pre class="kod" data-baslik="BAND.dat (ilk satırlar)">#K-Path         Spin-Up       Spin-Down
+# NKPTS &amp; NBANDS: 180  96
+# Band-Index    1
+  0.00000    -12.514855    -12.775801
+  0.01716    -12.519438    -12.778470
+  0.03432    -12.531495    -12.786205
+  0.05148    -12.548368    -12.798349
+  0.06864    -12.568445    -12.814156
+  0.08580    -12.590934    -12.832979
+  0.10295    -12.615423    -12.854318
+  0.12011    -12.641664    -12.877798
+  0.13727    -12.669488    -12.903138
+  ...</pre>
+
+<h2><span class="no">5</span>Sonuç: bant yapısı grafiği</h2>
+<p>Kaynaktaki son slayt, silisen için elde edilen bant yapısını gösterir. Yatay eksen Γ → M → K → Γ yoludur (bölüm 3.2'deki KPOINTS yoluyla aynı), dikey eksen <em>Energy (eV)</em>'dir.</p>
+<figure><img src="img/bant-yapisi-5.png" alt="Silisen bant yapısı"><figcaption>Silisen bant yapısı, Γ–M–K–Γ yolu (kaynaktaki sonuç grafiği; gösterge: Silicene(ml))</figcaption></figure>
+
+<h2>Ek notlar</h2>
+<ul>
+  <li>Kaynaktaki SC INCAR'da <code>SYSTEM = Antimonene</code>, NSC INCAR'da <code>SYSTEM = "Silicene"</code> yazılıdır; POSCAR, POTCAR ve sonuç grafiği silisen (Si) içindir. <code>SYSTEM</code> yalnızca bir etikettir.</li>
+  <li>Kaynağın NSC bölümündeki dosya listesinde <code>vaspkit</code> programı ve <code>walk_accunt</code> adlı bir dosya da görünür. SC bölümünde işin <code>walk_std</code> ile gönderilmesi gerektiği yazılıdır; NSC hesabı için ayrıca bir betik adı verilmemiştir.</li>
+  <li>Kaynaktaki <code>BAND.dat</code> örnek ekran görüntüsünde NKPTS = 180 ve iki spin sütunu (Spin-Up, Spin-Down) görünür; bu değerler bu kılavuzdaki KPOINTS (<code>20</code>) ve <code>ISPIN = 1</code> örnekleriyle doğrudan eşleşmez.</li>
+</ul>
+
+<h2>Ek: POTCAR örneği</h2>
+<pre class="kod" data-baslik="POTCAR dosyasının ilk satırları (Si, kaynaktan)">PAW_PBE Si 05Jan2001
+4.00000000000000000
+parameters from PSCTR are:
+  VRHFIN =Si: s2p2
+  LEXCH  = PE
+  EATOM  =   103.0669 eV,    7.5752 Ry
+
+  TITEL  = PAW_PBE Si 05Jan2001
+  LULTRA =        F    use ultrasoft PP ?
+  IUNSCR =        1    unscreen: 0-lin 1-nonlin 2-no
+  RPACOR =    1.500    partial core radius
+  POMASS =   28.085; ZVAL   =    4.000    mass and valenz
+  RCORE  =    1.900    outmost cutoff radius
+  RWIGS  =    2.480; RWIGS  =    1.312    wigner-seitz radius (au A)
+  ENMAX  =  245.345; ENMIN  =  184.009 eV
+  ICORE  =        2    local potential
+  LCOR   =        T    correct aug charges
+  LPAW   =        T    paw PP
+  EAUG   =  322.069
+  DEXC   =    -.007
+  RMAX   =    2.944    core radius for proj-oper
+  RAUG   =    1.300    factor for augmentation sphere
+  RDEP   =    1.993    radius for radial grids
+  QCUT   =   -4.246; QGAM   =    8.493    optimization parameters
+
+  Description</pre>
+
+<h2>Kaynaklar</h2>
+<div class="kaynaklar">
+  <ul>
+    <li>HYMF grubu slaytları: <em>Band_Calculation_w_vasp.pdf</em> (17 slayt).</li>
+    <li>VASP el kitabı (INCAR etiketleri): <a href="https://www.vasp.at/wiki">https://www.vasp.at/wiki</a></li>
+    <li>VASPKIT: <a href="https://vaspkit.com">https://vaspkit.com</a> (kaynaktaki ekran görüntüsünde sürüm 1.12, 01 Mar. 2020).</li>
+  </ul>
+</div>
+
+</body>
+</html>
