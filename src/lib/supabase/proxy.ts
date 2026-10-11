@@ -6,6 +6,8 @@ import { GECICI_OTURUM_CEREZI, oturumSecenekleri } from './hatirla';
 // geri kalan her yol girişe yönlendirilir. Takvim akışı oturumsuz çağrılır, kendi anahtarını
 // veritabanında doğrular.
 const ACIK_YOLLAR = ['/giris', '/auth', '/takvim-akisi'];
+// Şifre değiştirmesi gereken kişinin girebildiği yollar (ana sayfa dahil geri kalan her şey kapalı).
+const SIFRE_SAYFASI_YOLLARI = ['/sifre-yenile', '/auth', '/takvim-akisi'];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -36,6 +38,19 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const path = request.nextUrl.pathname;
   const korumali = path !== '/' && !ACIK_YOLLAR.some((p) => path === p || path.startsWith(p + '/'));
+
+  // Yöneticinin verdiği geçici şifreyle giren kişi, kendi şifresini belirleyene kadar yalnız şifre
+  // sayfasını görür (bayrak app_metadata'da, kullanıcı değiştiremez; bkz. src/lib/auth/dal.ts).
+  const meta = data?.claims?.app_metadata as Record<string, unknown> | undefined;
+  const sifreSayfasinda = SIFRE_SAYFASI_YOLLARI.some((p) => path === p || path.startsWith(p + '/'));
+  if (data?.claims?.sub && meta?.sifre_degistir === true && !sifreSayfasinda) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/sifre-yenile';
+    url.search = '';
+    const yonlendir = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((c) => yonlendir.cookies.set(c));
+    return yonlendir;
+  }
 
   if (!data?.claims?.sub && korumali) {
     const url = request.nextUrl.clone();

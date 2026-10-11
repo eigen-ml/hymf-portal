@@ -257,6 +257,8 @@ export async function davetEkle(input: {
         password: input.sifre,
         email_confirm: true,
         user_metadata: { full_name: input.full_name.trim() },
+        // İlk girişte kendi şifresini belirlemeden portalı kullanamaz (src/lib/supabase/proxy.ts).
+        app_metadata: { sifre_degistir: true },
       });
       if (error) {
         if (error.code === 'email_exists' || /already been registered/i.test(error.message)) {
@@ -367,7 +369,10 @@ export async function sifreSifirla(id: string): Promise<SifreSifirlamaSonucu> {
     if (!admin) return { ok: false, error: 'Sunucuda SUPABASE_SERVICE_ROLE_KEY tanımlı değil.' };
 
     const sifre = geciciSifre();
-    const { error: guncellemeHatasi } = await admin.auth.admin.updateUserById(id, { password: sifre });
+    const { error: guncellemeHatasi } = await admin.auth.admin.updateUserById(id, {
+      password: sifre,
+      app_metadata: { sifre_degistir: true },
+    });
     if (guncellemeHatasi) return { ok: false, error: 'Şifre sıfırlanamadı: ' + guncellemeHatasi.message };
 
     // Servis anahtarıyla yapılan değişiklik trigger'lardan geçmez; işlem geçmişine burada yazılır.

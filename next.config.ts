@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Kılavuz PDF'leri public/ dışında durur (yalnız üyeler indirir); sunucu fonksiyonuna eklenmeleri gerekir.
+  outputFileTracingIncludes: {
+    '/kilavuzlar/dosya/*': ['./icerik/kilavuzlar/**/*'],
+  },
 };
 
 export default nextConfig;

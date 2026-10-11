@@ -2,12 +2,14 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import { sifreyiDegistir } from './actions';
 import { Button } from '@/components/ui/Button';
 import { Uyari } from '@/components/ui/Uyari';
 import { Alan, SifreInput } from '@/components/ui';
 
-export function SifreYenileFormu() {
+export function SifreYenileFormu({ zorunlu = false }: { zorunlu?: boolean }) {
+  const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,36 +32,23 @@ export function SifreYenileFormu() {
     }
 
     setIsLoading(true);
+    const sonuc = await sifreyiDegistir(password);
+    setIsLoading(false);
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const hasValidSupabase = supabaseUrl && !supabaseUrl.includes('placeholder') && !supabaseUrl.includes('your-project');
-
-    if (hasValidSupabase) {
-      try {
-        const supabase = createClient();
-        const { error } = await supabase.auth.updateUser({ password });
-
-        if (error) {
-          setErrorMessage('Şifre güncellenemedi. Biraz sonra tekrar deneyin.');
-          setIsLoading(false);
-          return;
-        }
-
-        setSuccessMessage('Şifreniz güncellendi.');
-        setPassword('');
-        setConfirmPassword('');
-        setIsLoading(false);
-        return;
-      } catch (err) {
-        console.error('Password update error:', err);
-        setErrorMessage('Şifre güncellenemedi. Biraz sonra tekrar deneyin.');
-        setIsLoading(false);
-        return;
-      }
+    if (!sonuc.ok) {
+      setErrorMessage(sonuc.error);
+      return;
     }
 
-    setErrorMessage('Supabase yapılandırması eksik.');
-    setIsLoading(false);
+    setPassword('');
+    setConfirmPassword('');
+    if (zorunlu) {
+      // Geçici şifre engeli kalktı; ana sayfaya geç (sunucu bileşenleri yeni oturumla yüklensin).
+      router.replace('/');
+      router.refresh();
+      return;
+    }
+    setSuccessMessage('Şifreniz güncellendi.');
   };
 
   return (
@@ -76,7 +65,7 @@ export function SifreYenileFormu() {
 
       {!successMessage && (
         <form onSubmit={handleUpdatePassword} className="space-y-5">
-          <Alan etiket="Yeni Şifre (en az 8 karakter)" htmlFor="password">
+          <Alan etiket="Yeni şifre (en az 8 karakter)" htmlFor="password">
             <SifreInput
               id="password"
               required
@@ -87,7 +76,7 @@ export function SifreYenileFormu() {
             />
           </Alan>
 
-          <Alan etiket="Şifre Tekrarı" htmlFor="confirmPassword">
+          <Alan etiket="Yeni şifre (tekrar)" htmlFor="confirmPassword">
             <SifreInput
               id="confirmPassword"
               required
@@ -99,7 +88,7 @@ export function SifreYenileFormu() {
           </Alan>
 
           <Button type="submit" variant="primary" disabled={isLoading} className="w-full">
-            {isLoading ? 'Güncelleniyor...' : 'Şifreleri Güncelle'}
+            {isLoading ? 'Kaydediliyor…' : 'Şifreyi kaydet'}
           </Button>
         </form>
       )}
