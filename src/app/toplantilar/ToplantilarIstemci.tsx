@@ -203,10 +203,12 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
               <CalendarDays className="w-4 h-4" />
               <span>Takvimde gör</span>
             </Link>
-            <Button variant="primary" size="sm" onClick={() => setModalAcik(true)}>
-              <Plus className="w-4 h-4" />
-              <span>Toplantı notu ekle</span>
-            </Button>
+            {yonetebilir && (
+              <Button variant="primary" size="sm" onClick={() => setModalAcik(true)}>
+                <Plus className="w-4 h-4" />
+                <span>Toplantı notu ekle</span>
+              </Button>
+            )}
           </>
         }
       />
@@ -214,7 +216,10 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
       {silHata && <Uyari tone="tehlike">{silHata}</Uyari>}
 
       {kayitlar.length === 0 ? (
-        <BosDurum baslik="Henüz toplantı yok." aciklama="İlk toplantı notunu ekleyerek başlayabilirsiniz." />
+        <BosDurum
+          baslik="Henüz toplantı yok."
+          aciklama={yonetebilir ? 'İlk toplantı notunu ekleyerek başlayabilirsiniz.' : 'Grup toplantılarını hocalar ve yöneticiler ekler.'}
+        />
       ) : (
         <>
           <section className="space-y-4" aria-labelledby="yaklasan-baslik">
@@ -242,7 +247,7 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
       )}
 
       {/* YENİ TOPLANTI EKLEME MODALI */}
-      {modalAcik && (
+      {yonetebilir && modalAcik && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-paper/80">
           <div className="bg-surface border border-line rounded-lg max-w-lg w-full p-6 space-y-4">
             <div className="border-b border-line pb-3">

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireMemberAction } from '@/lib/auth/dal';
+import { isAdmin, isHoca } from '@/lib/yetki';
 
 export type ActionSonucu = { ok: true } | { ok: false; error: string };
 
@@ -26,6 +27,9 @@ const TEKRAR_MAX = 20;
 export async function toplantiEkle(input: ToplantiGirdisi): Promise<ActionSonucu> {
   try {
     const ben = await requireMemberAction();
+    if (!isHoca(ben) && !isAdmin(ben)) {
+      return { ok: false, error: 'Grup toplantısını hocalar ve yöneticiler ekler.' };
+    }
 
     const title = typeof input.title === 'string' ? input.title.trim() : '';
     if (!title) return { ok: false, error: 'Toplantı başlığı zorunludur.' };

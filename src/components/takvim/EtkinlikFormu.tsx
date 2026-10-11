@@ -22,13 +22,18 @@ export interface EklemeSonucu {
   mesaj: string;
 }
 
-/** Etkinlik veya (işaretlenirse) grup toplantısı ekleme penceresi. Saatler İstanbul saatidir. */
+/**
+ * Etkinlik veya (işaretlenirse) grup toplantısı ekleme penceresi. Saatler İstanbul saatidir.
+ * Grup toplantısı seçeneğini yalnız hoca ve yöneticiler görür.
+ */
 export function EtkinlikFormu({
   varsayilanGun,
+  toplantiEkleyebilir,
   onKapat,
   onEklendi,
 }: {
   varsayilanGun: string;
+  toplantiEkleyebilir: boolean;
   onKapat: () => void;
   onEklendi: (sonuc: EklemeSonucu) => void;
 }) {
@@ -120,21 +125,23 @@ export function EtkinlikFormu({
   return (
     <Pencere baslik={toplanti ? 'Toplantı ekle' : 'Etkinlik ekle'} onKapat={onKapat}>
       <form onSubmit={gonder} noValidate className="space-y-4">
-        <label className="flex min-h-10 cursor-pointer items-start gap-3 text-sm text-ink">
-          <input
-            type="checkbox"
-            checked={toplanti}
-            onChange={(e) => {
-              setToplanti(e.target.checked);
-              setAlanHatasi(null);
-            }}
-            className="mt-0.5 size-5 shrink-0 accent-primary"
-          />
-          <span>
-            <span className="font-medium">Bu bir grup toplantısı</span>
-            <span className="block text-ink-3">İşaretlerseniz Toplantılar sayfasında da görünür.</span>
-          </span>
-        </label>
+        {toplantiEkleyebilir && (
+          <label className="flex min-h-10 cursor-pointer items-start gap-3 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={toplanti}
+              onChange={(e) => {
+                setToplanti(e.target.checked);
+                setAlanHatasi(null);
+              }}
+              className="mt-0.5 size-5 shrink-0 accent-primary"
+            />
+            <span>
+              <span className="font-medium">Bu bir grup toplantısı</span>
+              <span className="block text-ink-3">İşaretlerseniz Toplantılar sayfasında da görünür.</span>
+            </span>
+          </label>
+        )}
 
         <Alan etiket={toplanti ? 'Toplantı adı' : 'Etkinlik adı'} htmlFor={id('ad')} hata={hataMesaji('ad')}>
           <input

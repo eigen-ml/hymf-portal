@@ -38,7 +38,7 @@ interface TakvimIstemciProps {
   ay: string;
   /** Sunucudaki bugün (İstanbul), YYYY-MM-DD. Hydration uyumu için tarayıcı saati kullanılmaz. */
   bugun: string;
-  /** Hoca veya yönetici: görevleri düzenleyebilir. */
+  /** Hoca veya yönetici: görevleri düzenler, grup toplantısı ekler. */
   yonetebilir: boolean;
 }
 
@@ -349,7 +349,14 @@ export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir }: TakvimIstemciP
         />
       )}
 
-      {formGunu && <EtkinlikFormu varsayilanGun={formGunu} onKapat={() => setFormGunu(null)} onEklendi={eklendi} />}
+      {formGunu && (
+        <EtkinlikFormu
+          varsayilanGun={formGunu}
+          toplantiEkleyebilir={yonetebilir}
+          onKapat={() => setFormGunu(null)}
+          onEklendi={eklendi}
+        />
+      )}
     </div>
   );
 }

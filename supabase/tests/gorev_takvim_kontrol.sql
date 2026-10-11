@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- Görev ve takvim RLS/trigger kontrolleri
 -- ==============================================================================
--- 20261011000000_gorev_takvim.sql'den sonra SQL Editor'de çalıştırın. Tek transaction, sonunda geri
+-- 20261012000000_toplanti_yetki.sql'den sonra SQL Editor'de çalıştırın. Tek transaction, sonunda geri
 -- alınır; gerçek veriye dokunmaz. Başarısız kontrol "KALDI: ..." hatasıyla durur. Hepsi geçerse son
 -- satırda "Görev/takvim kontrolleri geçti" yazar.
 --
@@ -254,6 +254,34 @@ do $$ begin
   end if;
 end $$;
 reset role;
+
+-- ---------- 8. Grup toplantısını yalnız hoca ve yönetici ekler (20261012000000) ----------
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"55555555-0000-4000-8000-0000000000a1","role":"authenticated"}', true);
+do $$ declare engellendi boolean := false; begin
+  begin
+    insert into public.meetings (title, meeting_date, creator_id)
+    values ('x', now() + interval '1 day', '55555555-0000-4000-8000-0000000000a1');
+  exception when others then engellendi := true;
+  end;
+  if not engellendi then raise exception 'KALDI: 8. Öğrenci grup toplantısı ekleyebildi'; end if;
+end $$;
+reset role;
+select set_config('request.jwt.claims', '', true);
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"11111111-0000-4000-8000-0000000000a1","role":"authenticated"}', true);
+insert into public.meetings (title, meeting_date, creator_id)
+values ('Hoca toplantısı', now() + interval '1 day', '11111111-0000-4000-8000-0000000000a1');
+reset role;
+select set_config('request.jwt.claims', '', true);
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"33333333-0000-4000-8000-0000000000a1","role":"authenticated"}', true);
+insert into public.meetings (title, meeting_date, creator_id)
+values ('Yönetici toplantısı', now() + interval '1 day', '33333333-0000-4000-8000-0000000000a1');
+reset role;
+select set_config('request.jwt.claims', '', true);
 
 rollback;
 

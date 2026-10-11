@@ -34,10 +34,14 @@ Dashboard → Database → Backups).
 3. `supabase/migrations/20261010000000_icerik.sql` dosyasını çalıştırın (duyuru, kaynak, ders,
    toplantı için silme kuralları ve bağlantı kısıtları). 2. adımı yeniden çalıştırırsanız bunu da
    ardından yeniden çalıştırın; 2. adım bu tabloların kurallarını silip yeniden kurar.
+   Ardından sırayla `supabase/migrations/20261011000000_gorev_takvim.sql` (görevler, takvim,
+   Apple Takvim aboneliği) ve `supabase/migrations/20261012000000_toplanti_yetki.sql` (grup
+   toplantısını yalnız hoca ve yöneticiler ekler).
 4. `supabase/seed_uyeler.sql` dosyasını çalıştırın.
 5. `supabase/tests/rls_kontrol.sql` → son satır **"Tüm RLS kontrolleri geçti"** olmalı. Ardından
    `supabase/tests/kayit_akisi.sql` → **"Kayıt akışı kontrolleri geçti"**. İkisi de her şeyi geri
-   alır, gerçek veriye dokunmaz.
+   alır, gerçek veriye dokunmaz. Son olarak `supabase/tests/gorev_takvim_kontrol.sql` →
+   **"Görev/takvim kontrolleri geçti"**.
 6. Storage kontrolü:
    `select id, public, file_size_limit from storage.buckets where id = 'workspace-files';`
    → `public = false`, `file_size_limit = 26214400`.

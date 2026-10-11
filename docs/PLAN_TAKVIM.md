@@ -18,7 +18,7 @@ sonundaki `GorevDurum`, `GroupTask`, `CalendarEvent`, `TakvimOgesi`.
 | --- | --- | --- |
 | `group_tasks` | Onaylı her üye (görevler herkese açık) | Hoca/yönetici verir, düzenler, siler, "tamamlandı" yapar. Görevi alan kişi yalnız `acik` ↔ `teslim_edildi` ve kendi notunu (`assignee_note`) değiştirir. |
 | `calendar_events` | Onaylı her üye | Her üye ekler; yalnız ekleyen (veya admin) siler. |
-| `meetings` | Onaylı her üye | Her üye ekler; ekleyen, hoca veya admin siler. |
+| `meetings` | Onaylı her üye | Hoca veya yönetici ekler (grup toplantısı, `20261012000000_toplanti_yetki.sql`); ekleyen, hoca veya admin siler. |
 | `calendar_feed_tokens` | Yalnız kendisi | Yalnız kendisi |
 
 Görev durumu → metin ve ton: `acik` "Açık" (notr), `teslim_edildi` "Teslim edildi" (inceleme),

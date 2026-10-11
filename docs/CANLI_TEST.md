@@ -15,6 +15,21 @@
    ders ekle (öğretim üyesi listesinde hocalar olmalı) ve derse materyal ekle.
 7. **Profil → Şifremi değiştir** çalışmalı.
 
+## Son kontrol: takvim, görevler, toplantılar (12 Eki)
+
+Gruba "deneyin, hata görürseniz yazın" demeden önce:
+
+8. **Simge**: tarayıcı sekmesinde mavi Ψ görünmeli (Next.js üçgeni değil). Eski simge kalırsa sayfayı
+   Cmd+Shift+R ile yenile.
+9. **Grup toplantısı** (hoca veya yönetici hesabıyla): Takvim → "Etkinlik ekle" → "Bu bir grup
+   toplantısı" işaretli → kaydet. Takvimde ve Toplantılar sayfasında görünmeli.
+10. **Öğrenci hesabıyla**: Takvim → "Etkinlik ekle" penceresinde "grup toplantısı" kutusu olmamalı;
+    Toplantılar sayfasında "Toplantı notu ekle" düğmesi olmamalı. Etkinlik ekleyip silebilmeli.
+11. **Görevler**: hoca görev verir → öğrenci "Teslim ettim" der → hoca "Tamamlandı ✓".
+12. **Apple Takvim**: Takvim sayfasının altındaki abonelik bağlantısı iPhone'da açılmalı.
+
+Hata bildiren kişiden üç şey iste: hangi sayfa, ne yaptı, ekranda ne yazdı (ekran görüntüsü).
+
 ## Sorun çıkarsa
 - Site kırıldıysa geri al: `npx vercel rollback https://hymf-portal-jdg3aa3zw-ataberkozs-projects.vercel.app`
 - Hata mesajını / ekran görüntüsünü al, yeni sohbette "docs/CANLI_TEST.md N. adımda şu oldu" diye yapıştır.
@@ -23,5 +38,5 @@
 - Supabase erişim token'ı olası düzeltmeler için 17 Ekim'e kadar duruyor; o gün sil
   (Account → Access Tokens).
 - Diğer 7 kişinin e-postaları gelince /yonetim → Üye ekle (liste: `supabase/seed_uyeler.sql` TODO satırları).
-- PR #1'i merge et (upstream'de yazma yetkin var, Sibel'i beklemene gerek yok), sonra fork'ta
-  "Sync fork". Fork'un `main`'i otomatik canlıya çıkar; migration'lar çalıştığı için güvenli.
+- Canlıya çıkarmadan önce yeni migration'ı çalıştır (docs/KURULUM.md 3. adım): fork'un `main`'i
+  otomatik canlıya çıkar.
