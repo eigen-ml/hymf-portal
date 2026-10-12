@@ -35,8 +35,9 @@ export const TAKVIM_ISTEMCI_ETIKETI: Record<TakvimIstemcisi, string> = {
 export function istemciyiBul(userAgent: string | null): TakvimIstemcisi {
   const ua = userAgent ?? '';
   if (/Google-Calendar-Importer/i.test(ua)) return 'google';
-  if (/CalendarAgent|dataaccessd|iOS\/|macOS\//i.test(ua)) return 'apple';
+  // Outlook önce: Mac'teki Outlook'un User-Agent'ında da "macOS/" geçebilir.
   if (/Microsoft|Outlook/i.test(ua)) return 'outlook';
+  if (/CalendarAgent|dataaccessd|iOS\/|macOS\//i.test(ua)) return 'apple';
   if (/Mozilla/i.test(ua)) return 'tarayici';
   return 'diger';
 }
