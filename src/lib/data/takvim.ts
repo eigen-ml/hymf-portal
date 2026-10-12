@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { randomBytes } from 'node:crypto';
 import { createClient } from '@/lib/supabase/server';
 import { isAdmin, isHoca } from '@/lib/yetki';
 import { gunISO } from '@/lib/zaman';
@@ -171,4 +172,32 @@ export async function takvimOgeleri(ben: Profile, aralik: TakvimAraligi): Promis
   });
 
   return ogeler;
+}
+
+/** Takvim aboneliği için yeni gizli anahtar: 32 rastgele bayt, base64url (43 karakter). */
+export function yeniTakvimAnahtari(): string {
+  return randomBytes(32).toString('base64url');
+}
+
+/**
+ * Kişinin takvim abonelik anahtarı; yoksa oluşturur. Abonelik paneli sayfa açılınca hazır gelsin
+ * diye sunucuda çağrılır. RLS: kişi yalnız kendi satırını okur ve yazar.
+ */
+export async function takvimAnahtariniGetir(kisiId: string): Promise<string> {
+  const sb = await createClient();
+  const oku = () => sb.from('calendar_feed_tokens').select('token').eq('user_id', kisiId).maybeSingle();
+
+  const mevcut = await oku();
+  if (mevcut.error) throw new Error('Takvim bağlantısı okunamadı: ' + mevcut.error.message);
+  if (mevcut.data?.token) return mevcut.data.token;
+
+  // Aynı anda iki sayfa açılırsa ikincisi çakışmaya düşmesin: varsa dokunma, sonra yeniden oku.
+  const { error } = await sb
+    .from('calendar_feed_tokens')
+    .upsert({ user_id: kisiId, token: yeniTakvimAnahtari() }, { onConflict: 'user_id', ignoreDuplicates: true });
+  if (error) throw new Error('Takvim bağlantısı oluşturulamadı: ' + error.message);
+
+  const yeni = await oku();
+  if (yeni.error || !yeni.data?.token) throw new Error('Takvim bağlantısı oluşturulamadı.');
+  return yeni.data.token;
 }

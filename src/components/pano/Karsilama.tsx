@@ -1,11 +1,12 @@
 import Link from 'next/link';
-import { buttonClass } from '@/components/ui';
+import { buttonClass, GrupLogosu } from '@/components/ui';
 import type { Profile } from '@/types/database';
 
 /** Üye olmayanın (girişsiz veya onay bekleyen) gördüğü açılış metni. */
 export function Karsilama({ ben }: { ben: Profile | null }) {
   return (
     <section className="max-w-3xl pt-4">
+      <GrupLogosu genislik={96} ustte className="mb-6" />
       <p className="text-base text-ink-2">Ankara Üniversitesi</p>
       <h1 className="mt-2 font-serif text-4xl leading-tight text-ink sm:text-5xl">Hesaplamalı Yoğun Madde Fiziği Grubu</h1>
       <p className="mt-5 max-w-prose text-lg leading-8 text-ink-2">

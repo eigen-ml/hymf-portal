@@ -1,9 +1,9 @@
 'use server';
 
-import { randomBytes } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireMemberAction } from '@/lib/auth/dal';
+import { takvimAnahtariniGetir, yeniTakvimAnahtari } from '@/lib/data/takvim';
 
 export type ActionSonucu = { ok: true } | { ok: false; error: string };
 export type AnahtarSonucu = { ok: true; token: string } | { ok: false; error: string };
@@ -101,31 +101,14 @@ export async function etkinlikSil(id: string): Promise<ActionSonucu> {
   }
 }
 
-function yeniAnahtar(): string {
-  return randomBytes(32).toString('base64url');
-}
-
 /**
- * Kişinin takvim abonelik anahtarı; yoksa oluşturur. İstemci bağlantıyı
- * `${origin}/takvim-akisi/${token}.ics` olarak kurar.
+ * Kişinin takvim abonelik anahtarı; yoksa oluşturur. Sayfalar anahtarı sunucuda hazırlar; bu
+ * action yalnız o adım hata verdiyse paneldeki "Bağlantıyı oluştur" düğmesiyle çağrılır.
  */
 export async function takvimAnahtarim(): Promise<AnahtarSonucu> {
   try {
     const ben = await requireMemberAction();
-    const sb = await createClient();
-
-    const { data: mevcut, error: okumaHatasi } = await sb
-      .from('calendar_feed_tokens')
-      .select('token')
-      .eq('user_id', ben.id)
-      .maybeSingle();
-    if (okumaHatasi) return { ok: false, error: okumaHatasi.message };
-    if (mevcut?.token) return { ok: true, token: mevcut.token };
-
-    const token = yeniAnahtar();
-    const { error } = await sb.from('calendar_feed_tokens').insert({ user_id: ben.id, token });
-    if (error) return { ok: false, error: 'Bağlantı oluşturulamadı: ' + error.message };
-    return { ok: true, token };
+    return { ok: true, token: await takvimAnahtariniGetir(ben.id) };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Beklenmeyen bir hata oluştu.' };
   }
@@ -136,7 +119,7 @@ export async function takvimAnahtariniYenile(): Promise<AnahtarSonucu> {
   try {
     const ben = await requireMemberAction();
     const sb = await createClient();
-    const token = yeniAnahtar();
+    const token = yeniTakvimAnahtari();
     const { error } = await sb
       .from('calendar_feed_tokens')
       .upsert({ user_id: ben.id, token, created_at: new Date().toISOString() }, { onConflict: 'user_id' });

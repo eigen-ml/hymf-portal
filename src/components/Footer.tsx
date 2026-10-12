@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 import { getMevcutProfil } from '@/lib/auth/dal';
 import { isMember } from '@/lib/yetki';
-import { MarkaIsareti } from '@/components/ui';
+import { GrupLogosu } from '@/components/ui';
 
 const grupBaglantilari = [
   { href: '/kilavuzlar', etiket: 'TRUBA ve VASP kılavuzları' },
@@ -27,7 +27,7 @@ export async function Footer() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
         <div>
           <p className="flex items-center gap-2.5 font-serif text-lg text-ink">
-            <MarkaIsareti className="size-8" />
+            <GrupLogosu genislik={44} />
             HYMF Portal
           </p>
           <p className="mt-3 max-w-xs leading-6 text-ink-2">

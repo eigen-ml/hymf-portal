@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
-import { icsOlustur, type IcsOlay } from '@/lib/ics';
+import { icsOlustur, type IcsOlay, type IcsTakvim } from '@/lib/ics';
 import { gunISO } from '@/lib/zaman';
 
-// Apple Takvim'in abone olduğu adres: /takvim-akisi/<anahtar>.ics
+// Apple, Google ve Outlook'un abone olduğu adres: /takvim-akisi/<anahtar>.ics
 // Oturum yok; anahtar takvim_akisi() fonksiyonunda doğrulanır (bkz. 20261011000000_gorev_takvim.sql).
+// Yanıt her zaman 200 ve text/calendar ya da 404'tür, yönlendirme yok: Google'ın sunucusu girişe
+// yönlenen bir adrese abone olmaz (proxy bu yolu ACIK_YOLLAR'da dışarıda bırakır).
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +34,14 @@ type Akis = {
 
 const DURUM_ONEKI = { acik: '', teslim_edildi: '(teslim edildi) ', tamamlandi: '✓ ' } as const;
 
+const TAKVIM: IcsTakvim = {
+  ad: 'HYMF Portal',
+  aciklama: 'HYMF araştırma grubunun toplantıları, etkinlikleri ve size ait görevler. Portaldan güncellenir, buradan değiştirilemez.',
+  // Logodaki lacivert (public/hymf-logo.png'den ölçüldü).
+  renk: '#2C2A64',
+  yenilemeDakika: 15,
+};
+
 function bulunamadi() {
   return new Response('Bulunamadı', { status: 404, headers: { 'Cache-Control': 'no-store' } });
 }
@@ -56,7 +66,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   for (const m of akis.toplantilar) {
     olaylar.push({
       uid: `toplanti-${m.id}@hymf-portal`,
-      baslik: `Toplantı: ${m.title}`,
+      baslik: `Grup toplantısı: ${m.title}`,
       baslangic: m.meeting_date,
       tumGun: false,
       aciklama: [m.notes, m.presentation_url].filter(Boolean).join('\n\n') || null,
@@ -89,7 +99,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     });
   }
 
-  return new Response(icsOlustur('HYMF Portal', olaylar), {
+  return new Response(icsOlustur(TAKVIM, olaylar), {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
       'Content-Disposition': 'inline; filename="hymf-portal.ics"',

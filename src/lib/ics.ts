@@ -12,6 +12,20 @@ export interface IcsOlay {
   aciklama?: string | null;
   yer?: string | null;
   url?: string | null;
+  /** Kaydın son değiştiği an (LAST-MODIFIED). */
+  degisti?: string | null;
+  /** Değişiklik sayacı (SEQUENCE); takvim uygulaması güncel sürümü bununla tanır. */
+  sira?: number | null;
+}
+
+export interface IcsTakvim {
+  /** Abonelikte takvimin adı. Tek toplantılık dosyada verilmez, kişi kendi takvimine ekler. */
+  ad?: string;
+  aciklama?: string;
+  /** Apple Takvim'de takvimin rengi, #RRGGBB. */
+  renk?: string;
+  /** Abonelikse istemciye kaç dakikada bir yenileyeceğini söyler. */
+  yenilemeDakika?: number;
 }
 
 function kacis(metin: string): string {
@@ -54,7 +68,7 @@ function sonrakiGun(gun: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function icsOlustur(takvimAdi: string, olaylar: IcsOlay[], simdi: Date = new Date()): string {
+export function icsOlustur(takvim: IcsTakvim, olaylar: IcsOlay[], simdi: Date = new Date()): string {
   const damga = utcDamga(simdi.toISOString());
   const satirlar: string[] = [
     'BEGIN:VCALENDAR',
@@ -62,11 +76,17 @@ export function icsOlustur(takvimAdi: string, olaylar: IcsOlay[], simdi: Date = 
     'PRODID:-//HYMF Portal//Takvim//TR',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    `X-WR-CALNAME:${kacis(takvimAdi)}`,
-    'X-WR-TIMEZONE:Europe/Istanbul',
-    'REFRESH-INTERVAL;VALUE=DURATION:PT1H',
-    'X-PUBLISHED-TTL:PT1H',
   ];
+  if (takvim.ad) satirlar.push(`X-WR-CALNAME:${kacis(takvim.ad)}`);
+  if (takvim.aciklama) satirlar.push(`X-WR-CALDESC:${kacis(takvim.aciklama)}`);
+  if (takvim.ad) satirlar.push('X-WR-TIMEZONE:Europe/Istanbul');
+  if (takvim.renk) satirlar.push(`X-APPLE-CALENDAR-COLOR:${takvim.renk}`);
+  if (takvim.yenilemeDakika) {
+    satirlar.push(
+      `REFRESH-INTERVAL;VALUE=DURATION:PT${takvim.yenilemeDakika}M`,
+      `X-PUBLISHED-TTL:PT${takvim.yenilemeDakika}M`,
+    );
+  }
 
   for (const o of olaylar) {
     satirlar.push('BEGIN:VEVENT', `UID:${o.uid}`, `DTSTAMP:${damga}`);
@@ -81,6 +101,8 @@ export function icsOlustur(takvimAdi: string, olaylar: IcsOlay[], simdi: Date = 
     if (o.aciklama) satirlar.push(`DESCRIPTION:${kacis(o.aciklama)}`);
     if (o.yer) satirlar.push(`LOCATION:${kacis(o.yer)}`);
     if (o.url) satirlar.push(`URL:${o.url}`);
+    if (o.degisti) satirlar.push(`LAST-MODIFIED:${utcDamga(o.degisti)}`);
+    if (o.sira != null && o.sira > 0) satirlar.push(`SEQUENCE:${Math.floor(o.sira)}`);
     satirlar.push('TRANSP:' + (o.tumGun ? 'TRANSPARENT' : 'OPAQUE'), 'END:VEVENT');
   }
 

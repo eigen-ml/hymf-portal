@@ -326,11 +326,25 @@ export interface Meeting {
   id: string;
   title: string;
   meeting_date: string;
+  /** Boşsa toplantı 1 saat sayılır (20261013000000_takvim_senkron.sql). */
+  ends_at?: string | null;
+  location?: string | null;
   notes?: string | null;
   presentation_url?: string | null;
   creator_id: string;
   created_at: string;
+  updated_at?: string;
+  /** Başlık, saat, yer veya not her değiştiğinde bir artar (ICS SEQUENCE). */
+  sequence?: number;
   creator?: Profile;
+}
+
+/** Takvim aboneliğini en son çeken uygulama; User-Agent'tan kaba sınıflandırma. */
+export type TakvimIstemcisi = 'apple' | 'google' | 'outlook' | 'tarayici' | 'diger';
+
+export interface TakvimBaglantisi {
+  sonCekim: string | null;
+  sonIstemci: TakvimIstemcisi | null;
 }
 
 // Görevler ve takvim: supabase/migrations/20261011000000_gorev_takvim.sql, sözleşme docs/PLAN_TAKVIM.md.

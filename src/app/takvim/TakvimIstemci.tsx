@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { BosDurum, Button, Rozet, SayfaBasligi, Uyari, buttonClass } from '@/components/ui';
-import { AppleTakvimPaneli } from '@/components/takvim/AppleTakvimPaneli';
+import { TakvimAboneligi } from '@/components/takvim/TakvimAboneligi';
 import { EtkinlikFormu, type EklemeSonucu } from '@/components/takvim/EtkinlikFormu';
 import { GunDetayi } from '@/components/takvim/GunDetayi';
 import {
@@ -40,6 +40,8 @@ interface TakvimIstemciProps {
   bugun: string;
   /** Hoca veya yönetici: görevleri düzenler, grup toplantısı ekler. */
   yonetebilir: boolean;
+  /** Kişinin abonelik anahtarı; sunucu hazırlayamadıysa null. */
+  takvimAnahtari: string | null;
 }
 
 /** Izgaradaki tek etiket: "14:00 Ad", görevde "✓ A. Yılmaz: Ad". */
@@ -96,7 +98,7 @@ function TelefonSatiri({ o, bugun, onAc }: { o: TakvimOgesi; bugun: string; onAc
   );
 }
 
-export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir }: TakvimIstemciProps) {
+export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir, takvimAnahtari }: TakvimIstemciProps) {
   const router = useRouter();
   const [acikGun, setAcikGun] = useState<string | null>(null);
   const [formGunu, setFormGunu] = useState<string | null>(null);
@@ -333,7 +335,7 @@ export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir }: TakvimIstemciP
         </div>
       </div>
 
-      <AppleTakvimPaneli />
+      <TakvimAboneligi token={takvimAnahtari} />
 
       {acikGun && (
         <GunDetayi

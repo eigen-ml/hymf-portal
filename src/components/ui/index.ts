@@ -15,3 +15,4 @@ export { Sekmeler } from './Sekmeler';
 export { ErisimEngellendi } from './ErisimEngellendi';
 export { OrnekVeriNotu } from './OrnekVeriNotu';
 export { MarkaIsareti } from './MarkaIsareti';
+export { GrupLogosu } from './GrupLogosu';
