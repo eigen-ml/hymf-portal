@@ -402,6 +402,8 @@ export interface TakvimOgesi {
   gun: string;
   aciklama: string | null;
   yer: string | null;
+  /** Yalnız toplantıda: sunum bağlantısı (düzenleme formu için). */
+  sunumUrl?: string | null;
   /** Ekleyen (toplantı/etkinlik) veya görevi veren. */
   ekleyenId: string;
   ekleyenAd: string | null;

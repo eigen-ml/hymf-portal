@@ -2,16 +2,22 @@
 
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Download, FileText, Plus, Trash2, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { CalendarDays, CalendarPlus, Download, FileText, Pencil, Plus, Trash2, User } from 'lucide-react';
 import { BosDurum, Button, Panel, Rozet, SayfaBasligi, Uyari, buttonClass } from '@/components/ui';
-import { kisaTarih, tarihSaat } from '@/lib/zaman';
+import { ToplantiFormu, type DuzenlenenToplanti, type KayitSonucu } from '@/components/takvim/ToplantiFormu';
+import { saatMetni } from '@/components/takvim/takvimYardim';
+import { toplantiBitisi } from '@/lib/toplanti';
+import { gunISO, kisaTarih, tarih } from '@/lib/zaman';
 import type { ProfileSummary } from '@/types/database';
-import { toplantiEkle, toplantiSil } from './actions';
+import { toplantiSil } from './actions';
 
 export interface ToplantiKaydi {
   id: string;
   title: string;
   meeting_date: string;
+  ends_at: string | null;
+  location: string | null;
   notes: string | null;
   presentation_url: string | null;
   creator_id: string;
@@ -19,34 +25,41 @@ export interface ToplantiKaydi {
   creator?: ProfileSummary | null;
 }
 
+/** "16 Ekim 2026, 10:00–11:00" */
+function zamanMetni(m: ToplantiKaydi): string {
+  return `${tarih(m.meeting_date)}, ${saatMetni(m.meeting_date)}–${saatMetni(toplantiBitisi(m))}`;
+}
+
 function KayitKarti({
   m,
-  silebilir,
+  yonetebilir,
   islemde,
+  onDuzenle,
   onSil,
 }: {
   m: ToplantiKaydi;
-  silebilir: boolean;
+  yonetebilir: boolean;
   islemde: boolean;
+  onDuzenle: (m: ToplantiKaydi) => void;
   onSil: (id: string) => void;
 }) {
   return (
     <Panel className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Rozet tone="bilgi">{tarihSaat(m.meeting_date)}</Rozet>
+        <Rozet tone="bilgi">{zamanMetni(m)}</Rozet>
 
         <div className="flex items-center gap-2 text-sm text-ink-3">
           Kayıt: {kisaTarih(m.created_at)}
-          {silebilir && (
+          {yonetebilir && (
             <button
               type="button"
               onClick={() => onSil(m.id)}
               disabled={islemde}
-              className="text-ink-3 hover:text-danger transition p-1 disabled:opacity-50"
+              className="p-1 text-ink-3 transition hover:text-danger disabled:opacity-50"
               title="Sil"
               aria-label="Sil"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -54,27 +67,43 @@ function KayitKarti({
 
       <div>
         <h3 className="text-lg font-semibold text-ink">{m.title}</h3>
-        {m.notes && <p className="text-sm text-ink-2 mt-2 leading-relaxed whitespace-pre-line">{m.notes}</p>}
+        {m.location && <p className="mt-1 text-sm text-ink-2">Yer: {m.location}</p>}
+        {m.notes && <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-2">{m.notes}</p>}
       </div>
 
-      {m.presentation_url && (
-        <div className="pt-2">
+      <div className="flex flex-wrap gap-2">
+        <a
+          href={`/toplantilar/${m.id}/toplanti.ics`}
+          download
+          className={buttonClass({ variant: 'secondary', size: 'sm' })}
+          title="Bu toplantıyı kendi takviminize ekleyin (.ics dosyası)"
+        >
+          <CalendarPlus className="size-4" />
+          Takvime ekle
+        </a>
+        {m.presentation_url && (
           <a
             href={m.presentation_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-sunken hover:bg-sunken/80 text-ink text-sm font-medium transition"
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
           >
-            <FileText className="w-4 h-4" />
-            <span>Sunum dosyasını indir</span>
-            <Download className="w-3.5 h-3.5 text-ink-3" />
+            <FileText className="size-4" />
+            Sunum dosyası
+            <Download className="size-3.5 text-ink-3" />
           </a>
-        </div>
-      )}
+        )}
+        {yonetebilir && (
+          <Button variant="ghost" size="sm" onClick={() => onDuzenle(m)} disabled={islemde}>
+            <Pencil className="size-4" />
+            Düzenle
+          </Button>
+        )}
+      </div>
 
-      <div className="pt-3 border-t border-line flex items-center justify-between text-sm text-ink-3">
+      <div className="flex items-center justify-between border-t border-line pt-3 text-sm text-ink-3">
         <div className="flex items-center gap-2">
-          <User className="w-4 h-4" />
+          <User className="h-4 w-4" />
           <span>{m.creator?.full_name || 'Grup üyesi'}</span>
         </div>
       </div>
@@ -91,106 +120,50 @@ interface ToplantilarIstemciProps {
   yonetebilir: boolean;
 }
 
-const BASLIK_MAX = 200;
-const NOT_MAX = 5000;
-const TEKRAR_MAX = 20;
-const inputSinifi =
-  'w-full px-3 py-2 bg-sunken border border-control rounded-md text-ink placeholder-ink-3 focus:outline-none focus-visible:border-link focus-visible:ring-2 focus-visible:ring-link/30';
-
 export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: ToplantilarIstemciProps) {
+  const router = useRouter();
   const simdiMs = Date.parse(simdi);
-  const yaklasan = kayitlar.filter((m) => Date.parse(m.meeting_date) >= simdiMs);
-  const gecmis = kayitlar.filter((m) => Date.parse(m.meeting_date) < simdiMs).reverse();
+  // Bitmemiş toplantı (şu an süren dahil) yaklaşanlarda kalır.
+  const yaklasan = kayitlar.filter((m) => Date.parse(toplantiBitisi(m)) >= simdiMs);
+  const gecmis = kayitlar.filter((m) => Date.parse(toplantiBitisi(m)) < simdiMs).reverse();
 
-  const [modalAcik, setModalAcik] = useState(false);
-  const [title, setTitle] = useState('');
-  const [meetingDate, setMeetingDate] = useState('');
-  const [notes, setNotes] = useState('');
-  const [presentationUrl, setPresentationUrl] = useState('');
-  const [tekrarHafta, setTekrarHafta] = useState('0');
-  const [formHata, setFormHata] = useState<string | null>(null);
+  const [form, setForm] = useState<{ mevcut?: DuzenlenenToplanti } | null>(null);
+  const [bildirim, setBildirim] = useState<string | null>(null);
   const [silHata, setSilHata] = useState<string | null>(null);
   const [islemde, startTransition] = useTransition();
 
-  // Yardım metni için: geçerli ve 1'den büyükse kaç hafta ekleneceği, değilse 0.
-  const tekrarSayisi = Number(tekrarHafta);
-  const tekrarOnizleme = Number.isInteger(tekrarSayisi) && tekrarSayisi >= 1 && tekrarSayisi <= TEKRAR_MAX ? tekrarSayisi : 0;
+  const duzenleyebilir = (m: ToplantiKaydi) => m.creator_id === benId || yonetebilir;
 
-  function formuSifirla() {
-    setTitle('');
-    setMeetingDate('');
-    setNotes('');
-    setPresentationUrl('');
-    setTekrarHafta('0');
-    setFormHata(null);
-  }
-
-  function modaliKapat() {
-    setModalAcik(false);
-    setFormHata(null);
-  }
-
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setFormHata(null);
-
-    const baslik = title.trim();
-    if (!baslik) {
-      setFormHata('Toplantı başlığı zorunludur.');
-      return;
-    }
-    if (baslik.length > BASLIK_MAX) {
-      setFormHata(`Başlık ${BASLIK_MAX} karakteri aşamaz.`);
-      return;
-    }
-    if (!meetingDate || Number.isNaN(Date.parse(meetingDate))) {
-      setFormHata('Geçerli bir tarih ve saat seçin.');
-      return;
-    }
-    if (notes.trim().length > NOT_MAX) {
-      setFormHata(`Notlar ${NOT_MAX} karakteri aşamaz.`);
-      return;
-    }
-    const url = presentationUrl.trim();
-    if (url && !/^https?:\/\//i.test(url)) {
-      setFormHata('Sunum bağlantısı http:// veya https:// ile başlamalıdır.');
-      return;
-    }
-
-    const tekrar = Number(tekrarHafta === '' ? '0' : tekrarHafta);
-    if (!Number.isInteger(tekrar) || tekrar < 0 || tekrar > TEKRAR_MAX) {
-      setFormHata(`Tekrar sayısı 0 ile ${TEKRAR_MAX} arasında bir tam sayı olmalıdır.`);
-      return;
-    }
-
-    // Saat her zaman İstanbul saati olarak yorumlanır (yurt dışındaki tarayıcıda da kaymasın).
-    const meeting_date = new Date(`${meetingDate.length === 16 ? meetingDate + ':00' : meetingDate}+03:00`).toISOString();
-
-    startTransition(async () => {
-      const sonuc = await toplantiEkle({
-        title: baslik,
-        meeting_date,
-        notes: notes.trim(),
-        presentation_url: url,
-        tekrar_hafta: tekrar,
-      });
-      if (!sonuc.ok) {
-        setFormHata(sonuc.error);
-        return;
-      }
-      formuSifirla();
-      setModalAcik(false);
-    });
+  function kaydedildi(sonuc: KayitSonucu) {
+    setForm(null);
+    setBildirim(sonuc.mesaj);
+    router.refresh();
   }
 
   function handleSil(id: string) {
-    if (!confirm('Bu toplantı kaydını silmek istediğinize emin misiniz?')) return;
+    if (!confirm('Bu toplantıyı silmek istediğinize emin misiniz? Gelecekteki bir toplantıysa Telegram grubuna iptal mesajı gider.')) return;
     setSilHata(null);
+    setBildirim(null);
     startTransition(async () => {
       const sonuc = await toplantiSil(id);
       if (!sonuc.ok) setSilHata(sonuc.error);
+      else setBildirim('Toplantı silindi.');
     });
   }
+
+  const kart = (m: ToplantiKaydi) => (
+    <KayitKarti
+      key={m.id}
+      m={m}
+      yonetebilir={duzenleyebilir(m)}
+      islemde={islemde}
+      onDuzenle={(k) => {
+        setBildirim(null);
+        setForm({ mevcut: k });
+      }}
+      onSil={handleSil}
+    />
+  );
 
   return (
     <div className="space-y-8">
@@ -200,25 +173,33 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
         eylemler={
           <>
             <Link href="/takvim" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
-              <CalendarDays className="w-4 h-4" />
+              <CalendarDays className="h-4 w-4" />
               <span>Takvimde gör</span>
             </Link>
             {yonetebilir && (
-              <Button variant="primary" size="sm" onClick={() => setModalAcik(true)}>
-                <Plus className="w-4 h-4" />
-                <span>Toplantı notu ekle</span>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setBildirim(null);
+                  setForm({});
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                <span>Toplantı ekle</span>
               </Button>
             )}
           </>
         }
       />
 
+      {bildirim && <Uyari tone="basari">{bildirim}</Uyari>}
       {silHata && <Uyari tone="tehlike">{silHata}</Uyari>}
 
       {kayitlar.length === 0 ? (
         <BosDurum
           baslik="Henüz toplantı yok."
-          aciklama={yonetebilir ? 'İlk toplantı notunu ekleyerek başlayabilirsiniz.' : 'Grup toplantılarını hocalar ve yöneticiler ekler.'}
+          aciklama={yonetebilir ? 'İlk toplantıyı ekleyerek başlayabilirsiniz.' : 'Grup toplantılarını hocalar ve yöneticiler ekler.'}
         />
       ) : (
         <>
@@ -226,132 +207,25 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
             <h2 id="yaklasan-baslik" className="text-lg font-semibold text-ink">
               Yaklaşan toplantılar
             </h2>
-            {yaklasan.length === 0 ? (
-              <p className="text-sm text-ink-3">Yaklaşan toplantı yok.</p>
-            ) : (
-              yaklasan.map((m) => <KayitKarti key={m.id} m={m} silebilir={m.creator_id === benId || yonetebilir} islemde={islemde} onSil={handleSil} />)
-            )}
+            {yaklasan.length === 0 ? <p className="text-sm text-ink-3">Yaklaşan toplantı yok.</p> : yaklasan.map(kart)}
           </section>
 
           <section className="space-y-4" aria-labelledby="gecmis-baslik">
             <h2 id="gecmis-baslik" className="text-lg font-semibold text-ink">
               Geçmiş toplantılar
             </h2>
-            {gecmis.length === 0 ? (
-              <p className="text-sm text-ink-3">Geçmiş toplantı yok.</p>
-            ) : (
-              gecmis.map((m) => <KayitKarti key={m.id} m={m} silebilir={m.creator_id === benId || yonetebilir} islemde={islemde} onSil={handleSil} />)
-            )}
+            {gecmis.length === 0 ? <p className="text-sm text-ink-3">Geçmiş toplantı yok.</p> : gecmis.map(kart)}
           </section>
         </>
       )}
 
-      {/* YENİ TOPLANTI EKLEME MODALI */}
-      {yonetebilir && modalAcik && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-paper/80">
-          <div className="bg-surface border border-line rounded-lg max-w-lg w-full p-6 space-y-4">
-            <div className="border-b border-line pb-3">
-              <h2 className="text-lg font-semibold text-ink">Toplantı notu / sunumu ekle</h2>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4 text-sm">
-              <div>
-                <label htmlFor="toplanti-baslik" className="block text-ink font-semibold mb-1">
-                  Toplantı başlığı *
-                </label>
-                <input
-                  id="toplanti-baslik"
-                  type="text"
-                  required
-                  maxLength={BASLIK_MAX}
-                  placeholder="Örn: 2D manyetik malzemeler semineri"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className={inputSinifi}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="toplanti-tarih" className="block text-ink font-semibold mb-1">
-                  Toplantı tarihi ve saati *
-                </label>
-                <input
-                  id="toplanti-tarih"
-                  type="datetime-local"
-                  required
-                  value={meetingDate}
-                  onChange={(e) => setMeetingDate(e.target.value)}
-                  className={inputSinifi}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="toplanti-tekrar" className="block text-ink font-semibold mb-1">
-                  Her hafta tekrarla
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    id="toplanti-tekrar"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={TEKRAR_MAX}
-                    step={1}
-                    value={tekrarHafta}
-                    onChange={(e) => setTekrarHafta(e.target.value)}
-                    className={`${inputSinifi} w-24`}
-                  />
-                  <span className="text-ink-2">hafta</span>
-                </div>
-                <p className="mt-1 text-ink-3">
-                  {tekrarOnizleme >= 1
-                    ? `Aynı gün ve saatte ${tekrarOnizleme} hafta daha eklenir, toplam ${tekrarOnizleme + 1} toplantı.`
-                    : '0 = tek toplantı'}
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="toplanti-notlar" className="block text-ink font-semibold mb-1">
-                  Toplantı notları / alınan kararlar
-                </label>
-                <textarea
-                  id="toplanti-notlar"
-                  rows={4}
-                  maxLength={NOT_MAX}
-                  placeholder="Gündem maddeleri, tartışılan konular veya alınan kararlar..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className={inputSinifi}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="toplanti-sunum" className="block text-ink font-semibold mb-1">
-                  Sunum bağlantısı (isteğe bağlı)
-                </label>
-                <input
-                  id="toplanti-sunum"
-                  type="url"
-                  placeholder="https://..."
-                  value={presentationUrl}
-                  onChange={(e) => setPresentationUrl(e.target.value)}
-                  className={inputSinifi}
-                />
-              </div>
-
-              {formHata && <Uyari tone="tehlike">{formHata}</Uyari>}
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-line">
-                <Button variant="ghost" size="sm" type="button" onClick={modaliKapat} disabled={islemde}>
-                  İptal
-                </Button>
-                <Button variant="primary" size="sm" type="submit" disabled={islemde}>
-                  {islemde ? 'Kaydediliyor...' : 'Kaydet'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {form && (
+        <ToplantiFormu
+          mevcut={form.mevcut}
+          varsayilanGun={gunISO(simdi)}
+          onKapat={() => setForm(null)}
+          onKaydedildi={kaydedildi}
+        />
       )}
     </div>
   );

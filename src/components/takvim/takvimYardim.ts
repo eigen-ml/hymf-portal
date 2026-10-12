@@ -139,3 +139,11 @@ export const ETIKET_SINIFI: Record<RozetTonu, string> = {
   inceleme: 'bg-review-soft text-review',
   tehlike: 'bg-danger-soft text-danger',
 };
+
+/** "10:00" → "11:00": toplantı bitişinin varsayılanı. Gün aşmasın diye en geç 23:59. */
+export function birSaatSonra(saat: string): string {
+  const [s, d] = saat.split(':').map(Number);
+  if (!Number.isInteger(s) || !Number.isInteger(d)) return '';
+  if (s >= 23) return '23:59';
+  return `${iki(s + 1)}:${iki(d)}`;
+}

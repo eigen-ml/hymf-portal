@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { BosDurum, Button, Rozet, Uyari, buttonClass } from '@/components/ui';
 import type { RozetTonu } from '@/components/ui';
 import { sonTarihMetni } from '@/lib/zaman';
@@ -31,12 +31,14 @@ function Oge({
   yonetebilir,
   islemde,
   onSil,
+  onDuzenle,
 }: {
   o: TakvimOgesi;
   bugun: string;
   yonetebilir: boolean;
   islemde: boolean;
   onSil: (o: TakvimOgesi) => void;
+  onDuzenle: (o: TakvimOgesi) => void;
 }) {
   const gorev = o.tur === 'gorev';
   const gecikti = gecikmisMi(o, bugun);
@@ -74,7 +76,14 @@ function Oge({
         </div>
       ) : (
         o.silebilir && (
-          <div className="pt-1">
+          <div className="flex flex-wrap gap-2 pt-1">
+            {/* Toplantıyı silebilen düzenler de (ekleyen, hoca, yönetici); etkinlikte düzenleme yok. */}
+            {o.tur === 'toplanti' && (
+              <Button variant="secondary" size="sm" onClick={() => onDuzenle(o)} disabled={islemde}>
+                <Pencil className="size-4" />
+                Düzenle
+              </Button>
+            )}
             <Button variant="secondary" size="sm" onClick={() => onSil(o)} disabled={islemde}>
               <Trash2 className="size-4" />
               Sil
@@ -95,6 +104,7 @@ export function GunDetayi({
   islemde,
   hata,
   onSil,
+  onDuzenle,
   onEkle,
   onKapat,
 }: {
@@ -105,6 +115,7 @@ export function GunDetayi({
   islemde: boolean;
   hata: string | null;
   onSil: (o: TakvimOgesi) => void;
+  onDuzenle: (o: TakvimOgesi) => void;
   onEkle: (gun: string) => void;
   onKapat: () => void;
 }) {
@@ -118,7 +129,7 @@ export function GunDetayi({
         ) : (
           <ul className="divide-y divide-line">
             {ogeler.map((o) => (
-              <Oge key={o.anahtar} o={o} bugun={bugun} yonetebilir={yonetebilir} islemde={islemde} onSil={onSil} />
+              <Oge key={o.anahtar} o={o} bugun={bugun} yonetebilir={yonetebilir} islemde={islemde} onSil={onSil} onDuzenle={onDuzenle} />
             ))}
           </ul>
         )}

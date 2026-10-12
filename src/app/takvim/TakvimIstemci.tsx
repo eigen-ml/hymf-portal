@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { BosDurum, Button, Rozet, SayfaBasligi, Uyari, buttonClass } from '@/components/ui';
 import { TakvimAboneligi } from '@/components/takvim/TakvimAboneligi';
 import { EtkinlikFormu, type EklemeSonucu } from '@/components/takvim/EtkinlikFormu';
+import { ToplantiFormu, type DuzenlenenToplanti } from '@/components/takvim/ToplantiFormu';
 import { GunDetayi } from '@/components/takvim/GunDetayi';
 import {
   ETIKET_SINIFI,
@@ -26,7 +27,7 @@ import {
 import { cn } from '@/lib/cn';
 import { kisaAd } from '@/lib/etiketler';
 import { sonTarihMetni } from '@/lib/zaman';
-import type { TakvimOgesi } from '@/types/database';
+import type { TakvimBaglantisi, TakvimOgesi } from '@/types/database';
 import { toplantiSil } from '@/app/toplantilar/actions';
 import { etkinlikSil } from './actions';
 
@@ -40,8 +41,8 @@ interface TakvimIstemciProps {
   bugun: string;
   /** Hoca veya yönetici: görevleri düzenler, grup toplantısı ekler. */
   yonetebilir: boolean;
-  /** Kişinin abonelik anahtarı; sunucu hazırlayamadıysa null. */
-  takvimAnahtari: string | null;
+  /** Kişinin abonelik anahtarı ve durumu; sunucu hazırlayamadıysa null. */
+  abonelik: { token: string; baglanti: TakvimBaglantisi } | null;
 }
 
 /** Izgaradaki tek etiket: "14:00 Ad", görevde "✓ A. Yılmaz: Ad". */
@@ -98,10 +99,11 @@ function TelefonSatiri({ o, bugun, onAc }: { o: TakvimOgesi; bugun: string; onAc
   );
 }
 
-export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir, takvimAnahtari }: TakvimIstemciProps) {
+export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir, abonelik }: TakvimIstemciProps) {
   const router = useRouter();
   const [acikGun, setAcikGun] = useState<string | null>(null);
   const [formGunu, setFormGunu] = useState<string | null>(null);
+  const [duzenlenen, setDuzenlenen] = useState<DuzenlenenToplanti | null>(null);
   const [bildirim, setBildirim] = useState<{ mesaj: string; ay: string } | null>(null);
   const [silHatasi, setSilHatasi] = useState<string | null>(null);
   const [silmede, silBasla] = useTransition();
@@ -140,6 +142,20 @@ export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir, takvimAnahtari }
     // Başka bir aya eklendiyse o aya geçilir ki kayıt görünsün.
     if (hedefAy !== ay) router.push(`/takvim?ay=${hedefAy}`);
     else router.refresh();
+  }
+
+  function duzenle(o: TakvimOgesi) {
+    setAcikGun(null);
+    setBildirim(null);
+    setDuzenlenen({
+      id: o.kayitId,
+      title: o.baslik,
+      meeting_date: o.baslangic,
+      ends_at: o.bitis,
+      location: o.yer,
+      notes: o.aciklama,
+      presentation_url: o.sunumUrl ?? null,
+    });
   }
 
   function sil(o: TakvimOgesi) {
@@ -335,7 +351,7 @@ export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir, takvimAnahtari }
         </div>
       </div>
 
-      <TakvimAboneligi token={takvimAnahtari} />
+      <TakvimAboneligi token={abonelik?.token ?? null} baglanti={abonelik?.baglanti ?? null} />
 
       {acikGun && (
         <GunDetayi
@@ -346,8 +362,20 @@ export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir, takvimAnahtari }
           islemde={silmede}
           hata={silHatasi}
           onSil={sil}
+          onDuzenle={duzenle}
           onEkle={detaydanEkle}
           onKapat={() => setAcikGun(null)}
+        />
+      )}
+
+      {duzenlenen && (
+        <ToplantiFormu
+          mevcut={duzenlenen}
+          onKapat={() => setDuzenlenen(null)}
+          onKaydedildi={(sonuc) => {
+            setDuzenlenen(null);
+            eklendi(sonuc);
+          }}
         />
       )}
 

@@ -1,5 +1,8 @@
+import { after } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { istemciyiBul } from '@/lib/abonelik';
 import { icsOlustur, type IcsOlay, type IcsTakvim } from '@/lib/ics';
+import { toplantiOlayi } from '@/lib/toplanti';
 import { gunISO } from '@/lib/zaman';
 
 // Apple, Google ve Outlook'un abone olduğu adres: /takvim-akisi/<anahtar>.ics
@@ -10,7 +13,18 @@ import { gunISO } from '@/lib/zaman';
 export const dynamic = 'force-dynamic';
 
 type Akis = {
-  toplantilar: { id: string; title: string; meeting_date: string; notes: string | null; presentation_url: string | null }[];
+  toplantilar: {
+    id: string;
+    title: string;
+    meeting_date: string;
+    notes: string | null;
+    presentation_url: string | null;
+    // 20261013000000_takvim_senkron.sql ile geldi.
+    ends_at?: string | null;
+    location?: string | null;
+    updated_at?: string;
+    sequence?: number;
+  }[];
   etkinlikler: {
     id: string;
     title: string;
@@ -60,19 +74,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   if (error || !data) return bulunamadi();
 
   const akis = data as Akis;
+
+  // Hangi uygulamanın çektiği (yönetim panelindeki "Takvim" bilgisi ve panodaki hatırlatma için).
+  // Yanıttan sonra yazılır; hata akışı etkilemez. Anahtar loglanmaz.
+  const istemci = istemciyiBul(request.headers.get('user-agent'));
+  after(async () => {
+    const { error: kayitHatasi } = await sb.rpc('takvim_akisi_cekildi', { p_token: token, p_istemci: istemci });
+    if (kayitHatasi) console.warn('[Takvim akışı] Çekim kaydı yazılamadı:', kayitHatasi.code ?? kayitHatasi.message);
+  });
+
   const site = new URL(request.url).origin;
   const olaylar: IcsOlay[] = [];
 
-  for (const m of akis.toplantilar) {
-    olaylar.push({
-      uid: `toplanti-${m.id}@hymf-portal`,
-      baslik: `Grup toplantısı: ${m.title}`,
-      baslangic: m.meeting_date,
-      tumGun: false,
-      aciklama: [m.notes, m.presentation_url].filter(Boolean).join('\n\n') || null,
-      url: `${site}/toplantilar`,
-    });
-  }
+  for (const m of akis.toplantilar) olaylar.push(toplantiOlayi(m));
 
   for (const e of akis.etkinlikler) {
     olaylar.push({

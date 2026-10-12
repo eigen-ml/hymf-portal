@@ -2,7 +2,7 @@ import { unstable_rethrow } from 'next/navigation';
 import { Uyari } from '@/components/ui';
 import { ayAraligi, ayiCoz } from '@/components/takvim/takvimYardim';
 import { requireMember } from '@/lib/auth/dal';
-import { takvimAnahtariniGetir, takvimOgeleri } from '@/lib/data/takvim';
+import { takvimAboneligiGetir, takvimOgeleri } from '@/lib/data/takvim';
 import { isAdmin, isHoca } from '@/lib/yetki';
 import { bugunISO } from '@/lib/zaman';
 import type { TakvimOgesi } from '@/types/database';
@@ -28,7 +28,7 @@ export default async function Page({ searchParams }: TakvimSayfasiProps) {
   }
 
   // Abonelik bağlantısı hazır gelsin; olmazsa panel "Bağlantıyı oluştur" düğmesi gösterir.
-  const anahtar = await takvimAnahtariniGetir(ben.id).catch(() => null);
+  const abonelik = await takvimAboneligiGetir(ben.id).catch(() => null);
 
   return (
     <TakvimIstemci
@@ -36,7 +36,7 @@ export default async function Page({ searchParams }: TakvimSayfasiProps) {
       ay={ay}
       bugun={bugun}
       yonetebilir={isHoca(ben) || isAdmin(ben)}
-      takvimAnahtari={anahtar}
+      abonelik={abonelik}
     />
   );
 }

@@ -6,6 +6,7 @@ import { cn } from '@/lib/cn';
 import { etkinlikEkle } from '@/app/takvim/actions';
 import { toplantiEkle } from '@/app/toplantilar/actions';
 import { Pencere } from './Pencere';
+import { birSaatSonra } from './takvimYardim';
 
 const BASLIK_MAX = 200;
 const YER_MAX = 300;
@@ -46,6 +47,8 @@ export function EtkinlikFormu({
   const [tumGun, setTumGun] = useState(false);
   const [baslangicSaat, setBaslangicSaat] = useState('');
   const [bitisSaat, setBitisSaat] = useState('');
+  // Toplantıda bitiş, kişi elle seçmedikçe başlangıçtan 1 saat sonradır.
+  const [bitisElle, setBitisElle] = useState(false);
   const [yer, setYer] = useState('');
   const [notlar, setNotlar] = useState('');
   const [tekrar, setTekrar] = useState('0');
@@ -77,9 +80,11 @@ export function EtkinlikFormu({
     if (saatli && !/^\d{2}:\d{2}$/.test(baslangicSaat)) {
       return hata('saat', toplanti ? 'Saati seçin.' : 'Başlangıç saatini seçin.');
     }
-    if (!toplanti && !tumGun && bitisSaat) {
+    if (saatli && bitisSaat) {
       if (!/^\d{2}:\d{2}$/.test(bitisSaat)) return hata('bitis', 'Bitiş saatini kontrol edin.');
-      if (bitisSaat < baslangicSaat) return hata('bitis', 'Bitiş saati başlangıçtan önce olamaz.');
+      if (toplanti ? bitisSaat <= baslangicSaat : bitisSaat < baslangicSaat) {
+        return hata('bitis', toplanti ? 'Bitiş saati başlangıçtan sonra olmalı.' : 'Bitiş saati başlangıçtan önce olamaz.');
+      }
     }
     if (toplanti && !tekrarGecerli) {
       return hata('tekrar', `Tekrar sayısı 0 ile ${TEKRAR_MAX} arasında bir tam sayı olmalı.`);
@@ -92,6 +97,8 @@ export function EtkinlikFormu({
         const sonuc = await toplantiEkle({
           title: baslik,
           meeting_date: `${tarih}T${baslangicSaat}:00+03:00`,
+          ends_at: bitisSaat ? `${tarih}T${bitisSaat}:00+03:00` : '',
+          location: yer.trim(),
           notes: notMetni,
           presentation_url: '',
           tekrar_hafta: tekrarSayisi,
@@ -133,12 +140,13 @@ export function EtkinlikFormu({
               onChange={(e) => {
                 setToplanti(e.target.checked);
                 setAlanHatasi(null);
+                if (e.target.checked && !bitisSaat && /^\d{2}:\d{2}$/.test(baslangicSaat)) setBitisSaat(birSaatSonra(baslangicSaat));
               }}
               className="mt-0.5 size-5 shrink-0 accent-primary"
             />
             <span>
               <span className="font-medium">Bu bir grup toplantısı</span>
-              <span className="block text-ink-3">İşaretlerseniz Toplantılar sayfasında da görünür.</span>
+              <span className="block text-ink-3">İşaretlerseniz Toplantılar sayfasında da görünür ve grubun Telegram kanalına bildirim gider.</span>
             </span>
           </label>
         )}
@@ -180,44 +188,46 @@ export function EtkinlikFormu({
         )}
 
         {(toplanti || !tumGun) && (
-          <div className={cn('grid gap-4', !toplanti && 'sm:grid-cols-2')}>
-            <Alan etiket={toplanti ? 'Saat' : 'Başlangıç saati'} htmlFor={id('saat')} hata={hataMesaji('saat')}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Alan etiket="Başlangıç saati" htmlFor={id('saat')} hata={hataMesaji('saat')}>
               <input
                 id={id('saat')}
                 type="time"
                 value={baslangicSaat}
-                onChange={(e) => setBaslangicSaat(e.target.value)}
+                onChange={(e) => {
+                  setBaslangicSaat(e.target.value);
+                  if (toplanti && !bitisElle && /^\d{2}:\d{2}$/.test(e.target.value)) setBitisSaat(birSaatSonra(e.target.value));
+                }}
                 aria-invalid={alanHatasi?.alan === 'saat' || undefined}
                 className={alanSinifi}
               />
             </Alan>
-            {!toplanti && (
-              <Alan etiket="Bitiş saati (isteğe bağlı)" htmlFor={id('bitis')} hata={hataMesaji('bitis')}>
-                <input
-                  id={id('bitis')}
-                  type="time"
-                  value={bitisSaat}
-                  onChange={(e) => setBitisSaat(e.target.value)}
-                  aria-invalid={alanHatasi?.alan === 'bitis' || undefined}
-                  className={alanSinifi}
-                />
-              </Alan>
-            )}
+            <Alan etiket={toplanti ? 'Bitiş' : 'Bitiş saati (isteğe bağlı)'} htmlFor={id('bitis')} hata={hataMesaji('bitis')}>
+              <input
+                id={id('bitis')}
+                type="time"
+                value={bitisSaat}
+                onChange={(e) => {
+                  setBitisSaat(e.target.value);
+                  setBitisElle(true);
+                }}
+                aria-invalid={alanHatasi?.alan === 'bitis' || undefined}
+                className={alanSinifi}
+              />
+            </Alan>
           </div>
         )}
 
-        {!toplanti && (
-          <Alan etiket="Yer (isteğe bağlı)" htmlFor={id('yer')}>
-            <input
-              id={id('yer')}
-              type="text"
-              value={yer}
-              onChange={(e) => setYer(e.target.value)}
-              maxLength={YER_MAX}
-              className={alanSinifi}
-            />
-          </Alan>
-        )}
+        <Alan etiket="Yer (isteğe bağlı)" htmlFor={id('yer')}>
+          <input
+            id={id('yer')}
+            type="text"
+            value={yer}
+            onChange={(e) => setYer(e.target.value)}
+            maxLength={YER_MAX}
+            className={alanSinifi}
+          />
+        </Alan>
 
         <Alan etiket="Not (isteğe bağlı)" htmlFor={id('not')}>
           <textarea

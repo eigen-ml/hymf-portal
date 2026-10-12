@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { createClient } from '@/lib/supabase/server';
 import { isAdmin, isHoca } from '@/lib/yetki';
 import { gunISO } from '@/lib/zaman';
-import type { CalendarEvent, GroupTask, Profile, TakvimOgesi } from '@/types/database';
+import type { CalendarEvent, GroupTask, Profile, TakvimBaglantisi, TakvimIstemcisi, TakvimOgesi } from '@/types/database';
 
 const KISA_PROFIL = 'id, full_name, academic_title, kadro';
 
@@ -77,7 +77,7 @@ export async function takvimOgeleri(ben: Profile, aralik: TakvimAraligi): Promis
   const [toplantilar, etkinlikler, gorevler] = await Promise.all([
     sb
       .from('meetings')
-      .select(`id, title, meeting_date, notes, creator_id, creator:profiles(${KISA_PROFIL})`)
+      .select(`id, title, meeting_date, ends_at, location, notes, presentation_url, creator_id, creator:profiles(${KISA_PROFIL})`)
       .gte('meeting_date', aralik.baslangic)
       .lt('meeting_date', aralik.bitis),
     sb
@@ -100,7 +100,10 @@ export async function takvimOgeleri(ben: Profile, aralik: TakvimAraligi): Promis
     id: string;
     title: string;
     meeting_date: string;
+    ends_at: string | null;
+    location: string | null;
     notes: string | null;
+    presentation_url: string | null;
     creator_id: string;
     creator: { full_name: string } | null;
   };
@@ -114,11 +117,12 @@ export async function takvimOgeleri(ben: Profile, aralik: TakvimAraligi): Promis
       kayitId: m.id,
       baslik: m.title,
       baslangic: m.meeting_date,
-      bitis: null,
+      bitis: m.ends_at,
       tumGun: false,
       gun: gunISO(m.meeting_date),
       aciklama: m.notes,
-      yer: null,
+      yer: m.location,
+      sunumUrl: m.presentation_url,
       ekleyenId: m.creator_id,
       ekleyenAd: m.creator?.full_name ?? null,
       silebilir: m.creator_id === ben.id || yonetici,
@@ -179,17 +183,28 @@ export function yeniTakvimAnahtari(): string {
   return randomBytes(32).toString('base64url');
 }
 
+export interface AbonelikBilgisi {
+  token: string;
+  baglanti: TakvimBaglantisi;
+}
+
 /**
- * Kişinin takvim abonelik anahtarı; yoksa oluşturur. Abonelik paneli sayfa açılınca hazır gelsin
- * diye sunucuda çağrılır. RLS: kişi yalnız kendi satırını okur ve yazar.
+ * Kişinin takvim aboneliği: anahtar (yoksa oluşturulur) ve aboneliği en son hangi uygulamanın ne
+ * zaman çektiği. Abonelik paneli sayfa açılınca hazır gelsin diye sunucuda çağrılır.
+ * RLS: kişi yalnız kendi satırını okur ve yazar.
  */
-export async function takvimAnahtariniGetir(kisiId: string): Promise<string> {
+export async function takvimAboneligiGetir(kisiId: string): Promise<AbonelikBilgisi> {
   const sb = await createClient();
-  const oku = () => sb.from('calendar_feed_tokens').select('token').eq('user_id', kisiId).maybeSingle();
+  const oku = () =>
+    sb.from('calendar_feed_tokens').select('token, son_cekim, son_istemci').eq('user_id', kisiId).maybeSingle();
+  const donustur = (s: { token: string; son_cekim: string | null; son_istemci: string | null }): AbonelikBilgisi => ({
+    token: s.token,
+    baglanti: { sonCekim: s.son_cekim, sonIstemci: s.son_istemci as TakvimIstemcisi | null },
+  });
 
   const mevcut = await oku();
   if (mevcut.error) throw new Error('Takvim bağlantısı okunamadı: ' + mevcut.error.message);
-  if (mevcut.data?.token) return mevcut.data.token;
+  if (mevcut.data?.token) return donustur(mevcut.data);
 
   // Aynı anda iki sayfa açılırsa ikincisi çakışmaya düşmesin: varsa dokunma, sonra yeniden oku.
   const { error } = await sb
@@ -199,5 +214,10 @@ export async function takvimAnahtariniGetir(kisiId: string): Promise<string> {
 
   const yeni = await oku();
   if (yeni.error || !yeni.data?.token) throw new Error('Takvim bağlantısı oluşturulamadı.');
-  return yeni.data.token;
+  return donustur(yeni.data);
+}
+
+/** Yalnız anahtar (paneldeki "Bağlantıyı oluştur" düğmesi için). */
+export async function takvimAnahtariniGetir(kisiId: string): Promise<string> {
+  return (await takvimAboneligiGetir(kisiId)).token;
 }

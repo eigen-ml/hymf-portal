@@ -3,8 +3,10 @@
 import React, { useEffect, useRef, useState, useTransition } from 'react';
 import { Check, Copy, ExternalLink } from 'lucide-react';
 import { Button, Panel, Uyari, buttonClass, inputSinifi } from '@/components/ui';
-import { abonelikAdresleri, type AbonelikAdresleri } from '@/lib/abonelik';
+import { TAKVIM_ISTEMCI_ETIKETI, abonelikAdresleri, takvimBagliMi, type AbonelikAdresleri } from '@/lib/abonelik';
 import { cn } from '@/lib/cn';
+import { goreliZaman } from '@/lib/zaman';
+import type { TakvimBaglantisi } from '@/types/database';
 import { takvimAnahtarim, takvimAnahtariniYenile } from '@/app/takvim/actions';
 import { AbonelikAdimlari, GuncellemeSuresi } from './AbonelikAdimlari';
 
@@ -34,12 +36,41 @@ export function AbonelikDugmeleri({ adresler }: { adresler: AbonelikAdresleri })
   );
 }
 
+/** "Takviminiz bağlı: Apple, son eşitleme 12 dakika önce." Bağlı değilse veya yalnız indirdiyse not. */
+function BaglantiDurumu({ baglanti }: { baglanti: TakvimBaglantisi | null }) {
+  if (takvimBagliMi(baglanti)) {
+    return (
+      <p className="text-base text-ink-2">
+        <span className="font-semibold text-ok">Takviminiz bağlı:</span> {TAKVIM_ISTEMCI_ETIKETI[baglanti!.sonIstemci!]}, son
+        eşitleme <span suppressHydrationWarning>{goreliZaman(baglanti!.sonCekim!)}</span>.
+      </p>
+    );
+  }
+  if (baglanti?.sonIstemci === 'tarayici') {
+    return (
+      <p className="text-base text-warn">
+        Adres tarayıcıda açılmış, takvim tek seferlik dosya olarak inmiş. Güncel kalması için aşağıdaki düğmelerden
+        biriyle abone olun.
+      </p>
+    );
+  }
+  return null;
+}
+
 /**
  * Takvimi kişinin kendi takvim uygulamasına abone etme paneli. Bağlantı kişiye özeldir; anahtar
  * sayfa açılırken sunucuda hazırlanır (yoksa oluşturulur), yalnız oturum sahibine gelir.
  */
-export function TakvimAboneligi({ token: ilkToken }: { token: string | null }) {
+export function TakvimAboneligi({
+  token: ilkToken,
+  baglanti = null,
+}: {
+  token: string | null;
+  /** Aboneliği en son hangi uygulama çekti; yenilenen anahtarda sıfırlanır. */
+  baglanti?: TakvimBaglantisi | null;
+}) {
   const [token, setToken] = useState(ilkToken);
+  const [yenilendi, setYenilendi] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const [kopyalandi, setKopyalandi] = useState<'evet' | 'olmadi' | null>(null);
   const [bekliyor, basla] = useTransition();
@@ -84,6 +115,7 @@ export function TakvimAboneligi({ token: ilkToken }: { token: string | null }) {
         return;
       }
       setToken(sonuc.token);
+      setYenilendi(true);
     });
   }
 
@@ -103,12 +135,14 @@ export function TakvimAboneligi({ token: ilkToken }: { token: string | null }) {
   }
 
   return (
-    <Panel baslik="Takvim uygulamanıza ekleyin">
+    <Panel id="abonelik" baslik="Takvim uygulamanıza ekleyin">
       <div className="space-y-6">
         <p className="max-w-prose text-base leading-7 text-ink-2">
           Bir kez ekleyin, grup toplantıları ve etkinlikler telefonunuzun takvimine kendiliğinden düşsün. Yalnız
           portaldaki kayıtlar ve sizin görevleriniz görünür; kendi takviminizdeki hiçbir şey değişmez veya silinmez.
         </p>
+
+        {!yenilendi && <BaglantiDurumu baglanti={baglanti} />}
 
         {hata && <Uyari tone="tehlike">{hata}</Uyari>}
 
