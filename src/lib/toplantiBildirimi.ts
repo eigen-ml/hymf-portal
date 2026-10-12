@@ -1,11 +1,12 @@
 import 'server-only';
 
-// Grup toplantısı eklenince, saati veya yeri değişince ya da silinince Telegram grubuna tek mesaj.
+// Grup toplantısı eklenince, saati veya yeri değişince ya da silinince Telegram'a tek mesaj: grup
+// sohbetine (ayarlıysa) ve botu bağlamış her üyeye özelden.
 // Mesaj sesli gider. Gönderim hatası toplantı kaydını etkilemez, yalnız sunucu loguna düşer.
 // .ics bağlantısı konmaz: Telegram'ın tarayıcısında oturum olmadığı için giriş sayfasına düşer.
 
 import { CANLI_ADRES } from '@/lib/site';
-import { htmlKacis, telegramGonder } from '@/lib/telegram';
+import { bildirimGonder, htmlKacis } from '@/lib/telegram';
 import { toplantiBasligi, toplantiBitisi } from '@/lib/toplanti';
 import type { Meeting } from '@/types/database';
 
@@ -87,7 +88,7 @@ function gecmisMi(t: BildirimToplantisi): boolean {
 }
 
 async function gonder(html: string, olay: string) {
-  const sonuc = await telegramGonder(html, { sessiz: false });
+  const sonuc = await bildirimGonder(html, { sessiz: false });
   if (!sonuc.ok && !sonuc.atlandi) console.error(`[Toplantı bildirimi] ${olay} gönderilemedi: ${sonuc.hata}`);
 }
 

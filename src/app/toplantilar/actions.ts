@@ -5,7 +5,6 @@ import { after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requireMemberAction } from '@/lib/auth/dal';
 import { toplantiDegistiBildir, toplantiEklendiBildir, toplantiSilindiBildir } from '@/lib/toplantiBildirimi';
-import { isAdmin, isHoca } from '@/lib/yetki';
 
 export type ActionSonucu = { ok: true } | { ok: false; error: string };
 
@@ -94,9 +93,6 @@ function yenile() {
 export async function toplantiEkle(input: ToplantiGirdisi): Promise<ActionSonucu> {
   try {
     const ben = await requireMemberAction();
-    if (!isHoca(ben) && !isAdmin(ben)) {
-      return { ok: false, error: 'Grup toplantısını hocalar ve yöneticiler ekler.' };
-    }
 
     const girdi = temizle(input);
     if (typeof girdi === 'string') return { ok: false, error: girdi };
@@ -131,7 +127,7 @@ export async function toplantiEkle(input: ToplantiGirdisi): Promise<ActionSonucu
   }
 }
 
-/** Ekleyen, hoca veya yönetici düzenler; RLS zorlar. Seri toplantıda yalnız bu hafta değişir. */
+/** Her üye düzenler (not dahil); RLS zorlar. Seri toplantıda yalnız bu hafta değişir. */
 export async function toplantiDuzenle(id: string, input: ToplantiDuzenlemesi): Promise<ActionSonucu> {
   try {
     await requireMemberAction();

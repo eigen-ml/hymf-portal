@@ -1,10 +1,19 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requireMemberAction } from '@/lib/auth/dal';
 import { isAdmin, isHoca } from '@/lib/yetki';
 import type { GorevDurum } from '@/types/database';
+import { bildirimGonder, htmlKacis } from '@/lib/telegram';
+import { CANLI_ADRES } from '@/lib/site';
+
+/** Kişiye özelden kısa görev bildirimi; Telegram'ı bağlamamışsa sessizce atlanır. */
+function gorevBildir(kisiler: string[], baslik: string, gorev: string) {
+  const html = `${baslik}\n\n<b>${htmlKacis(gorev)}</b>\n\n<a href="${CANLI_ADRES}/gorevler">Görevlerde aç</a>`;
+  after(() => bildirimGonder(html, { kisiler }));
+}
 
 export type ActionSonucu = { ok: true } | { ok: false; error: string };
 
@@ -74,6 +83,7 @@ export async function gorevVer(input: GorevGirdisi): Promise<ActionSonucu> {
     );
     if (error) return { ok: false, error: 'Kaydedilemedi: ' + error.message };
 
+    gorevBildir(kisiler, `📌 Sana yeni görev verildi (${htmlKacis(ben.full_name)})`, title);
     yenile();
     return { ok: true };
   } catch (e) {
@@ -136,9 +146,18 @@ export async function gorevDurumu(id: string, status: GorevDurum): Promise<Actio
     }
 
     const sb = await createClient();
-    const { data, error } = await sb.from('group_tasks').update({ status }).eq('id', id).select('id');
+    const { data, error } = await sb
+      .from('group_tasks')
+      .update({ status })
+      .eq('id', id)
+      .select('id, title, assignee_id, assigned_by');
     if (error) return { ok: false, error: error.message };
-    if ((data ?? []).length === 0) return { ok: false, error: 'Bu görevi değiştirme yetkiniz yok.' };
+    const gorev = data?.[0];
+    if (!gorev) return { ok: false, error: 'Bu görevi değiştirme yetkiniz yok.' };
+
+    const ad = htmlKacis(ben.full_name);
+    if (status === 'teslim_edildi') gorevBildir([gorev.assigned_by], `📥 ${ad} görevini teslim etti`, gorev.title);
+    if (status === 'tamamlandi' && gorev.assignee_id !== ben.id) gorevBildir([gorev.assignee_id], '✅ Görevin onaylandı', gorev.title);
 
     yenile();
     return { ok: true };

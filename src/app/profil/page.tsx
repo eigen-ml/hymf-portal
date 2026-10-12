@@ -4,10 +4,16 @@ import Link from 'next/link';
 import { requireMember } from '@/lib/auth/dal';
 import { SayfaBasligi } from '@/components/ui';
 import { KADRO_ETIKETI, YETKI_ETIKETI } from '@/lib/etiketler';
+import { createClient } from '@/lib/supabase/server';
+import { baglantiKodu, botBaglantisi } from '@/lib/telegramBaglanti';
 import ProfilFormu from './ProfilFormu';
+import { TelegramKutusu } from './TelegramKutusu';
 
 export default async function ProfilPage() {
   const ben = await requireMember();
+  const sb = await createClient();
+  const { data: tg } = await sb.from('telegram_baglantilari').select('kullanici_adi').eq('user_id', ben.id).maybeSingle();
+  const kod = baglantiKodu(ben.id);
 
   return (
     <div className="space-y-8">
@@ -40,6 +46,8 @@ export default async function ProfilPage() {
           Şifremi değiştir
         </Link>
       </p>
+
+      <TelegramKutusu bagli={!!tg} kullaniciAdi={tg?.kullanici_adi ?? null} baglanti={kod ? botBaglantisi(kod) : null} />
 
       <ProfilFormu profil={ben} />
     </div>

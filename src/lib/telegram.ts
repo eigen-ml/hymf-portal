@@ -1,4 +1,7 @@
+import 'server-only';
+
 import { CANLI_ADRES } from '@/lib/site';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { AnnouncementPriority } from '@/types/database';
 
 export interface TelegramSonucu {
@@ -10,16 +13,15 @@ export interface TelegramSonucu {
 }
 
 /**
- * Grubun Telegram sohbetine HTML mesaj gönderir. TELEGRAM_BOT_TOKEN ve TELEGRAM_CHAT_ID yalnız
+ * Bir Telegram sohbetine (varsayılan: grup) HTML mesaj gönderir. TELEGRAM_BOT_TOKEN ve TELEGRAM_CHAT_ID yalnız
  * Vercel Production'da tanımlı; başka yerde gönderim atlanır. Preview'da denemek için o ortama
  * kendi sohbet kimliğinizi koyun, gruba gitmesin. Hata fırlatmaz, sonucu döner.
  */
 export async function telegramGonder(
   html: string,
-  { sessiz = false, onizleme = false }: { sessiz?: boolean; onizleme?: boolean } = {},
+  { sessiz = false, onizleme = false, chatId = process.env.TELEGRAM_CHAT_ID }: { sessiz?: boolean; onizleme?: boolean; chatId?: string } = {},
 ): Promise<TelegramSonucu> {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!botToken || !chatId || botToken === 'your_telegram_bot_token') {
     console.info('[Telegram] Bot ayarlı değil, gönderim atlandı.');
@@ -50,6 +52,36 @@ export async function telegramGonder(
     console.error('[Telegram] İstek hatası:', hata);
     return { ok: false, hata };
   }
+}
+
+/**
+ * Grup sohbetine (ayarlıysa) ve botu bağlamış kişilere özelden gönderir. `kisiler` verilirse yalnız
+ * onlara özelden gider, gruba gitmez. Hata fırlatmaz; gruba gönderimin sonucunu (yoksa ilk özel
+ * gönderiminkini) döner.
+ */
+export async function bildirimGonder(
+  html: string,
+  { sessiz = false, onizleme = false, kisiler }: { sessiz?: boolean; onizleme?: boolean; kisiler?: string[] } = {},
+): Promise<TelegramSonucu> {
+  const grup = kisiler ? null : process.env.TELEGRAM_CHAT_ID ? telegramGonder(html, { sessiz, onizleme }) : null;
+  const sohbetler = await bagliSohbetler(kisiler);
+  const ozel = await Promise.all(sohbetler.map((chatId) => telegramGonder(html, { sessiz, onizleme, chatId })));
+  if (grup) return grup;
+  return ozel.find((s) => s.ok) ?? ozel[0] ?? { ok: false, atlandi: true, hata: 'Telegram bağlı kimse yok' };
+}
+
+async function bagliSohbetler(kisiler?: string[]): Promise<string[]> {
+  if (kisiler && kisiler.length === 0) return [];
+  const sb = createAdminClient();
+  if (!sb || !process.env.TELEGRAM_BOT_TOKEN) return [];
+  let sorgu = sb.from('telegram_baglantilari').select('chat_id');
+  if (kisiler) sorgu = sorgu.in('user_id', kisiler);
+  const { data, error } = await sorgu;
+  if (error) {
+    console.error('[Telegram] Bağlantılar okunamadı:', error.message);
+    return [];
+  }
+  return (data ?? []).map((r) => String(r.chat_id));
 }
 
 /** Telegram HTML kipi için kaçış: metin ve öznitelik değerleri. */
@@ -101,6 +133,6 @@ ${htmlKacis(content)}
 🔗 <a href="${htmlKacis(destinationUrl)}">HYMF Portalında Görüntüle</a>
 `.trim();
 
-  const sonuc = await telegramGonder(htmlMessage, { sessiz: disableNotification, onizleme: true });
+  const sonuc = await bildirimGonder(htmlMessage, { sessiz: disableNotification, onizleme: true });
   return { success: sonuc.ok, messageId: sonuc.mesajId, error: sonuc.hata };
 }

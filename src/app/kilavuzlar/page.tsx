@@ -1,4 +1,5 @@
-import { Download, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { Download } from 'lucide-react';
 import { requireMember } from '@/lib/auth/dal';
 import { KILAVUZLAR } from '@/lib/kilavuz/liste';
 import { BosDurum, Panel, SayfaBasligi, buttonClass } from '@/components/ui';
@@ -14,7 +15,7 @@ export default async function Page() {
     <div className="space-y-10">
       <SayfaBasligi
         baslik="Kılavuzlar"
-        aciklama="Grubun VASP hesap kılavuzları. Açmak için başlığa, kaydetmek için İndir'e basın."
+        aciklama="Grubun VASP hesap kılavuzları. Açmak için başlığa basın."
       />
 
       <Panel baslik="Hesap kılavuzları" govdeSinifi="p-0">
@@ -25,24 +26,15 @@ export default async function Page() {
         ) : (
           <ul className="divide-y divide-line">
             {pdfler.map((k) => (
-              <li key={k.dosya} className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4 sm:px-6">
-                <div className="min-w-0 flex-1">
-                  <a
-                    href={`/kilavuzlar/dosya/${k.dosya}`}
-                    target="_blank"
-                    rel="noopener"
-                    className="inline-flex items-center gap-1.5 text-lg font-semibold text-ink hover:text-link"
-                  >
-                    {k.baslik}
-                    <ExternalLink className="size-4 text-ink-3" aria-hidden="true" />
-                  </a>
-                  <p className="mt-1 text-sm text-ink-2">{k.aciklama}</p>
-                  <p className="mt-1 text-sm text-ink-3">PDF, {k.bilgi}</p>
-                </div>
-                <a href={`/kilavuzlar/dosya/${k.dosya}?indir=1`} className={buttonClass({ variant: 'secondary' })}>
-                  <Download className="size-4" aria-hidden="true" />
-                  İndir
-                </a>
+              <li key={k.dosya} className="px-5 py-4 sm:px-6">
+                <Link
+                  href={`/kilavuzlar/${encodeURIComponent(k.dosya)}`}
+                  className="text-lg font-semibold text-ink hover:text-link"
+                >
+                  {k.baslik}
+                </Link>
+                <p className="mt-1 text-sm text-ink-2">{k.aciklama}</p>
+                <p className="mt-1 text-sm text-ink-3">PDF, {k.bilgi}</p>
               </li>
             ))}
           </ul>

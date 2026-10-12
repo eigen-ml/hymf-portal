@@ -4,8 +4,8 @@ import { GECICI_OTURUM_CEREZI, oturumSecenekleri } from './hatirla';
 
 // Girişsiz ziyaretçi yalnız ana sayfayı, giriş sayfasını ve e-posta bağlantısı dönüşünü görür;
 // geri kalan her yol girişe yönlendirilir. Takvim akışı oturumsuz çağrılır, kendi anahtarını
-// veritabanında doğrular.
-const ACIK_YOLLAR = ['/giris', '/auth', '/takvim-akisi'];
+// veritabanında doğrular. Telegram webhook'u kendi gizli başlığını doğrular.
+const ACIK_YOLLAR = ['/giris', '/auth', '/takvim-akisi', '/api/telegram'];
 // Şifre değiştirmesi gereken kişinin girebildiği yollar (ana sayfa dahil geri kalan her şey kapalı).
 const SIFRE_SAYFASI_YOLLARI = ['/sifre-yenile', '/auth', '/takvim-akisi'];
 

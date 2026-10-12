@@ -75,19 +75,21 @@ function Oge({
           </Link>
         </div>
       ) : (
-        o.silebilir && (
+        (o.silebilir || o.tur === 'toplanti') && (
           <div className="flex flex-wrap gap-2 pt-1">
-            {/* Toplantıyı silebilen düzenler de (ekleyen, hoca, yönetici); etkinlikte düzenleme yok. */}
+            {/* Toplantıyı her üye düzenler; silme ekleyende, hocada, yöneticide. Etkinlikte düzenleme yok. */}
             {o.tur === 'toplanti' && (
               <Button variant="secondary" size="sm" onClick={() => onDuzenle(o)} disabled={islemde}>
                 <Pencil className="size-4" />
                 Düzenle
               </Button>
             )}
-            <Button variant="secondary" size="sm" onClick={() => onSil(o)} disabled={islemde}>
-              <Trash2 className="size-4" />
-              Sil
-            </Button>
+            {o.silebilir && (
+              <Button variant="secondary" size="sm" onClick={() => onSil(o)} disabled={islemde}>
+                <Trash2 className="size-4" />
+                Sil
+              </Button>
+            )}
           </div>
         )
       )}

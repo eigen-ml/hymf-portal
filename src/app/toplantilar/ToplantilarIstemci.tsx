@@ -93,12 +93,10 @@ function KayitKarti({
             <Download className="size-3.5 text-ink-3" />
           </a>
         )}
-        {yonetebilir && (
-          <Button variant="ghost" size="sm" onClick={() => onDuzenle(m)} disabled={islemde}>
-            <Pencil className="size-4" />
-            Düzenle
-          </Button>
-        )}
+        <Button variant="ghost" size="sm" onClick={() => onDuzenle(m)} disabled={islemde}>
+          <Pencil className="size-4" />
+          Düzenle
+        </Button>
       </div>
 
       <div className="flex items-center justify-between border-t border-line pt-3 text-sm text-ink-3">
@@ -132,6 +130,7 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
   const [silHata, setSilHata] = useState<string | null>(null);
   const [islemde, startTransition] = useTransition();
 
+  // Herkes ekler ve düzenler; silme ekleyen, hoca veya yöneticide.
   const duzenleyebilir = (m: ToplantiKaydi) => m.creator_id === benId || yonetebilir;
 
   function kaydedildi(sonuc: KayitSonucu) {
@@ -176,19 +175,17 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
               <CalendarDays className="h-4 w-4" />
               <span>Takvimde gör</span>
             </Link>
-            {yonetebilir && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  setBildirim(null);
-                  setForm({});
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                <span>Toplantı ekle</span>
-              </Button>
-            )}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setBildirim(null);
+                setForm({});
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              <span>Toplantı ekle</span>
+            </Button>
           </>
         }
       />
@@ -199,7 +196,7 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
       {kayitlar.length === 0 ? (
         <BosDurum
           baslik="Henüz toplantı yok."
-          aciklama={yonetebilir ? 'İlk toplantıyı ekleyerek başlayabilirsiniz.' : 'Grup toplantılarını hocalar ve yöneticiler ekler.'}
+          aciklama="İlk toplantıyı ekleyerek başlayabilirsiniz."
         />
       ) : (
         <>

@@ -382,7 +382,7 @@ export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir, abonelik }: Takv
       {formGunu && (
         <EtkinlikFormu
           varsayilanGun={formGunu}
-          toplantiEkleyebilir={yonetebilir}
+          toplantiEkleyebilir
           onKapat={() => setFormGunu(null)}
           onEklendi={eklendi}
         />

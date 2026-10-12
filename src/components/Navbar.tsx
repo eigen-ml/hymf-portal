@@ -33,6 +33,14 @@ const digerBaglantilar: Baglanti[] = [
   { href: '/uyeler', etiket: 'Üyeler' },
 ];
 
+// Hoca "çok uğraşamam" dedi: menüde yalnız bunlar. Diğer sayfalar adresle yine açılır.
+const hocaBaglantilari: Baglanti[] = [
+  { href: '/', etiket: 'Pano' },
+  { href: '/takvim', etiket: 'Takvim' },
+  { href: '/gorevler', etiket: 'Görevler' },
+  { href: '/kilavuzlar', etiket: 'Kılavuzlar' },
+];
+
 function aktifMi(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
   return pathname === href || pathname.startsWith(href + '/');
@@ -82,11 +90,12 @@ export function Navbar() {
 
   const uye = isMember(profile);
   // Girişsiz ziyaretçi yalnız ana sayfayı (marka bağlantısı) ve giriş düğmesini görür.
-  const ana = uye ? anaBaglantilar : [];
-  const diger = uye ? digerBaglantilar : [];
+  const ana = uye ? (isHoca ? hocaBaglantilari : anaBaglantilar) : [];
+  const diger = uye && !isHoca ? digerBaglantilar : [];
   const ozel: Baglanti[] = uye
     ? [
         { href: '/calisma-alani', etiket: isHoca ? 'Öğrencilerim' : 'Çalışma alanım' },
+        ...(isHoca ? [] : [{ href: '/drive', etiket: "Drive'ım" }]),
         ...(isAdmin ? [{ href: '/yonetim', etiket: 'Yönetim' }] : []),
       ]
     : [];

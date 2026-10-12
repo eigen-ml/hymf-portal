@@ -103,3 +103,13 @@ superadmin ekleyebilir. Danışman eşleşmesi iki taraf da hesap açınca otoma
 - "Önce supabase/schema.sql dosyasını çalıştırın": 2.1 adımı atlanmış.
 - Kayıt sonrası "Hesabınız onay bekliyor": e-posta davet listesinde mi, e-posta doğrulandı mı?
 - Hoca öğrencisini görmüyor: `advisor_assignments` satırı var mı, hocanın kadrosu `hoca` mı?
+
+## Telegram kişisel bildirim (Ekim 2026)
+
+Bot, bağlanan her üyeye özelden yazar (toplantı, duyuru, kişiye görev verilince / teslim / onay).
+`TELEGRAM_CHAT_ID` tanımlıysa gruba da gider; yalnız özelden istenirse o değişkeni silin.
+
+1. Supabase: `supabase/migrations/20261014000000_herkes_toplanti_telegram.sql`.
+2. Vercel (Production): `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` (@'siz), `TELEGRAM_WEBHOOK_SECRET` (rastgele, 32+ karakter).
+3. Webhook bir kez: `curl https://api.telegram.org/bot<TOKEN>/setWebhook -d url=https://hymf-portal.vercel.app/api/telegram -d secret_token=<SECRET>`.
+4. Üye: Profilim → "Telegram'ı bağla" → bot sohbetinde Başlat. Kapatmak için bota `/durdur`.
