@@ -1,6 +1,8 @@
+import { cookies } from 'next/headers';
 import { SayfaBasligi } from '@/components/ui';
 import { bekliyorMu } from '@/components/gorevler/yardimci';
-import { gorevleriGetir, takvimOgeleri } from '@/lib/data/takvim';
+import { TAKVIM_KUTUSU_CEREZI, takvimBagliMi } from '@/lib/abonelik';
+import { gorevleriGetir, takvimAboneligiGetir, takvimOgeleri } from '@/lib/data/takvim';
 import { getDanismanPanosu } from '@/lib/data/workspaces';
 import { createClient } from '@/lib/supabase/server';
 import { isAdmin, isHoca } from '@/lib/yetki';
@@ -11,6 +13,7 @@ import { CalismaAlanimBaglantisi, OgrencilerOzeti } from './CalismaOzeti';
 import { GorevDagilimi, GorevlerimPaneli, OnayBekleyenler } from './GorevPanolari';
 import { HizliEylemler } from './HizliEylemler';
 import { SonDuyurular, type PanoDuyurusu } from './SonDuyurular';
+import { TakvimEkleKutusu } from './TakvimEkleKutusu';
 import { bugunMetni, ilkAd } from './yardimci';
 
 const GUN = 86_400_000;
@@ -47,7 +50,7 @@ export async function Pano({ ben }: { ben: Profile }) {
   const baslangic = new Date(`${bugun}T00:00:00+03:00`);
   const bitis = new Date(baslangic.getTime() + HAFTA_GUN * GUN);
 
-  const [gorevler, hafta, duyurular, ogrenciler] = await Promise.all([
+  const [gorevler, hafta, duyurular, ogrenciler, abonelik] = await Promise.all([
     dene(() => gorevleriGetir()),
     dene(() => takvimOgeleri(ben, { baslangic: baslangic.toISOString(), bitis: bitis.toISOString() })),
     dene(() => sonDuyurular()),
@@ -59,7 +62,12 @@ export async function Pano({ ben }: { ben: Profile }) {
           return sonuc.data;
         })
       : Promise.resolve(null),
+    dene(() => takvimAboneligiGetir(ben.id)),
   ]);
+
+  // Takvimini bağlamamış (veya adresi yalnız tarayıcıda açmış) kişiye en üstte hatırlatma.
+  const kutuErtelendi = (await cookies()).get(TAKVIM_KUTUSU_CEREZI)?.value === 'gizli';
+  const takvimKutusu = abonelik && !takvimBagliMi(abonelik.baglanti) && !kutuErtelendi ? abonelik : null;
 
   // Hoca olmayan herkes kendi görevlerini görür; hoca yalnız kendine görev verilmişse.
   const benimGorevimVar = (gorevler ?? []).some((g) => g.assignee_id === ben.id && bekliyorMu(g));
@@ -68,6 +76,10 @@ export async function Pano({ ben }: { ben: Profile }) {
   return (
     <div className="space-y-8">
       <SayfaBasligi baslik={`Merhaba, ${ilkAd(ben.full_name)}`} aciklama={bugunMetni()} />
+
+      {takvimKutusu && (
+        <TakvimEkleKutusu token={takvimKutusu.token} yalnizIndirdi={takvimKutusu.baglanti.sonIstemci === 'tarayici'} />
+      )}
 
       <HizliEylemler yonetebilir={yonetebilir} />
 

@@ -51,3 +51,6 @@ export function takvimDurumMetni(b: TakvimBaglantisi | null | undefined, simdi: 
   if (!takvimBagliMi(b)) return 'Bağlı değil';
   return `${TAKVIM_ISTEMCI_ETIKETI[b!.sonIstemci!]} · ${goreliZaman(b!.sonCekim!, simdi)}`;
 }
+
+/** Panodaki "takvimi ekle" kutusunda "Daha sonra" denince yazılan oturum çerezi (tarayıcı kapanınca silinir). */
+export const TAKVIM_KUTUSU_CEREZI = 'hymf-takvim-kutusu';

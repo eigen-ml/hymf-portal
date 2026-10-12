@@ -9,10 +9,18 @@ import { KADRO_ETIKETI, kisaAd } from '@/lib/etiketler';
 import { kisaTarih } from '@/lib/zaman';
 import { uyeyiOnayla, uyeyiGuncelle, aktiflikDegistir, danismanEkle, danismanCikar, birincilDanismanYap, sifreSifirla } from '@/app/yonetim/actions';
 
+/** Kişinin takvim aboneliği: metin sunucuda hazırlanır ("Apple · 2 saat önce", "Bağlı değil"). */
+export interface TakvimDurumu {
+  metin: string;
+  bagli: boolean;
+}
+
 interface UyeleriYonetProps {
   profiles: Profile[];
   advisorAssignments: AdvisorAssignment[];
   hocaKadrosuKisitli: boolean;
+  /** Kişi id → takvim durumu. null: bilgi yüklenemedi, satır gösterilmez. */
+  takvimDurumlari: Record<string, TakvimDurumu> | null;
 }
 
 interface EditFormData {
@@ -21,7 +29,7 @@ interface EditFormData {
   kadro?: Kadro | null;
 }
 
-export function UyeleriYonet({ profiles, advisorAssignments, hocaKadrosuKisitli }: UyeleriYonetProps) {
+export function UyeleriYonet({ profiles, advisorAssignments, hocaKadrosuKisitli, takvimDurumlari }: UyeleriYonetProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -240,6 +248,16 @@ export function UyeleriYonet({ profiles, advisorAssignments, hocaKadrosuKisitli 
                     <div className="text-sm text-ink-3 mt-1">
                       {p.kadro ? KADRO_ETIKETI[p.kadro] : <span className="text-ink-3">Belirlenmedi</span>}
                     </div>
+                    {takvimDurumlari && (() => {
+                      const takvim = takvimDurumlari[p.id];
+                      const metin = takvim?.metin ?? 'Bağlı değil';
+                      const bagli = takvim?.bagli ?? false;
+                      return (
+                        <div className="text-sm text-ink-3 mt-1">
+                          Takvim: <span className={bagli ? 'text-ink-2' : 'text-ink-3'}>{metin}</span>
+                        </div>
+                      );
+                    })()}
                     {advisors.length > 0 && (
                       <div className="text-sm text-ink-3 mt-1">
                         Danışmanlar: {advisors.map((a) => (
