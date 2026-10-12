@@ -1,6 +1,6 @@
 # Kurulum ve canlıya alma (Ata için)
 
-Sıra önemli: **önce veritabanı, sonra test, en son `npx vercel --prod`.** Yeni kod, migration
+Sıra önemli: **önce veritabanı, sonra test, en son `main`'e push (otomatik canlıya çıkar).** Yeni kod, migration
 çalışmadan canlıya çıkarsa site kırılır.
 
 ## 1. Supabase Auth ayarları (fkjjpjvozrexaxpvevum)
@@ -36,12 +36,14 @@ Dashboard → Database → Backups).
    ardından yeniden çalıştırın; 2. adım bu tabloların kurallarını silip yeniden kurar.
    Ardından sırayla `supabase/migrations/20261011000000_gorev_takvim.sql` (görevler, takvim,
    Apple Takvim aboneliği) ve `supabase/migrations/20261012000000_toplanti_yetki.sql` (grup
-   toplantısını yalnız hoca ve yöneticiler ekler).
+   toplantısını yalnız hoca ve yöneticiler ekler). Ardından `supabase/migrations/20261013000000_takvim_senkron.sql`
+   (toplantının bitişi, yeri ve düzenlenmesi; takvim aboneliğinin çekim kaydı; yalnız ekleme yapar, eski kod bozulmaz).
 4. `supabase/seed_uyeler.sql` dosyasını çalıştırın.
 5. `supabase/tests/rls_kontrol.sql` → son satır **"Tüm RLS kontrolleri geçti"** olmalı. Ardından
    `supabase/tests/kayit_akisi.sql` → **"Kayıt akışı kontrolleri geçti"**. İkisi de her şeyi geri
    alır, gerçek veriye dokunmaz. Son olarak `supabase/tests/gorev_takvim_kontrol.sql` →
-   **"Görev/takvim kontrolleri geçti"**.
+   **"Görev/takvim kontrolleri geçti"**, en son `supabase/tests/takvim_senkron_kontrol.sql` →
+   **"Takvim senkron kontrolleri geçti"**.
 6. Storage kontrolü:
    `select id, public, file_size_limit from storage.buckets where id = 'workspace-files';`
    → `public = false`, `file_size_limit = 26214400`.
@@ -59,11 +61,21 @@ SQL Editor'de yapın.
   Yalnız sunucuda, `src/lib/supabase/admin.ts` içinde ve davet satırı yöneticinin kendi oturumuyla
   yazıldıktan sonra kullanılır. Değeri Supabase → Settings → API Keys → `service_role`.
   `NEXT_PUBLIC_` önekiyle ASLA eklemeyin.
+- `TELEGRAM_BOT_TOKEN` ve `TELEGRAM_CHAT_ID` yalnız **Production**'da. Duyurular ve grup toplantısı
+  bildirimleri (ekleme, saat/yer değişikliği, iptal) bununla gider. Tanımlı olmayan ortamda (yerel,
+  preview) gönderim atlanır ve yalnız loglanır.
+- Preview'da denemek için Preview ortamına aynı `TELEGRAM_BOT_TOKEN`'ı ve **kendi** sohbet kimliğini
+  koy, gruba gitmesin. Kendi kimliğin: önce bota özelden "Start" de, sonra Telegram'da @userinfobot'a
+  yaz, verdiği sayı (Id) sohbet kimliğindir.
+- Takvim abonelik bağlantıları ve Telegram mesajlarındaki portal bağlantısı her ortamda
+  `https://hymf-portal.vercel.app`'e gider (`src/lib/site.ts`). Alan adı değişirse orayı güncelle.
 
 ## 4. Canlıya alma
 
-`npx vercel --prod` (bu klasörden). Ardından girişsiz olarak `/calisma-alani` açın: `/giris`'e
-yönlenmeli.
+Vercel, `eigen-ml/hymf-portal` fork'una bağlı; `main`'e giren her commit otomatik canlıya çıkar,
+diğer dallar preview adresi alır. Sıra: migration (SQL Editor) → test SQL → dal pushlanır, preview
+denenir → Ata `git push origin <dal>:main` çalıştırır. Ardından girişsiz olarak `/calisma-alani`
+açın: `/giris`'e yönlenmeli.
 
 ## 5. Ata'nın hesabı
 

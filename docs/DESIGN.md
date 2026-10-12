@@ -176,7 +176,8 @@ Yeni sayfalar bu bileşenleri kullanır, aynı işi gören yeni bir stil yazmaz.
 | `DurumRozeti` | Plan durumu. Rengi kendisi seçer. |
 | `YetkiRozeti` | Yalnız `admin` ve `superadmin` için görünür; `uye` için hiçbir şey çizmez. |
 | `BasHarfAvatar` | Kişi göstergesi, ada göre sabit yumuşak renk. Fotoğraf kullanılmaz. |
-| `MarkaIsareti` | Mavi yuvarlak karede Ψ (çizgi olarak çizili). Navbar ve Footer'da; başka yerde kullanılmaz. |
+| `MarkaIsareti` | Mavi yuvarlak karede Ψ (çizgi olarak çizili). Yalnız Navbar'da; sekme simgesi (`icon.svg`, `favicon.ico`, `apple-icon.png`) de Ψ. |
+| `GrupLogosu` | Grubun yuvarlak logosu (`public/hymf-logo.png`, 499×488, kendi beyaz halkasıyla). Giriş sayfasında formun üstünde 112 px, girişsiz ana sayfanın üstünde 96 px, footer'da 44 px ve yanında "HYMF Portal". Arkasına kutu, gölge, zemin konmaz. Küçük boyda okunmadığı için Navbar'da ve sekme simgesinde kullanılmaz. |
 | `TemaSecici` (`src/components/`) | Sistem / Açık / Koyu seçimi. Navbar'da bulunur, sayfaya ayrıca konmaz. |
 | `BosDurum` | Boş liste: ne olduğunu söyleyen başlık, ne yapılacağını söyleyen tek cümle, opsiyonel eylem. |
 | `Uyari` | Satır içi bilgi/hata kutusu. `tone`: `bilgi`, `uyari`, `basari`, `tehlike`. |
@@ -235,7 +236,8 @@ Kurallar:
 - Kırmızıyı (`pen`) danışman geri bildirimi dışında kullanma. Hata için `danger`, gecikme için `warn`.
 - Her kutuya kart verme. Gölge yalnız `shadow-panel` ve `shadow-pop`.
 - Ortalanmış uzun metin yazma; içerik sola yaslı.
-- Meta bilgiyi orta noktayla zincirleme ("A · B · C"); ayrı satır veya virgül kullan.
+- Meta bilgiyi orta noktayla zincirleme ("A · B · C"); ayrı satır veya virgül kullan. Tek istisna,
+  yönetim listesindeki kısa takvim durumu: "Takvim: Apple · 2 saat önce".
 - Buton ve bağlantı metnine "→" ekleme.
 - `dark:` sınıfı yazma; renkler token'dan gelir. Yeni token gerekirse `globals.css`'te açık ve
   koyu değeriyle ekle.
