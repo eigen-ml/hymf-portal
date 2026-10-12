@@ -147,3 +147,15 @@ export function birSaatSonra(saat: string): string {
   if (s >= 23) return '23:59';
   return `${iki(s + 1)}:${iki(d)}`;
 }
+
+/** Başlangıç kayınca süre korunur: 10:00–11:30 iken başlangıç 14:00 olursa bitiş 15:30. En geç 23:59. */
+export function sureyiKoruyarakBitis(eskiBaslangic: string, eskiBitis: string, yeniBaslangic: string): string {
+  const dakika = (saat: string) => {
+    const [s, d] = saat.split(':').map(Number);
+    return s * 60 + d;
+  };
+  const sure = dakika(eskiBitis) - dakika(eskiBaslangic);
+  if (!(sure > 0)) return birSaatSonra(yeniBaslangic);
+  const bitis = Math.min(dakika(yeniBaslangic) + sure, 23 * 60 + 59);
+  return `${iki(Math.floor(bitis / 60))}:${iki(bitis % 60)}`;
+}

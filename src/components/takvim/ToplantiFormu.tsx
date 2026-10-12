@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn';
 import { gunISO } from '@/lib/zaman';
 import { toplantiDuzenle, toplantiEkle } from '@/app/toplantilar/actions';
 import { Pencere } from './Pencere';
-import { birSaatSonra, saatMetni } from './takvimYardim';
+import { birSaatSonra, saatMetni, sureyiKoruyarakBitis } from './takvimYardim';
 
 const BASLIK_MAX = 200;
 const YER_MAX = 300;
@@ -58,7 +58,7 @@ export function ToplantiFormu({
   const [tarih, setTarih] = useState(mevcut ? gunISO(mevcut.meeting_date) : (varsayilanGun ?? ''));
   const [baslangicSaat, setBaslangicSaat] = useState(ilkSaat);
   const [bitisSaat, setBitisSaat] = useState(mevcut ? (mevcut.ends_at ? saatMetni(mevcut.ends_at) : birSaatSonra(ilkSaat)) : '');
-  // Kişi bitişi kendisi seçmediyse başlangıç değişince bitiş 1 saat sonrasına kayar.
+  // Başlangıç değişince bitiş de kayar (bkz. baslangicDegisti).
   const [bitisElle, setBitisElle] = useState(!!mevcut?.ends_at);
   const [yer, setYer] = useState(mevcut?.location ?? '');
   const [notlar, setNotlar] = useState(mevcut?.notes ?? '');
@@ -78,7 +78,10 @@ export function ToplantiFormu({
 
   function baslangicDegisti(deger: string) {
     setBaslangicSaat(deger);
-    if (!bitisElle && /^\d{2}:\d{2}$/.test(deger)) setBitisSaat(birSaatSonra(deger));
+    if (!/^\d{2}:\d{2}$/.test(deger)) return;
+    // Bitiş elle seçildiyse (düzenlenen toplantıda da öyle sayılır) süre korunur; değilse 1 saat sonrası.
+    const sureKorunur = bitisElle && /^\d{2}:\d{2}$/.test(baslangicSaat) && /^\d{2}:\d{2}$/.test(bitisSaat);
+    setBitisSaat(sureKorunur ? sureyiKoruyarakBitis(baslangicSaat, bitisSaat, deger) : birSaatSonra(deger));
   }
 
   function gonder(e: React.FormEvent<HTMLFormElement>) {
