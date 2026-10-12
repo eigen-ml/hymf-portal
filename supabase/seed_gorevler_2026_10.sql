@@ -3,7 +3,7 @@
 -- ==============================================================================
 -- SQL Editor'de çalıştırın; tekrar çalıştırmak güvenlidir (aynı kişide aynı başlık varsa atlar).
 -- Kişi henüz hesap açmadıysa onun görevleri atlanır ve NOTICE ile yazılır; hesap açınca yeniden
--- çalıştırın. Görevi veren: aşağıdaki VEREN adı. Kişi notunu yazar, "teslim ettim" der; hoca tik atar.
+-- çalıştırın. Görevi veren: veren_adi (hesabı yoksa başka bir hoca, o da yoksa bir yönetici). Kişi notunu yazar, "teslim ettim" der; hoca tik atar.
 
 do $$
 declare
@@ -12,11 +12,15 @@ declare
   r record;
   kisi uuid;
 begin
+  -- Önce adı verilen hoca, yoksa herhangi bir hoca, yoksa bir yönetici (hesabı açık olan).
   select id into veren from public.profiles
-  where full_name ilike veren_adi and is_approved and is_active limit 1;
+  where is_approved and is_active and (full_name ilike veren_adi or kadro = 'hoca' or yetki in ('admin', 'superadmin'))
+  order by (full_name ilike veren_adi) desc, (kadro = 'hoca') desc, created_at
+  limit 1;
   if veren is null then
-    raise exception 'Görevi verecek hoca bulunamadı (%). veren_adi''nı düzeltin.', veren_adi;
+    raise exception 'Görevi verecek hoca veya yönetici bulunamadı.';
   end if;
+  raise notice 'Görevi veren: %', (select full_name from public.profiles where id = veren);
 
   for r in
     select * from (values
