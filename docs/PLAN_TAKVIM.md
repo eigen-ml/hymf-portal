@@ -65,7 +65,8 @@ anahtar canlıda da geçerlidir. Kopyalanan adres `https`, Apple düğmesi `webc
 - **Apple:** `webcal://…`. Mac ve iPhone abonelik penceresini açar.
 - **Google:** `https://calendar.google.com/calendar/render?cid=<encodeURIComponent(webcal adresi)>`,
   yeni sekmede. Preview'da Ata'nın Google hesabıyla denenecek; `webcal://` ile olmazsa `https://`
-  ile denenip çalışan burada yazılacak. **Sonuç: henüz denenmedi.**
+  ile denenip çalışan burada yazılacak. **12 Eki: Ata preview'da denedi, "takvim işi oldu"; düğme
+  `webcal://` ile kaldı.**
 - **Outlook:** `addfromweb` düğmesi konmadı (denenemedi); panelde elle ekleme adımı var.
 - Güncelleme: Apple 15 dk–1 saat, Google birkaç saat (8–24 saat, hızlandırılamaz). Son dakika
   değişikliği Telegram'dan gider.
@@ -91,6 +92,42 @@ Yalnız başlık/not/sunum değişirse ve bitmiş toplantıda mesaj gitmez. Mesa
 "Google Takvim'e ekle" bağlantısı var (seride `recur=RRULE:FREQ=WEEKLY;COUNT=n`), `.ics` bağlantısı yok
 (Telegram'ın tarayıcısında oturum olmadığı için giriş sayfasına düşer). Env yalnız Production'da;
 başka ortamda gönderim atlanır ve loglanır. Telegram hatası kaydı etkilemez.
+
+### Durum (12 Eki, oturum sonu)
+
+Dal `feat/takvim-senkron-logo` pushlandı (preview: `hymf-portal-6gfthqrt1-ataberkozs-projects.vercel.app`,
+Vercel girişi ister). **Canlıya henüz alınmadı**; canlıda hâlâ `1827a93` var.
+
+Yapıldı ve dalda:
+- Logo (giriş, girişsiz ana sayfa, footer); Navbar ve sekme simgesi Ψ.
+- Tek tıkla abonelik paneli (Apple, Google; Outlook elle), bağlantı sayfa açılınca hazır.
+- Toplantı **düzenleme** (Toplantılar sayfası ve takvim gün detayında "Düzenle"), bitiş (+1 saat
+  varsayılan) ve yer alanları, her toplantıda "Takvime ekle" (.ics).
+- Akışta DTEND/LOCATION/LAST-MODIFIED/SEQUENCE, "Grup toplantısı: …" başlığı, çekim kaydı.
+- Panoda "takvimi ekle" kutusu, /yonetim Üyeler'de "Takvim: Apple · … önce" satırı.
+- Telegram toplantı bildirimi (ekleme, saat/yer değişikliği, iptal; seri tek mesaj).
+
+Veritabanı: `20261013000000_takvim_senkron.sql` canlıda çalıştı, `takvim_senkron_kontrol.sql` geçti
+(Ata, 12 Eki). Kod tarafı lint, tsc, build temiz; SQL yerelde PGlite ile de denendi.
+
+Denendi: Ata preview'da takvim aboneliğini denedi, çalıştı.
+Denenmedi veya sonuç yok:
+- **Telegram:** preview'da mesaj gelmedi. Preview env'ine (`TELEGRAM_BOT_TOKEN` + kendi
+  `TELEGRAM_CHAT_ID`) bakılmadı; env deploy'dan sonra eklendiyse yeni deploy gerekir. Canlıya
+  alınca ilk gerçek toplantı eklemede gruba mesaj gidiyor mu bakılacak (CANLI_TEST 20).
+- Outlook düğmesi (konmadı), iPhone, "Takvim: Apple · …" satırı (çekim kaydını yalnız canlıdaki
+  yeni kod yazar; canlıya almadan görünmez).
+- Boş Apple aboneliğinin teşhisi (KURULUM'daki üç kontrol) cevaplanmadı; abonelik yeniden
+  eklenince çalıştığı için önemi kalmadı.
+
+Sıradaki adımlar:
+1. Canlıya alma (Ata): `git push origin feat/takvim-senkron-logo:main`. Migration zaten çalıştı.
+2. Kontrol: `curl -sI https://hymf-portal.vercel.app` → 200; sahte anahtarla
+   `curl -sI https://hymf-portal.vercel.app/takvim-akisi/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.ics`
+   → 404, yönlendirme yok. Sonra CANLI_TEST 13–22.
+3. Açık sorular: e-posta daveti (Resend alan adı ister, ~10 $/yıl; ya da grup Gmail'i + uygulama
+   şifresi), Vercel Cron ile "yarın toplantı" hatırlatması, upstream (`sibel441`) PR'ı ne zaman,
+   toplantının varsayılan yeri.
 
 ### Dosya sahipliği (takvim senkronu)
 
