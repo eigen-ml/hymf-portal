@@ -4,7 +4,7 @@ import { createContext, useContext } from 'react';
 
 /**
  * Kod bloklarındaki yer tutucuların dolduğu değerler, ör. { kullanici_adiniz: 'ayse' }.
- * Değeri boş olan anahtar olduğu gibi kalır. Sıra önemlidir: uzun anahtar (ör. '[kullanici_adiniz]') önce yazılmalı.
+ * Değeri boş olan anahtar olduğu gibi kalır.
  */
 export const KodDegiskenleri = createContext<Record<string, string>>({});
 

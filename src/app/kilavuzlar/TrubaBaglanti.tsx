@@ -362,7 +362,7 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
       </Kart>
 
       <div className="space-y-4">
-        <Uyari tone="uyari" baslik="Başlamadan önce: üç kural">
+        <Uyari tone="uyari" baslik="Kurallar">
           <ol className="mt-1 list-decimal space-y-2 pl-5">
             <li>
               <strong>Hesap kişiye özel.</strong> Kendi kullanıcı adınla gir, şifreni kimseyle paylaşma, başkasının hesabıyla
@@ -442,15 +442,14 @@ scp -r kullanici_adiniz@172.16.6.14:/uzak/dizin/ ./`}
         />
       </Kart>
 
-      <Kart baslik="VASP'ı kendi hesabına kurma ve ilk test" id="vasp-kurulum">
+      <Kart baslik="VASP kurulumu" id="vasp-kurulum">
         <div className="space-y-3 text-sm leading-relaxed text-ink-2">
           <Denendi />
           <p>
-            Bu adımlar baştan sona denendi: VASP 6.6.0 paketi kendi scratch klasörüne açıldı, küçük bir silisyum (Si) hesabı{' '}
-            <Kod>debug</Kod> kuyruğunda 4 çekirdekle çalıştırıldı, 11 adımda yakınsadı ve bir saniye sürdü. Komutları
-            değiştirmeden, sırayla uygula. Her adımın yanında hangi pencereye yazılacağı yazıyor.
+            VASP 6.6.0 kurulumu ve Si test hesabı (<Kod>debug</Kod> kuyruğu, 4 çekirdek). Komutları sırayla, değiştirmeden
+            çalıştır.
           </p>
-          <p>Bilgisayarın:</p>
+          <p>İşletim sistemi:</p>
           <SistemSekmeleri sistem={sistem} sec={setSistem} />
           {sistem === 'linux' && <p className="text-ink-3">Linux&apos;ta komutlar macOS ile aynıdır.</p>}
         </div>
@@ -487,7 +486,7 @@ scp -r kullanici_adiniz@172.16.6.14:/uzak/dizin/ ./`}
           </section>
 
           <section className="space-y-3">
-            <AdimBasligi no={3} baslik="Paketi TRUBA'ya gönder (SSH'a girmeden)" />
+            <AdimBasligi no={3} baslik="Paketi TRUBA'ya gönder" />
             <p>Yeni bir {kabuk} penceresi aç ve yapıştır:</p>
             {windows ? (
               <CodeBlock
@@ -508,7 +507,7 @@ scp -r kullanici_adiniz@172.16.6.14:/uzak/dizin/ ./`}
           </section>
 
           <section className="space-y-3">
-            <AdimBasligi no={4} baslik="TRUBA'ya bağlan ve scratch'e geç" />
+            <AdimBasligi no={4} baslik="TRUBA'ya bağlan" />
             <p>Aynı {kabuk} penceresinde bağlan:</p>
             <CodeBlock
               title={`SSH bağlantısı (${kabuk})`}
@@ -525,7 +524,7 @@ scp -r kullanici_adiniz@172.16.6.14:/uzak/dizin/ ./`}
           </section>
 
           <section className="space-y-3">
-            <AdimBasligi no={5} baslik="Paketi aç (scratch'teyken)" truba />
+            <AdimBasligi no={5} baslik="Paketi aç" truba />
             <CodeBlock
               title="Paketi aç (TRUBA)"
               language="bash"
@@ -539,7 +538,7 @@ scp -r kullanici_adiniz@172.16.6.14:/uzak/dizin/ ./`}
           </section>
 
           <section className="space-y-3">
-            <AdimBasligi no={6} baslik="Modüller var mı (yalnız listeler)" truba />
+            <AdimBasligi no={6} baslik="Modül kontrolü" truba />
             <CodeBlock
               title="Modül kontrolü (TRUBA)"
               language="bash"
@@ -551,7 +550,7 @@ scp -r kullanici_adiniz@172.16.6.14:/uzak/dizin/ ./`}
           </section>
 
           <section className="space-y-3">
-            <AdimBasligi no={7} baslik="Test klasörünü hazırla" truba />
+            <AdimBasligi no={7} baslik="Test dosyaları" truba />
             <p>
               Bloğun tamamını tek seferde TRUBA penceresine yapıştır. Hiçbir şey çalıştırmaz, yalnız dosya oluşturur. Bu blokta
               yer tutucu yok, <Kod>$USER</Kod> kendiliğinden kullanıcı adın olur.
@@ -588,7 +587,7 @@ scp -r kullanici_adiniz@172.16.6.14:/uzak/dizin/ ./`}
           </section>
 
           <section className="space-y-3">
-            <AdimBasligi no={8} baslik="İşi gönder ve izle (test_si içindeyken)" truba />
+            <AdimBasligi no={8} baslik="İşi gönder" truba />
             <CodeBlock title="İşi gönder (TRUBA)" language="bash" code="sbatch job.sh" />
             <Gormeli>
               <Kod>Submitted batch job 1234567 on cluster arf</Kod> (numara seninkinde farklı olur).
@@ -616,7 +615,7 @@ scp -r kullanici_adiniz@172.16.6.14:/uzak/dizin/ ./`}
           </section>
 
           <section className="space-y-3">
-            <AdimBasligi no={10} baslik="Sonuçları bilgisayarına çek" />
+            <AdimBasligi no={10} baslik="Sonuçları indir" />
             <p>
               TRUBA&apos;dan <Kod>exit</Kod> ile çık ya da yeni bir {kabuk} penceresi aç:
             </p>
@@ -641,7 +640,7 @@ scp -r kullanici_adiniz@172.16.6.14:/uzak/dizin/ ./`}
         </div>
       </Kart>
 
-      <Kart baslik="İşe yarar komutlar">
+      <Kart baslik="Komutlar">
         {/* Telefonda alt alta, geniş ekranda üç sütun: yatay kaydırma olmasın. */}
         <div className="text-sm">
           <div className="hidden border-b border-line py-2 text-ink-3 sm:grid sm:grid-cols-[minmax(0,1fr)_14rem_8rem] sm:gap-6">

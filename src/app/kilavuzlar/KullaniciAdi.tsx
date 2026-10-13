@@ -46,10 +46,7 @@ function useKullaniciAdi(): string {
 /** İçindeki bütün kod bloklarında `kullanici_adiniz` girilen adla dolar. */
 export function KullaniciAdiSaglayici({ children }: { children: React.ReactNode }) {
   const ad = useKullaniciAdi();
-  // Eski örnek betikte köşeli parantezli hâli var; önce o değişmeli.
-  return (
-    <KodDegiskenleri.Provider value={{ '[kullanici_adiniz]': ad, kullanici_adiniz: ad }}>{children}</KodDegiskenleri.Provider>
-  );
+  return <KodDegiskenleri.Provider value={{ kullanici_adiniz: ad }}>{children}</KodDegiskenleri.Provider>;
 }
 
 export function KullaniciAdiKutusu() {
