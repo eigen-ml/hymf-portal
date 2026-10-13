@@ -8,7 +8,7 @@ export interface KilavuzDosyasi {
   aciklama: string;
   /** Sayfa sayısı (PDF) veya kısa tür bilgisi. */
   bilgi: string;
-  tur: 'pdf' | 'veri';
+  tur: 'pdf' | 'veri' | 'ovpn';
 }
 
 export const KILAVUZLAR: readonly KilavuzDosyasi[] = [
@@ -67,5 +67,24 @@ export const KILAVUZLAR: readonly KilavuzDosyasi[] = [
     aciklama: 'Örnek SnSSe 4×4 hücresi (48 atom), Bader kılavuzunda kullanılıyor.',
     bilgi: 'VASP yapı dosyası',
     tur: 'veri',
+  },
+];
+
+// TRUBA OpenVPN yapılandırma dosyaları. Kaynak: docs.truba.gov.tr (OpenVPN Bağlantısı sayfası), 13 Eki 2026'da
+// indirildi. Kişisel anahtar yok; giriş TRUBA kullanıcı adı ve şifresiyle. TRUBA değiştirirse yeniden indirin.
+export const TRUBA_DOSYALARI: readonly KilavuzDosyasi[] = [
+  {
+    dosya: 'TRUBA-genel.ovpn',
+    baslik: 'TRUBA-genel.ovpn',
+    aciklama: 'Windows ve Linux için. Mac\'te iOS dosyası sorun çıkarırsa bunu kullanın.',
+    bilgi: 'OpenVPN yapılandırması',
+    tur: 'ovpn',
+  },
+  {
+    dosya: 'TRUBA-ios.ovpn',
+    baslik: 'TRUBA-ios.ovpn',
+    aciklama: 'TRUBA\'nın Mac kılavuzunda verilen dosya.',
+    bilgi: 'OpenVPN yapılandırması',
+    tur: 'ovpn',
   },
 ];

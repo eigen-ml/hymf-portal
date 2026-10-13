@@ -9,6 +9,7 @@ import {
   Network,
 } from 'lucide-react';
 import { CodeBlock } from '@/components/CodeBlock';
+import { TrubaBaglanti } from './TrubaBaglanti';
 
 export function GenelNotlar() {
   const [activeTab, setActiveTab] = useState<'truba' | 'vasp' | 'lammps' | 'vpn'>('truba');
@@ -18,7 +19,7 @@ export function GenelNotlar() {
       <div>
         <h2 className="font-serif text-2xl text-ink">Genel notlar</h2>
         <p className="text-base text-ink-2 mt-2 max-w-prose">
-          TRUBA bağlantısı, örnek VASP ve LAMMPS dosyaları, yerleşke dışı VPN.
+          TRUBA bağlantısı, örnek VASP ve LAMMPS dosyaları, kampüs dışından makale erişimi.
         </p>
       </div>
 
@@ -33,7 +34,7 @@ export function GenelNotlar() {
           }`}
         >
           <Cpu className="w-4 h-4" />
-          <span>TRUBA aktivasyonu</span>
+          <span>TRUBA bağlantısı</span>
         </button>
 
         <button
@@ -69,94 +70,71 @@ export function GenelNotlar() {
           }`}
         >
           <Network className="w-4 h-4" />
-          <span>Okul VPN ve veri tabanları</span>
+          <span>Kampüs dışı erişim</span>
         </button>
       </div>
 
       {/* SEKME 1: TRUBA */}
       {activeTab === 'truba' && (
         <div className="space-y-6">
+          <TrubaBaglanti />
+
+          {/* VASP Slurm betiği: TRUBA'nın VASP sayfasındaki örnekten, ARF kuyruk bilgisine göre uyarlandı. */}
           <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
             <h2 className="text-lg font-semibold text-ink">
-              TRUBA hesap aktivasyonu ve SSH bağlantısı
+              Örnek VASP iş betiği (barbun kuyruğu)
             </h2>
             <div className="text-sm text-ink-2 space-y-3 leading-relaxed">
               <p>
-                TRUBA hesapları grup liderimiz Prof. Dr. danışmanlığındaki araştırma projesi kapsamında tanımlanır. Hesabınız açıldıktan sonra aşağıdaki adımları izleyiniz:
+                TRUBA VASP&apos;ı hazır modül olarak vermez; VASP kendi ev dizininize derlenir (
+                <a href="https://docs.truba.gov.tr/2-temel_bilgiler/uygulamalar/Vasp/vasp_install_TRUBA.html" target="_blank" rel="noopener noreferrer" className="text-link underline">TRUBA VASP kurulumu</a>
+                ). Betikte, VASP&apos;ı derlerken kullandığınız modüller ve derlediğiniz <code className="font-mono">vasp_std</code>{' '}
+                dosyasının yolu yazılmalıdır. Köşeli parantezli yerleri kendi bilgilerinizle değiştirin.
               </p>
-              <ol className="list-decimal list-inside space-y-2 pl-2">
+              <ul className="list-disc pl-5 space-y-1">
                 <li>
-                  <strong className="text-ink">SSH anahtarı oluşturma:</strong> Terminalinizde (Linux / macOS / PowerShell) SSH anahtar çifti oluşturun:
+                  <code className="font-mono">-A</code>: TRUBA hesap adı. Genelde kullanıcı adınızdır; grup çalışmalarında farklı
+                  olabilir.
                 </li>
-              </ol>
-            </div>
-
-            <CodeBlock
-              title="SSH Anahtarı Oluşturma Komutu"
-              language="bash"
-              code={`# 4096 bit RSA veya Ed25519 anahtarı oluşturun
-ssh-keygen -t ed25519 -C "ad.soyad@ankara.edu.tr"
-
-# Oluşturulan genel anahtarı görüntüleyin ve TRUBA portalına yükleyin:
-cat ~/.ssh/id_ed25519.pub`}
-            />
-
-            <div className="text-sm text-ink-2 space-y-2">
+                <li>
+                  barbun kuyruğu: sunucu başına 40 çekirdek, en az 20 çekirdek istenmeli, en uzun süre 3 gün. Kısa denemeler için{' '}
+                  <code className="font-mono">debug</code> kuyruğu (en fazla 4 saat).
+                </li>
+              </ul>
               <p>
-                Genel anahtarınızı (public key) <a href="https://portal.truba.gov.tr" target="_blank" rel="noopener noreferrer" className="text-link underline">portal.truba.gov.tr</a> adresine giriş yaparak profilinizdeki SSH anahtarları bölümüne ekleyiniz.
+                Dosyayı hesap klasörünüzde <code className="font-mono">vasp_run.slurm</code> adıyla kaydedip{' '}
+                <code className="font-mono">sbatch vasp_run.slurm</code> ile sıraya gönderin.
               </p>
-              <p>Anahtar onaylandıktan sonra bağlantı komutu:</p>
             </div>
 
             <CodeBlock
-              title="TRUBA Kullanıcı Arayüzüne Bağlantı (172.16.7.1)"
-              language="bash"
-              code={`ssh -i ~/.ssh/id_ed25519 kullanici_adiniz@172.16.7.1`}
-            />
-          </div>
-
-          {/* Standart Barbun VASP Slurm Betiği */}
-          <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-ink">
-              Standart TRUBA Barbun VASP Slurm iş betiği
-            </h2>
-            <p className="text-sm text-ink-2">
-              Aşağıdaki Slurm betiğini hesaplama klasörünüzde <code className="font-mono">run_vasp.sh</code> adıyla kaydedip <code className="font-mono">sbatch run_vasp.sh</code> komutu ile sıraya gönderebilirsiniz:
-            </p>
-
-            <CodeBlock
-              title="run_vasp.sh (Standart HYMF Barbun Slurm Betiği)"
+              title="vasp_run.slurm"
               language="bash"
               code={`#!/bin/bash
-# ==============================================================================
-# HYMF - TRUBA Barbun Kümesi VASP Hesaplama Betiği
-# ==============================================================================
 #SBATCH -p barbun
-#SBATCH -A your_hymf_group_code
-#SBATCH -J vasp_geometry_opt
-#SBATCH -N 2
-#SBATCH -n 80
-#SBATCH --time=72:00:00
+#SBATCH -A [kullanici_adiniz]
+#SBATCH -J vasp-test
+#SBATCH -N 1
+#SBATCH -n 40
+#SBATCH --time=3-00:00:00
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
 
-echo "[HYMF] Baslama Zamani: $(date)"
-echo "[HYMF] Calisan Dugumler: $SLURM_JOB_NODELIST"
-
-# Modülleri temizle ve VASP modülünü yükle
+# VASP'ı derlerken kullandığınız modülleri yükleyin
 module purge
-module load centos7.9/comp/intel/compilers-2021.4.0
-module load centos7.9/app/vasp/6.3.2-int-mkl-mpi
+module load [derlemede_kullandiginiz_moduller]
 
-# Bellek ve iş parçacığı ayarları
-ulimit -s unlimited
 export OMP_NUM_THREADS=1
+ulimit -s unlimited
 
-# VASP Standart çalıştırıcı
-srun vasp_std > vasp.out
-
-echo "[HYMF] Bitis Zamani: $(date)"`}
+mpirun /truba/home/[kullanici_adiniz]/[vasp_klasoru]/bin/vasp_std > vasp.out`}
             />
+            <p className="text-sm text-ink-3">
+              Kaynak: TRUBA{' '}
+              <a href="https://docs.truba.gov.tr/2-temel_bilgiler/uygulamalar/Vasp/vasp_TRUBA.html" target="_blank" rel="noopener noreferrer" className="text-link underline">VASP kullanımı</a>{' '}
+              ve{' '}
+              <a href="https://docs.truba.gov.tr/1-kaynaklar/arf/arf_kuyruk_bilgisi.html" target="_blank" rel="noopener noreferrer" className="text-link underline">ARF kuyruk bilgisi</a>.
+            </p>
           </div>
         </div>
       )}
@@ -166,10 +144,14 @@ echo "[HYMF] Bitis Zamani: $(date)"`}
         <div className="space-y-6">
           <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
             <h2 className="text-lg font-semibold text-ink">
-              VASP 4 temel giriş dosyası ve INCAR şablonu
+              VASP giriş dosyaları: genel örnek
             </h2>
             <p className="text-sm text-ink-2 leading-relaxed">
               VASP çalıştırmak için çalışma dizininde 4 dosya bulunmalıdır: <strong>INCAR</strong> (hesaplama parametreleri), <strong>POSCAR</strong> (atomik koordinatlar), <strong>KPOINTS</strong> (Brillouin bölgesi örneklemesi) ve <strong>POTCAR</strong> (pseudopotansiyeller).
+            </p>
+            <p className="text-sm text-ink-2 leading-relaxed">
+              Aşağıdaki değerler genel bir başlangıç örneğidir, grubun standardı değildir. ENCUT ve k-noktası ağını kendi
+              sisteminiz için yakınsama testiyle seçin. Grubun kullandığı adımlar yukarıdaki hesap kılavuzlarındadır.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -189,22 +171,23 @@ Monkhorst-Pack
               <div className="p-4 rounded-md bg-sunken border border-line space-y-2">
                 <span className="text-sm font-semibold text-ink">POTCAR birleştirme komutu</span>
                 <CodeBlock
-                  title="POTCAR Hazırlama (Örn: Mo ve S için)"
+                  title="POTCAR hazırlama (Mo ve S örneği)"
                   language="bash"
-                  code={`cat ~/potcar_PBE/Mo_pv/POTCAR ~/potcar_PBE/S/POTCAR > POTCAR`}
+                  code={`# Klasör yolunu kendi POTCAR kütüphanenize göre değiştirin; sıra POSCAR'daki element sırasıyla aynı olmalı
+cat [potcar_klasoru]/Mo_pv/POTCAR [potcar_klasoru]/S/POTCAR > POTCAR`}
                 />
               </div>
             </div>
 
             <div className="pt-3">
               <h3 className="text-sm font-semibold text-ink mb-2">
-                Önerilen geometri optimizasyonu INCAR parametreleri
+                Örnek geometri optimizasyonu INCAR&apos;ı
               </h3>
               <CodeBlock
-                title="INCAR (Geometri Relaksasyonu)"
+                title="INCAR (geometri optimizasyonu, örnek)"
                 language="text"
-                code={`# HYMF Standart Geometri Optimizasyonu INCAR
-SYSTEM = HYMF_MoS2_Optimization
+                code={`# Örnek geometri optimizasyonu INCAR'ı
+SYSTEM = MoS2_relax
 
 # Elektronik Rahatlama
 ENCUT  = 520       # Düzlem dalga kesme enerjisi (eV)
@@ -221,7 +204,7 @@ NSW    = 200       # Maksimum iyonik adım sayısı
 EDIFFG = -0.01     # İyonik kuvvet yakınsama kriteri (-0.01 eV/Angstrom)
 
 # Performans ve Paralelleştirme
-NCORE  = 4         # Düğüm başına çekirdek dağılımı (Barbun için NCORE=4 veya 8)
+NCORE  = 4         # Bir bandı paylaşan çekirdek sayısı; performansa göre ayarlayın
 LREAL  = Auto      # Gerçek uzay projeksiyonu
 LWAVE  = .FALSE.   # WAVECAR çıktısını disk tasarrufu için kapat
 LCHARG = .TRUE.    # CHGCAR çıktısını al`}
@@ -236,16 +219,16 @@ LCHARG = .TRUE.    # CHGCAR çıktısını al`}
         <div className="space-y-6">
           <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
             <h2 className="text-lg font-semibold text-ink">
-              LAMMPS moleküler dinamik ve simülasyon kılavuzu
+              LAMMPS: genel NVT örneği
             </h2>
             <p className="text-sm text-ink-2 leading-relaxed">
-              Büyük atomik sistemlerin termal iletkenlik, difüzyon ve faz dönüşümü analizleri için LAMMPS yazılımı kullanılır.
+              Genel bir LAMMPS giriş dosyası örneği (Tersoff potansiyeliyle SiC, 300 K NVT), grubun standardı değildir. TRUBA&apos;da LAMMPS hazır modül olarak var; güncel modül adını <code className="font-mono">module avail</code> ile görün.
             </p>
 
             <CodeBlock
-              title="in.nvt (Standart NVT Termal Dengeleme Giriş Betiği)"
+              title="in.nvt (örnek NVT dengeleme)"
               language="text"
-              code={`# HYMF - LAMMPS NVT Equilibration
+              code={`# Örnek LAMMPS NVT dengeleme
 units          metal
 atom_style     atomic
 boundary       p p p
@@ -272,31 +255,43 @@ run            50000   # 50 ps`}
         </div>
       )}
 
-      {/* SEKME 4: VPN */}
+      {/* SEKME 4: Kampüs dışı erişim. Kaynak: kutuphane.ankara.edu.tr/kampus-disi-erisim ve bid.ankara.edu.tr/proxy (13 Eki 2026). */}
       {activeTab === 'vpn' && (
         <div className="space-y-6">
           <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
             <h2 className="text-lg font-semibold text-ink">
-              Ankara Üniversitesi kampüs dışı erişim
+              Kampüs dışından makale ve veri tabanı erişimi
             </h2>
             <div className="text-sm text-ink-2 space-y-3 leading-relaxed">
               <p>
-                Kampüs dışından makale indirirken (ScienceDirect, APS Physical Review, AIP, Nature, IEEE) okul IP adresinden görünmek için FortiClient VPN veya Vetis portalı kullanılır:
+                Üniversitenin abone olduğu veri tabanlarına lisans gereği yalnız Ankara Üniversitesi IP adreslerinden
+                girilebilir. Kampüs dışından iki yol var:
               </p>
-              <ul className="space-y-2 pl-2">
+              <ul className="space-y-3 pl-2">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-ok shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-ink">FortiClient SSL-VPN:</strong> Ankara Üniversitesi Bilgi İşlem Daire Başkanlığı sayfasından FortiClient yazılımını indirin. Sunucu adresi: <code className="font-mono">vpn.ankara.edu.tr</code>, bağlantı noktası: <code className="font-mono">10443</code>. Kullanıcı adı ve şifre olarak kurumsal e-posta bilgilerinizi giriniz.
+                    <strong className="text-ink">KDS ile kurumsal giriş:</strong> yayıncının sitesinde &quot;Kurumsal Giriş&quot;
+                    seçeneğinden Ankara Üniversitesi&apos;ni seçip KDS bilgilerinizle girin; proxy ayarı gerekmez. Listede
+                    ScienceDirect, AIP, ACS, IOP, Nature, SpringerLink, Wiley, Web of Science ve Scopus da var.
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-ok shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-ink">VETİS (Uzaktan kütüphane portalı):</strong> Herhangi bir yazılım kurmadan <a href="https://kutuphane.ankara.edu.tr" target="_blank" rel="noopener noreferrer" className="text-link underline">kutuphane.ankara.edu.tr</a> üzerinden VETİS sistemine giriş yaparak akademik veri tabanlarına doğrudan erişebilirsiniz.
+                    <strong className="text-ink">Proxy sunucusu:</strong> tarayıcının proxy ayarlarını yapın. Kullanıcı adı{' '}
+                    <code className="font-mono">TC-kimlik-no@ankara.edu.tr</code>, şifre KDS şifreniz. Sunucu adresi ve ayarlar{' '}
+                    <a href="https://bid.ankara.edu.tr/proxy/" target="_blank" rel="noopener noreferrer" className="text-link underline">Bilgi İşlem proxy sayfasındaki</a>{' '}
+                    Firefox kılavuzunda. İşiniz bitince proxy&apos;yi kapatmanız önerilir.
                   </div>
                 </li>
               </ul>
+              <p className="text-ink-3">
+                Kaynak ve veri tabanlarının tam listesi:{' '}
+                <a href="https://kutuphane.ankara.edu.tr/kampus-disi-erisim/" target="_blank" rel="noopener noreferrer" className="text-link underline">Kütüphane kampüs dışı erişim</a>.
+                KDS şifresi <a href="https://kds.ankara.edu.tr/" target="_blank" rel="noopener noreferrer" className="text-link underline">kds.ankara.edu.tr</a>{' '}
+                adresinden alınır ya da değiştirilir.
+              </p>
             </div>
           </div>
         </div>

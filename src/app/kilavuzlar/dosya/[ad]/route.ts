@@ -2,14 +2,14 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { getMevcutProfil } from '@/lib/auth/dal';
 import { isMember } from '@/lib/yetki';
-import { KILAVUZLAR } from '@/lib/kilavuz/liste';
+import { KILAVUZLAR, TRUBA_DOSYALARI } from '@/lib/kilavuz/liste';
 
 // Kılavuz dosyalarını yalnız onaylı üyelere verir. public/ kullanılmıyor, çünkü oradaki dosyalar
 // oturum kontrolüne uğramadan herkese açık sunulur.
 
 export async function GET(request: Request, { params }: { params: Promise<{ ad: string }> }) {
   const { ad } = await params;
-  const kayit = KILAVUZLAR.find((k) => k.dosya === ad);
+  const kayit = [...KILAVUZLAR, ...TRUBA_DOSYALARI].find((k) => k.dosya === ad);
   if (!kayit) return new Response('Bulunamadı', { status: 404 });
 
   const profil = await getMevcutProfil();
@@ -20,8 +20,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ ad: 
   }
 
   const icerik = await readFile(path.join(process.cwd(), 'icerik', 'kilavuzlar', kayit.dosya));
-  const indir = new URL(request.url).searchParams.has('indir');
-  const tip = kayit.tur === 'pdf' ? 'application/pdf' : 'text/plain; charset=utf-8';
+  const indir = kayit.tur === 'ovpn' || new URL(request.url).searchParams.has('indir');
+  const tip =
+    kayit.tur === 'pdf' ? 'application/pdf' : kayit.tur === 'ovpn' ? 'application/x-openvpn-profile' : 'text/plain; charset=utf-8';
 
   return new Response(new Uint8Array(icerik), {
     headers: {
