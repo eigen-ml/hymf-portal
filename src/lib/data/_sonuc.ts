@@ -19,7 +19,7 @@ export function hata(e: unknown): Sonuc<never> {
 
 export const YETKI_YOK = 'Bu işlem için yetkiniz yok.';
 export const BULUNAMADI_VEYA_YETKI_YOK = 'Kayıt bulunamadı ya da bu işlem için yetkiniz yok.';
-export const BOYUT_HATASI = "Dosya 25 MB'tan büyük. Büyük çıktılar için TRUBA yolunu plan maddesine yazın.";
+export const BOYUT_HATASI = "Dosya 10 MB'tan büyük. Büyük dosyaları kendi Drive klasörüne koy, bağlantısını Drive'ım sayfasına yaz.";
 export const TUR_HATASI = 'Bu dosya türü yüklenemiyor. PDF, PNG, JPEG, CSV, TXT, DOCX veya XLSX yükleyin.';
 const GENEL = 'Beklenmeyen bir hata oluştu.';
 

@@ -4,7 +4,8 @@ import { ok, hata, basarisiz, BOYUT_HATASI, TUR_HATASI, BULUNAMADI_VEYA_YETKI_YO
 import type { Sonuc } from './_sonuc';
 import { guvenliDosyaAdi } from '@/lib/calisma/hesap';
 
-export const DOSYA_SINIRI_BAYT = 26_214_400; // 25 MB
+export const DOSYA_SINIRI_BAYT = 10_485_760; // 10 MB (bucket file_size_limit ile aynı)
+export const KOTA_BAYT = 104_857_600; // 100 MB, kişi başı (public.dosya_kotasi_bayt ile aynı)
 
 export const IZINLI_MIME_TURLERI = [
   'application/pdf',

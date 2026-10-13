@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireMember } from '@/lib/auth/dal';
 import { getCalismaAlaniVerisi } from '@/lib/data/workspaces';
 import { Dosyalar } from '@/components/calisma/Dosyalar';
+import { DriveBaglantisi } from './DriveBaglantisi';
 
 export default async function DrivePage() {
   const ben = await requireMember();
@@ -36,6 +37,13 @@ export default async function DrivePage() {
         baslik="Drive'ım"
         aciklama="Kendi dosyaların. PDF'ler sitede açılır; danışmanın da görebilir."
       />
+      <Uyari tone="uyari">
+        <strong>Buraya her şeyi atma.</strong> Site depolaması bütün grup için ortak ve küçük: kişi başı
+        100 MB, dosya başına 10 MB. Burası danışmanının görmesi gereken dosyalar için (tez taslağı, sunum
+        PDF&apos;i, grafik). Hesap çıktısı ya da veri paylaşacaksan yalnız gereken kısmı .txt olarak yükle.
+        Gerisi aşağıdaki kendi Drive klasörüne.
+      </Uyari>
+      <DriveBaglantisi workspaceId={veri.workspace.id} driveUrl={veri.workspace.drive_url} />
       <Dosyalar
         workspaceId={veri.workspace.id}
         files={veri.files}

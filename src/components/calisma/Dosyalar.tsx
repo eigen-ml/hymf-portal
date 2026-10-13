@@ -6,7 +6,8 @@ import { Trash2 } from 'lucide-react';
 import type { WorkspaceFile, PlanItem } from '@/types/database';
 import type { IzleyiciBaglami } from '@/lib/yetki';
 import { dosyaYukleyebilir, dosyaSilebilir } from '@/lib/yetki';
-import { uploadFile, deleteFile, getDownloadUrl, DOSYA_SINIRI_BAYT } from '@/lib/data/files';
+import { uploadFile, deleteFile, getDownloadUrl, DOSYA_SINIRI_BAYT, KOTA_BAYT } from '@/lib/data/files';
+import { BOYUT_HATASI } from '@/lib/data/_sonuc';
 import { createClient } from '@/lib/supabase/client';
 import { kisaAd } from '@/lib/etiketler';
 import { kisaTarih, tarihSaat } from '@/lib/zaman';
@@ -82,7 +83,12 @@ export function Dosyalar({
     }
 
     if (selectedFile.size > DOSYA_SINIRI_BAYT) {
-      setError(`Dosya 25 MB'tan büyük. Büyük çıktılar için TRUBA yolunu plan maddesine yazın.`);
+      setError(BOYUT_HATASI);
+      return;
+    }
+
+    if (kullanilan + selectedFile.size > KOTA_BAYT) {
+      setError(`Yer yetmiyor: ${dosyaBoyutu(KOTA_BAYT - kullanilan)} boş. Eski dosyaları sil ya da bu dosyayı kendi Drive klasörüne koy.`);
       return;
     }
 
@@ -148,6 +154,9 @@ export function Dosyalar({
     }
   };
 
+  const kullanilan = files.reduce((t, f) => t + (f.size_bytes ?? 0), 0);
+  const doluluk = Math.min(100, Math.round((kullanilan / KOTA_BAYT) * 100));
+
   const openItems = planItems.filter((item) =>
     ['planlandi', 'devam_ediyor', 'takildi', 'incelemede'].includes(item.status),
   );
@@ -155,9 +164,31 @@ export function Dosyalar({
   return (
     <Panel
       baslik="Dosyalar"
-      aciklama="PDF, PNG, JPEG, CSV, TXT, DOCX veya XLSX, en fazla 25 MB. Büyük VASP çıktılarını yüklemeyin; TRUBA yolunu plan maddesine yazın."
+      aciklama="PDF, PNG, JPEG, CSV, TXT, DOCX veya XLSX, dosya başına en fazla 10 MB. Büyük VASP çıktılarını yüklemeyin; TRUBA yolunu plan maddesine yazın."
     >
       {error && <Uyari tone="tehlike">{error}</Uyari>}
+
+      <div className="mb-6">
+        <div className="flex justify-between text-sm text-ink-2">
+          <span>Site depolaması</span>
+          <span>
+            {kullanilan ? dosyaBoyutu(kullanilan) : '0 MB'} / {dosyaBoyutu(KOTA_BAYT)}
+          </span>
+        </div>
+        <div
+          className="mt-1.5 h-2 overflow-hidden rounded-full bg-line"
+          role="progressbar"
+          aria-label="Site depolaması doluluğu"
+          aria-valuenow={doluluk}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div
+            className={doluluk >= 90 ? 'h-full bg-danger' : doluluk >= 70 ? 'h-full bg-warn' : 'h-full bg-ink-3'}
+            style={{ width: `${doluluk}%` }}
+          />
+        </div>
+      </div>
 
       {dosyaYukleyebilir(izleyici) && (
         <form onSubmit={handleUpload} className="mb-6 border-b border-line pb-6">

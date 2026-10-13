@@ -13,7 +13,7 @@ yazar. UI kuralları `docs/DESIGN.md` dosyasındadır.
 | `gelistirici` | Danışman atanabilir. Çalışma alanı danışman atanınca açılır. Danışmansız geliştiricinin alanı yoktur. | Ata, 9 Ekim |
 | M. Kabak | `mkabak@eng.ankara.edu.tr` allowlist'e `hoca` / `uye` olarak girer. | Ata, 9 Ekim (adres grup sitesinde açık) |
 | Drive | Her çalışma alanında `drive_url` alanı olur (paylaşılan Google Drive klasör bağlantısı). Gerçek Drive API entegrasyonu yok. | Ata'nın "drive da olsun" isteği |
-| Dosyalar | Supabase Storage, private bucket `workspace-files`, ≤ 25 MB. VASP büyük çıktıları yüklenmez, `truba_ref` alanına yol/iş no yazılır. | Görev §2a |
+| Dosyalar | Supabase Storage, private bucket `workspace-files`, dosya ≤ 10 MB, kişi başı 100 MB (20261015000000_dosya_kotasi). Büyükler kişinin kendi Drive klasörüne (`drive_url`, Drive'ım sayfası). VASP büyük çıktıları yüklenmez, `truba_ref` alanına yol/iş no yazılır. | Görev §2a |
 | `truba_ref` | Öğrenci, danışmanın eklediği maddede `status` dışında `truba_ref` alanını da değiştirebilir. Görevde yalnız `status` yazıyor, ama TRUBA yolunu işi koşan öğrenci girer. **Açık soru olarak PR'da.** | Orkestratör |
 | Hoca kadrosu | `kadro`'yu `hoca`'ya çevirmek veya `hoca`'dan çıkarmak, `hoca` kadrolu birini onaylamak ve `hoca`/admin içeren davet eklemek **yalnız superadmin**. Aksi hâlde admin kendini (veya bir arkadaşını) hoca yapıp danışman atayarak plan görebilirdi. | Orkestratör (görünürlük kuralının gereği) |
 | Kendi kadrosu | Superadmin dışında kimse kendi kadrosunu değiştiremez. | Orkestratör |
@@ -446,7 +446,7 @@ updateProgressUpdate(sb, id: string, body: string): Promise<Sonuc<ProgressUpdate
 deleteProgressUpdate(sb, id: string): Promise<Sonuc<null>>
 
 // files.ts
-DOSYA_SINIRI_BAYT = 26_214_400; IZINLI_MIME_TURLERI: readonly string[]
+DOSYA_SINIRI_BAYT = 10_485_760; KOTA_BAYT = 104_857_600; IZINLI_MIME_TURLERI: readonly string[]
 listFiles(sb, workspaceId: string): Promise<Sonuc<WorkspaceFile[]>>
 uploadFile(sb, input: { workspaceId: string; file: File; planItemId?: string | null; notes?: string | null }): Promise<Sonuc<WorkspaceFile>>
 getDownloadUrl(sb, storagePath: string): Promise<Sonuc<string>>   // 60 sn signed URL
