@@ -151,10 +151,13 @@ export function uyelikLogMetni(log: Pick<UyelikLog, 'action' | 'details' | 'targ
   }
 }
 
-/** "Yeşim Moğulkoç" → "Y. Moğulkoç" */
+/** "Prof. Dr. Yeşim Moğulkoç" → "Y. Moğulkoç" (unvanlar ve noktalı kısaltmalar atlanır) */
 export function kisaAd(fullName: string): string {
-  const parcalar = fullName.trim().split(/\s+/);
-  if (parcalar.length < 2) return fullName;
+  const parcalar = fullName
+    .trim()
+    .split(/\s+/)
+    .filter((p) => p.length > 0 && !p.endsWith('.') && p.toLocaleLowerCase('tr') !== 'üyesi');
+  if (parcalar.length < 2) return parcalar[0] ?? fullName.trim();
   const soyad = parcalar[parcalar.length - 1];
   return `${parcalar[0].charAt(0)}. ${soyad}`;
 }
