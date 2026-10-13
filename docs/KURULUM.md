@@ -61,6 +61,10 @@ SQL Editor'de yapın.
   Yalnız sunucuda, `src/lib/supabase/admin.ts` içinde ve davet satırı yöneticinin kendi oturumuyla
   yazıldıktan sonra kullanılır. Değeri Supabase → Settings → API Keys → `service_role`.
   `NEXT_PUBLIC_` önekiyle ASLA eklemeyin.
+- `VASP_PAKET_URL` (production + preview): lisanslı VASP paketinin Drive klasör bağlantısı. Yalnız
+  sunucuda okunur, `/kilavuzlar` → TRUBA bağlantısı → "VASP'ı kendi hesabına kurma" kartındaki indirme
+  düğmesine gider (sayfa yalnız üyelere açık). Repoya yazılmaz; tanımsızsa düğmenin yerinde "Paket
+  bağlantısı henüz eklenmedi" notu çıkar. Kılavuzun kodu `src/app/kilavuzlar/TrubaBaglanti.tsx`.
 - `TELEGRAM_BOT_TOKEN` ve `TELEGRAM_CHAT_ID` yalnız **Production**'da. Duyurular ve grup toplantısı
   bildirimleri (ekleme, saat/yer değişikliği, iptal) bununla gider. Tanımlı olmayan ortamda (yerel,
   preview) gönderim atlanır ve yalnız loglanır.

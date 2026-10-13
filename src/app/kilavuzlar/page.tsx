@@ -8,6 +8,9 @@ import { GenelNotlar } from './GenelNotlar';
 export default async function Page() {
   await requireMember();
 
+  // Lisanslı VASP paketinin Drive bağlantısı repoda durmaz; Vercel'de VASP_PAKET_URL. Sayfa yalnız üyelere açık.
+  const vaspPaketUrl = process.env.VASP_PAKET_URL?.trim();
+
   const pdfler = KILAVUZLAR.filter((k) => k.tur === 'pdf');
   const veriler = KILAVUZLAR.filter((k) => k.tur === 'veri');
 
@@ -60,7 +63,7 @@ export default async function Page() {
         </Panel>
       )}
 
-      <GenelNotlar />
+      <GenelNotlar vaspPaketUrl={vaspPaketUrl?.startsWith('https://') ? vaspPaketUrl : undefined} />
     </div>
   );
 }

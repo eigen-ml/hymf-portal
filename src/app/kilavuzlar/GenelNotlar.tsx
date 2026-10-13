@@ -9,9 +9,10 @@ import {
   Network,
 } from 'lucide-react';
 import { CodeBlock } from '@/components/CodeBlock';
+import { KullaniciAdiSaglayici } from './KullaniciAdi';
 import { TrubaBaglanti } from './TrubaBaglanti';
 
-export function GenelNotlar() {
+export function GenelNotlar({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
   const [activeTab, setActiveTab] = useState<'truba' | 'vasp' | 'lammps' | 'vpn'>('truba');
 
   return (
@@ -76,41 +77,42 @@ export function GenelNotlar() {
 
       {/* SEKME 1: TRUBA */}
       {activeTab === 'truba' && (
-        <div className="space-y-6">
-          <TrubaBaglanti />
+        <KullaniciAdiSaglayici>
+          <div className="space-y-6">
+            <TrubaBaglanti vaspPaketUrl={vaspPaketUrl} />
 
-          {/* VASP Slurm betiği: TRUBA'nın VASP sayfasındaki örnekten, ARF kuyruk bilgisine göre uyarlandı. */}
-          <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-ink">
-              Örnek VASP iş betiği (barbun kuyruğu)
-            </h2>
-            <div className="text-sm text-ink-2 space-y-3 leading-relaxed">
-              <p>
-                TRUBA VASP&apos;ı hazır modül olarak vermez; VASP kendi ev dizininize derlenir (
-                <a href="https://docs.truba.gov.tr/2-temel_bilgiler/uygulamalar/Vasp/vasp_install_TRUBA.html" target="_blank" rel="noopener noreferrer" className="text-link underline">TRUBA VASP kurulumu</a>
-                ). Betikte, VASP&apos;ı derlerken kullandığınız modüller ve derlediğiniz <code className="font-mono">vasp_std</code>{' '}
-                dosyasının yolu yazılmalıdır. Köşeli parantezli yerleri kendi bilgilerinizle değiştirin.
-              </p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>
-                  <code className="font-mono">-A</code>: TRUBA hesap adı. Genelde kullanıcı adınızdır; grup çalışmalarında farklı
-                  olabilir.
-                </li>
-                <li>
-                  barbun kuyruğu: sunucu başına 40 çekirdek, en az 20 çekirdek istenmeli, en uzun süre 3 gün. Kısa denemeler için{' '}
-                  <code className="font-mono">debug</code> kuyruğu (en fazla 4 saat).
-                </li>
-              </ul>
-              <p>
-                Dosyayı hesap klasörünüzde <code className="font-mono">vasp_run.slurm</code> adıyla kaydedip{' '}
-                <code className="font-mono">sbatch vasp_run.slurm</code> ile sıraya gönderin.
-              </p>
-            </div>
+            {/* VASP Slurm betiği: TRUBA'nın VASP sayfasındaki örnekten, ARF kuyruk bilgisine göre uyarlandı. */}
+            <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
+              <h2 className="text-lg font-semibold text-ink">
+                Örnek VASP iş betiği (barbun kuyruğu)
+              </h2>
+              <div className="text-sm text-ink-2 space-y-3 leading-relaxed">
+                <p>
+                  TRUBA VASP&apos;ı hazır modül olarak vermez; VASP kendi ev dizininize derlenir (
+                  <a href="https://docs.truba.gov.tr/2-temel_bilgiler/uygulamalar/Vasp/vasp_install_TRUBA.html" target="_blank" rel="noopener noreferrer" className="text-link underline">TRUBA VASP kurulumu</a>
+                  ). Betikte, VASP&apos;ı derlerken kullandığınız modüller ve derlediğiniz <code className="font-mono">vasp_std</code>{' '}
+                  dosyasının yolu yazılmalıdır. Köşeli parantezli yerleri kendi bilgilerinizle değiştirin.
+                </p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>
+                    <code className="font-mono">-A</code>: TRUBA hesap adı. Genelde kullanıcı adınızdır; grup çalışmalarında farklı
+                    olabilir.
+                  </li>
+                  <li>
+                    barbun kuyruğu: sunucu başına 40 çekirdek, en az 20 çekirdek istenmeli, en uzun süre 3 gün. Kısa denemeler için{' '}
+                    <code className="font-mono">debug</code> kuyruğu (en fazla 4 saat).
+                  </li>
+                </ul>
+                <p>
+                  Dosyayı hesap klasörünüzde <code className="font-mono">vasp_run.slurm</code> adıyla kaydedip{' '}
+                  <code className="font-mono">sbatch vasp_run.slurm</code> ile sıraya gönderin.
+                </p>
+              </div>
 
-            <CodeBlock
-              title="vasp_run.slurm"
-              language="bash"
-              code={`#!/bin/bash
+              <CodeBlock
+                title="vasp_run.slurm"
+                language="bash"
+                code={`#!/bin/bash
 #SBATCH -p barbun
 #SBATCH -A [kullanici_adiniz]
 #SBATCH -J vasp-test
@@ -128,15 +130,16 @@ export OMP_NUM_THREADS=1
 ulimit -s unlimited
 
 mpirun /truba/home/[kullanici_adiniz]/[vasp_klasoru]/bin/vasp_std > vasp.out`}
-            />
-            <p className="text-sm text-ink-3">
-              Kaynak: TRUBA{' '}
-              <a href="https://docs.truba.gov.tr/2-temel_bilgiler/uygulamalar/Vasp/vasp_TRUBA.html" target="_blank" rel="noopener noreferrer" className="text-link underline">VASP kullanımı</a>{' '}
-              ve{' '}
-              <a href="https://docs.truba.gov.tr/1-kaynaklar/arf/arf_kuyruk_bilgisi.html" target="_blank" rel="noopener noreferrer" className="text-link underline">ARF kuyruk bilgisi</a>.
-            </p>
+              />
+              <p className="text-sm text-ink-3">
+                Kaynak: TRUBA{' '}
+                <a href="https://docs.truba.gov.tr/2-temel_bilgiler/uygulamalar/Vasp/vasp_TRUBA.html" target="_blank" rel="noopener noreferrer" className="text-link underline">VASP kullanımı</a>{' '}
+                ve{' '}
+                <a href="https://docs.truba.gov.tr/1-kaynaklar/arf/arf_kuyruk_bilgisi.html" target="_blank" rel="noopener noreferrer" className="text-link underline">ARF kuyruk bilgisi</a>.
+              </p>
+            </div>
           </div>
-        </div>
+        </KullaniciAdiSaglayici>
       )}
 
       {/* SEKME 2: VASP */}

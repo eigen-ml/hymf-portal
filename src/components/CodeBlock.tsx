@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Check, Copy, Terminal } from 'lucide-react';
+import { useDoldur } from './KodDegiskenleri';
 
 interface CodeBlockProps {
   code: string;
@@ -9,8 +10,10 @@ interface CodeBlockProps {
   title?: string;
 }
 
-export function CodeBlock({ code, language = 'bash', title }: CodeBlockProps) {
+export function CodeBlock({ code: hamKod, language = 'bash', title }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
+  // Yer tutucular (ör. kullanici_adiniz) sayfada girilen değerle dolar; kopyalanan da dolmuş hâlidir.
+  const code = useDoldur()(hamKod);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
