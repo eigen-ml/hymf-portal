@@ -46,7 +46,7 @@ const SUNUCULAR: { ad: string; ip: string; not: React.ReactNode }[] = [
   { ad: 'arf-ui5', ip: '172.16.6.15', not: 'dosya aktarımı için önerilir' },
 ];
 
-// Adım 7: tek seferde yapıştırılır, yalnız dosya oluşturur. $USER TRUBA'da kendiliğinden kullanıcı adı olur.
+// Adım 9 (test dosyaları): tek seferde yapıştırılır, yalnız dosya oluşturur. $USER TRUBA'da kendiliğinden kullanıcı adı olur.
 const TEST_HAZIRLA = `cd /arf/scratch/$USER && mkdir -p test_si && cd test_si && pwd
 cp ../pseudoPOT/PP_GGA/Si/POTCAR .
 cat > POSCAR <<'EOF'
@@ -155,7 +155,7 @@ const KOMUTLAR: { komut: string; ne: string; nerede: 'TRUBA' | 'Bilgisayarınız
   { komut: 'module list', ne: 'Yüklü modüller', nerede: 'TRUBA' },
   { komut: 'exit', ne: 'TRUBA’dan çık (VPN açık kalır)', nerede: 'TRUBA' },
   { komut: 'ssh kullanici_adiniz@172.16.6.12', ne: 'TRUBA’ya bağlan', nerede: 'Bilgisayarınız' },
-  { komut: 'scp', ne: 'Dosya gönder (Adım 3) ya da çek (Adım 10); klasör için -r', nerede: 'Bilgisayarınız' },
+  { komut: 'scp', ne: 'Dosya gönder (adım 6) ya da çek (adım 12); klasör için -r', nerede: 'Bilgisayarınız' },
 ];
 
 function Dis({ href, children }: { href: string; children: React.ReactNode }) {
@@ -167,16 +167,25 @@ function Dis({ href, children }: { href: string; children: React.ReactNode }) {
   );
 }
 
-function Adimlar({ children }: { children: React.ReactNode }) {
-  return <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-ink-2 marker:text-ink-3">{children}</ol>;
-}
-
 function Kart({ baslik, id, children }: { baslik: string; id?: string; children: React.ReactNode }) {
   return (
-    <div id={id} className="scroll-mt-24 space-y-4 rounded-lg border border-line bg-surface p-6">
+    <div id={id} className="scroll-mt-24 space-y-4 rounded-lg border border-line bg-surface p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-ink">{baslik}</h2>
       {children}
     </div>
+  );
+}
+
+// Varsayılan kapalı ek bilgi: kurulumu yapan kişinin önünü kesmesin.
+function Ek({ baslik, children }: { baslik: string; children: React.ReactNode }) {
+  return (
+    <details className="group rounded-lg border border-line bg-surface">
+      <summary className="cursor-pointer list-none px-6 py-4 text-base font-semibold text-ink marker:hidden">
+        <span className="mr-2 inline-block text-ink-3 transition group-open:rotate-90">›</span>
+        {baslik}
+      </summary>
+      <div className="space-y-4 border-t border-line px-6 py-5">{children}</div>
+    </details>
   );
 }
 
@@ -194,26 +203,63 @@ function Pencere({ truba }: { truba?: boolean }) {
 
 function Gormeli({ children }: { children: React.ReactNode }) {
   return (
-    <p>
+    <p className="rounded-md bg-sunken px-3 py-2">
       <strong className="text-ink">Görmen gereken:</strong> {children}
     </p>
   );
 }
 
-function AdimBasligi({ no, baslik, truba }: { no: number; baslik: string; truba?: boolean }) {
+// Kurulumun sırası. Başlıklar kısa; yol haritası ve adım başlıkları buradan gelir.
+const ADIMLAR = [
+  { id: 'hesap', baslik: 'TRUBA hesabı al' },
+  { id: 'openvpn', baslik: "OpenVPN'i kur" },
+  { id: 'vpn', baslik: "VPN'e bağlan" },
+  { id: 'paket', baslik: 'VASP paketini indir' },
+  { id: 'terminal', baslik: 'Terminali aç' },
+  { id: 'gonder', baslik: "Paketi TRUBA'ya gönder" },
+  { id: 'gir', baslik: "TRUBA'ya gir" },
+  { id: 'ac', baslik: 'Paketi aç' },
+  { id: 'test', baslik: 'Test dosyalarını oluştur' },
+  { id: 'calistir', baslik: 'Testi çalıştır' },
+  { id: 'sonuc', baslik: 'Sonuca bak' },
+  { id: 'indir', baslik: 'Sonucu bilgisayarına al' },
+] as const;
+
+type AdimId = (typeof ADIMLAR)[number]['id'];
+
+function Adim({ id, truba, children }: { id: AdimId; truba?: boolean; children: React.ReactNode }) {
+  const no = ADIMLAR.findIndex((a) => a.id === id) + 1;
+  const { baslik } = ADIMLAR[no - 1];
   return (
-    <h3 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-ink">
-      <span>
-        Adım {no}: {baslik}
-      </span>
-      <Pencere truba={truba} />
-    </h3>
+    <li id={`adim-${id}`} className="scroll-mt-24 border-t border-line pt-6 first:border-0 first:pt-0">
+      <h3 className="flex items-start gap-3 text-base font-semibold text-ink">
+        <span
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-on-primary"
+          aria-hidden="true"
+        >
+          {no}
+        </span>
+        <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+          <span>
+            <span className="sr-only">Adım {no}: </span>
+            {baslik}
+          </span>
+          <Pencere truba={truba} />
+        </span>
+      </h3>
+      {/* Telefonda gövde tam genişlikte; geniş ekranda numaranın hizasından başlar. */}
+      <div className="mt-3 min-w-0 space-y-3 text-sm leading-relaxed text-ink-2 sm:pl-11">{children}</div>
+    </li>
   );
+}
+
+function Liste({ children }: { children: React.ReactNode }) {
+  return <ol className="list-[lower-alpha] space-y-2 pl-5 marker:text-ink-3">{children}</ol>;
 }
 
 function SistemSekmeleri({ sistem, sec }: { sistem: Sistem; sec: (s: Sistem) => void }) {
   return (
-    <div className="mb-4 flex gap-1 rounded-md border border-line bg-sunken p-1 sm:inline-flex" role="tablist">
+    <div className="flex gap-1 rounded-md border border-line bg-sunken p-1 sm:inline-flex" role="tablist">
       {SISTEMLER.map((s) => (
         <button
           key={s.id}
@@ -231,6 +277,16 @@ function SistemSekmeleri({ sistem, sec }: { sistem: Sistem; sec: (s: Sistem) => 
   );
 }
 
+function OvpnIndir({ dosya }: { dosya: string }) {
+  const d = TRUBA_DOSYALARI.find((x) => x.dosya === dosya)!;
+  return (
+    <a href={`/kilavuzlar/dosya/${d.dosya}`} download={d.dosya} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+      <Download className="size-4" aria-hidden="true" />
+      {d.dosya} indir
+    </a>
+  );
+}
+
 export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
   const [sistem, setSistem] = useState<Sistem>('mac');
   const secili = SISTEMLER.find((s) => s.id === sistem)!;
@@ -239,168 +295,452 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
 
   return (
     <div className="space-y-6">
-      <KullaniciAdiKutusu />
-
-      <Kart baslik="TRUBA'ya bağlanma" id="truba-baglanti">
-        <div className="space-y-3 text-sm leading-relaxed text-ink-2">
-          <p>
-            Bağlantı iki adımdır: önce <strong className="text-ink">OpenVPN</strong> ile TRUBA ağına girersiniz, sonra{' '}
-            <strong className="text-ink">SSH</strong> ile kullanıcı arayüzü sunucusuna bağlanırsınız. İkisinde de aynı TRUBA
-            kullanıcı adı ve şifresi kullanılır. TRUBA&apos;ya göre OpenVPN, ULAKNET (okul ağı) içinde olsanız da gereklidir.
-          </p>
-          <p>
-            Hesabınız yoksa başvuru{' '}
-            <Dis href={`${TRUBA_DOCS}/0-truba/kullanici_basvurulari.html`}>TRUBA kullanıcı başvurusu</Dis> sayfasından
-            yapılır. TRUBA hesabı kişiye özeldir, başkasıyla paylaşılırsa erişim kapatılır.
-          </p>
+      <Kart baslik="Başlamadan önce">
+        <p className="text-sm leading-relaxed text-ink-2">
+          Aşağıdaki adımları yukarıdan aşağıya, sırayla yap. Linux bilmen gerekmiyor: gri kutulardaki komutu{' '}
+          <strong className="text-ink">Kopyala</strong> ile al, söylenen pencereye yapıştır, <strong className="text-ink">Enter</strong>
+          &apos;a bas. Her adımın sonunda ne görmen gerektiği yazıyor; görmezsen sonraki adıma geçme, aşağıdaki{' '}
+          <a href="#sorun-giderme" className="text-link underline">Sorun giderme</a>&apos;ye bak.
+        </p>
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-ink">Bilgisayarın</p>
+          <SistemSekmeleri sistem={sistem} sec={setSistem} />
         </div>
-
-        <div>
-          <h3 className="mb-2 text-sm font-semibold text-ink">1. OpenVPN yapılandırma dosyaları</h3>
-          <ul className="divide-y divide-line rounded-md border border-line">
-            {TRUBA_DOSYALARI.map((d) => (
-              <li key={d.dosya} className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="font-mono text-sm font-semibold text-ink">{d.dosya}</p>
-                  <p className="mt-0.5 text-sm text-ink-2">{d.aciklama}</p>
-                </div>
-                <a href={`/kilavuzlar/dosya/${d.dosya}`} download={d.dosya} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
-                  <Download className="size-4" aria-hidden="true" />
-                  İndir
+        <KullaniciAdiKutusu />
+        <nav aria-label="Kurulum adımları" className="rounded-md border border-line bg-sunken p-4">
+          <ol className="grid list-decimal gap-x-8 gap-y-1 pl-5 text-sm text-ink-2 marker:text-ink-3 sm:grid-cols-2">
+            {ADIMLAR.map((a) => (
+              <li key={a.id}>
+                <a href={`#adim-${a.id}`} className="hover:text-link hover:underline">
+                  {a.baslik}
                 </a>
               </li>
             ))}
-          </ul>
-          <p className="mt-2 text-sm text-ink-3">
-            Kaydedilen dosyanın adı <Kod>.ovpn</Kod> ile bitmeli; bazı tarayıcılar sonuna <Kod>.txt</Kod> ekler, eklediyse
-            silin. Dosyalar TRUBA&apos;nın{' '}
-            <Dis href={`${TRUBA_DOCS}/2-temel_bilgiler/openvpn_installation/openvpn_info.html`}>OpenVPN sayfasından</Dis>{' '}
-            alındı; bağlanamazsanız güncel hâlini oradan indirin.
-          </p>
-        </div>
-
-        <div>
-          <h3 className="mb-2 text-sm font-semibold text-ink">2. Kurulum ve bağlantı</h3>
-          <SistemSekmeleri sistem={sistem} sec={setSistem} />
-
-          {sistem === 'mac' && (
-            <Adimlar>
-              <li>
-                <Dis href="https://openvpn.net/">openvpn.net</Dis> sayfasında <em>Apps</em> sekmesinden{' '}
-                <strong className="text-ink">OpenVPN Connect</strong>&apos;e girin, <em>Download OpenVPN Connect for Mac</em> ile
-                indirin ve <Kod>.dmg</Kod> dosyasını açıp kurun. Daha önce kurulu bir OpenVPN varsa sürümü 2.4.0&apos;dan yeni
-                olmalı; eski sürümler bağlanamaz.
-              </li>
-              <li>
-                Yukarıdan <Kod>TRUBA-ios.ovpn</Kod> dosyasını indirin. TRUBA&apos;ya göre bu dosya bazı sürümlerde sorun
-                çıkarabilir; öyle olursa <Kod>TRUBA-genel.ovpn</Kod>&apos;u kullanın.
-              </li>
-              <li>Dosyayı OpenVPN Connect uygulamasının içine sürükleyin.</li>
-              <li>Açılan menüde TRUBA kullanıcı adınızı ve şifrenizi girip bağlanın.</li>
-              <li>
-                Bağlantı kurulunca <strong className="text-ink">Terminal</strong>&apos;i açın ve bağlanın. İlk bağlantıda
-                sunucuyu onaylamanız istenir, <Kod>yes</Kod> yazın. Şifre yazılırken ekranda görünmez, bu normaldir.
-                <CodeBlock title="SSH bağlantısı" language="bash" code="ssh kullanici_adiniz@172.16.6.12" />
-              </li>
-            </Adimlar>
-          )}
-
-          {sistem === 'windows' && (
-            <Adimlar>
-              <li>
-                <Dis href="https://openvpn.net/">openvpn.net</Dis> sayfasında sağ üstten <em>Community → Downloads</em>&apos;a
-                girin ve Windows sürümünüze uygun installer&apos;ı (ör. <em>Windows 64-bit MSI installer</em>) indirin. Dosyayı
-                çalıştırıp <em>Install Now</em>&apos;a basın, izin sorusuna <em>Evet</em> deyin. Kurulum bitince{' '}
-                <em>Close</em>&apos;a basın; masaüstünde <em>OpenVPN GUI</em> simgesi çıkar. Daha önce kurulu bir OpenVPN varsa
-                sürümü 2.4.0&apos;dan yeni olmalı.
-              </li>
-              <li>
-                Yukarıdan <Kod>TRUBA-genel.ovpn</Kod> dosyasını indirin. Adı <Kod>.txt</Kod> ile bittiyse uzantıyı{' '}
-                <Kod>.ovpn</Kod> yapın.
-              </li>
-              <li>
-                <em>OpenVPN GUI</em>&apos;yi çift tıklayarak açın; sağ altta saatin yanında OpenVPN simgesi belirir. Simgeye sağ
-                tıklayıp <em>Import file</em>&apos;ı seçin ve indirdiğiniz <Kod>TRUBA-genel.ovpn</Kod>&apos;u gösterin.{' '}
-                <em>File imported successfully</em> yazısı çıkmalı.
-              </li>
-              <li>Simgeye sağ tıklayıp bağlanın; TRUBA kullanıcı adınızı ve şifrenizi girin.</li>
-              <li>
-                Bağlantı kurulunca <strong className="text-ink">PowerShell</strong>&apos;i açın ve bağlanın. İlk bağlantıda{' '}
-                <Kod>yes</Kod> yazın; şifre yazılırken görünmez.
-                <CodeBlock title="SSH bağlantısı (PowerShell)" language="powershell" code="ssh kullanici_adiniz@172.16.6.12" />
-                Windows 10 (1803 ve sonrası) <Kod>ssh</Kod> komutuyla gelir; <Kod>ssh -V</Kod> ile kontrol edin. Yoksa{' '}
-                <em>Ayarlar → Uygulamalar → İsteğe Bağlı Özellikler</em>&apos;de <em>OpenSSH Client</em>&apos;ı{' '}
-                <em>Özellik ekle</em> ile yükleyin. PuTTY ve MobaXterm de kullanılabilir.
-              </li>
-            </Adimlar>
-          )}
-
-          {sistem === 'linux' && (
-            <Adimlar>
-              <li>
-                OpenVPN&apos;i kurun:
-                <CodeBlock title="OpenVPN kurulumu" language="bash" code="sudo apt-get install openvpn" />
-              </li>
-              <li>
-                Yukarıdan <Kod>TRUBA-genel.ovpn</Kod> dosyasını indirin, dosyanın bulunduğu klasörde terminal açıp çalıştırın.
-                Kullanıcı adı ve şifre sorulur.
-                <CodeBlock title="VPN bağlantısı" language="bash" code="sudo openvpn TRUBA-genel.ovpn" />
-                Bu terminali kapatmayın; kapatırsanız VPN bağlantısı kesilir.
-              </li>
-              <li>
-                Yeni bir terminal açıp bağlanın:
-                <CodeBlock title="SSH bağlantısı" language="bash" code="ssh kullanici_adiniz@172.16.6.12" />
-              </li>
-            </Adimlar>
-          )}
-
-          <p className="mt-3 text-sm text-ink-3">
-            Kaynak: TRUBA <Dis href={`${TRUBA_DOCS}/${secili.kaynak}`}>{secili.ad} kılavuzu</Dis> ve{' '}
-            <Dis href={`${TRUBA_DOCS}/2-temel_bilgiler/ssh_baglanti/index.html`}>SSH bağlantısı</Dis>.
-          </p>
-        </div>
+          </ol>
+        </nav>
       </Kart>
 
-      <div className="space-y-4">
-        <Uyari tone="uyari" baslik="Kurallar">
-          <ol className="mt-1 list-decimal space-y-2 pl-5">
-            <li>
-              <strong>Hesap kişiye özel.</strong> Kendi kullanıcı adınla gir, şifreni kimseyle paylaşma, başkasının hesabıyla
-              girme. TRUBA başkasının hesabını kullananın hesabını kapatır (
-              <Dis href={KURALLAR}>Kullanım Kuralları</Dis>).
-            </li>
-            <li>
-              <strong>Her şey scratch&apos;te çalışır, home&apos;da hiçbir şey çalıştırılmaz.</strong> Çalışma klasörün{' '}
-              <Kod>/arf/scratch/kullanici_adiniz</Kod>. Home (<Kod>/arf/home/kullanici_adiniz</Kod>) yalnız saklamak içindir.
-              Sonuçları scratch&apos;ten bilgisayarına ya da home&apos;a çek; TRUBA scratch&apos;teki dosyaları en fazla 30 gün
-              tutar ve kendiliğinden siler, yedek de almaz (<Dis href={DEPOLAMA}>Dosya Sistemleri ve Depolama</Dis>).
-            </li>
-            <li>
-              <strong>Arayüz sunucusunda (girdiğin <Kod>arf-ui2</Kod>) hesap yapılmaz.</strong> Her hesap <Kod>sbatch</Kod> ile
-              kuyruğa gönderilir; arayüzde uzun ya da ağır çalışan işleri TRUBA sonlandırır, ısrar edenin hesabını askıya alır (
-              <Dis href={SSS}>Sıkça Sorulan Sorular</Dis>). Başkasının iş betiğini kopyalarsan <Kod>#SBATCH -A</Kod> (hesap
-              adı), <Kod>-p</Kod> (kuyruk) ve program yolunu mutlaka kendine göre değiştir.
-            </li>
-          </ol>
-        </Uyari>
+      <Kart baslik="TRUBA ve VASP kurulumu" id="vasp-kurulum">
+        <Denendi />
+        <ol className="space-y-6">
+          <Adim id="hesap">
+            <p>
+              Hesabın varsa bu adımı geç. Yoksa <Dis href={`${TRUBA_DOCS}/0-truba/kullanici_basvurulari.html`}>TRUBA kullanıcı
+              başvurusu</Dis> sayfasından başvur. Hesap kişiye özeldir; şifreni kimseyle paylaşma, başkasının hesabıyla girme.
+            </p>
+            <p>Hesap açılınca kullanıcı adını yukarıdaki kutuya yaz; sayfadaki komutlar ona göre dolar.</p>
+          </Adim>
 
-        <div className="space-y-2 rounded-md border border-line bg-sunken p-4 text-sm leading-relaxed text-ink-2">
-          <p className="font-semibold text-ink">Hangi penceredeyim?</p>
-          <p>
-            Satırın başı <Kod>[kullanici_adiniz@arf-ui2 ~]$</Kod> ise TRUBA&apos;dasın; <Kod>...MacBook... %</Kod>,{' '}
-            <Kod>{'PS C:\\Users\\...>'}</Kod> gibi bir şey ise kendi bilgisayarındasın.
-          </p>
-          <p>
-            <Kod>command not found: sinfo</Kod> ya da <Kod>no such file or directory: /arf/...</Kod> görüyorsan komutu kendi
-            bilgisayarına yazmışsın demektir.
-          </p>
+          <Adim id="openvpn">
+            <p>
+              TRUBA&apos;ya yalnız OpenVPN açıkken ulaşılır, okul ağındayken de. Bu bir kez kurulur.
+            </p>
+            {sistem === 'mac' && (
+              <Liste>
+                <li>
+                  <Dis href="https://openvpn.net/">openvpn.net</Dis> sayfasında <em>Apps</em> sekmesinden{' '}
+                  <strong className="text-ink">OpenVPN Connect</strong>&apos;e gir, <em>Download OpenVPN Connect for Mac</em> ile
+                  indir, <Kod>.dmg</Kod> dosyasını açıp kur.
+                </li>
+                <li>
+                  TRUBA dosyasını indir: <OvpnIndir dosya="TRUBA-ios.ovpn" />
+                </li>
+                <li>İndirdiğin dosyayı OpenVPN Connect penceresinin içine sürükle.</li>
+              </Liste>
+            )}
+            {sistem === 'windows' && (
+              <Liste>
+                <li>
+                  <Dis href="https://openvpn.net/">openvpn.net</Dis> sayfasında sağ üstten <em>Community → Downloads</em>&apos;a gir,{' '}
+                  <em>Windows 64-bit MSI installer</em>&apos;ı indir. Çalıştırıp <em>Install Now</em>&apos;a bas, izin sorusuna{' '}
+                  <em>Evet</em> de, bitince <em>Close</em>. Masaüstünde <em>OpenVPN GUI</em> simgesi çıkar.
+                </li>
+                <li>
+                  TRUBA dosyasını indir: <OvpnIndir dosya="TRUBA-genel.ovpn" />
+                </li>
+                <li>
+                  <em>OpenVPN GUI</em>&apos;yi çift tıklayıp aç; sağ altta saatin yanında simgesi belirir. Simgeye sağ tıkla,{' '}
+                  <em>Import file</em>&apos;ı seç ve indirdiğin dosyayı göster.
+                </li>
+              </Liste>
+            )}
+            {sistem === 'linux' && (
+              <Liste>
+                <li>
+                  Terminal&apos;de OpenVPN&apos;i kur:
+                  <CodeBlock title="OpenVPN kurulumu" language="bash" code="sudo apt-get install openvpn" />
+                </li>
+                <li>
+                  TRUBA dosyasını indir: <OvpnIndir dosya="TRUBA-genel.ovpn" />
+                </li>
+              </Liste>
+            )}
+            <p className="text-ink-3">
+              Dosyanın adı <Kod>.ovpn</Kod> ile bitmeli; tarayıcı sonuna <Kod>.txt</Kod> eklediyse sil. Daha önce kurulu eski bir
+              OpenVPN varsa sürümü 2.4.0&apos;dan yeni olmalı. Kaynak: TRUBA{' '}
+              <Dis href={`${TRUBA_DOCS}/${secili.kaynak}`}>{secili.ad} kılavuzu</Dis>.
+            </p>
+          </Adim>
+
+          <Adim id="vpn">
+            {sistem === 'mac' && <p>OpenVPN Connect&apos;te TRUBA profilini aç, TRUBA kullanıcı adını ve şifreni girip bağlan.</p>}
+            {sistem === 'windows' && (
+              <p>Saatin yanındaki OpenVPN simgesine sağ tıkla, bağlan; TRUBA kullanıcı adını ve şifreni gir.</p>
+            )}
+            {sistem === 'linux' && (
+              <>
+                <p>İndirdiğin dosyanın olduğu klasörde terminal aç ve çalıştır; kullanıcı adı ve şifre sorulur:</p>
+                <CodeBlock title="VPN bağlantısı" language="bash" code="sudo openvpn TRUBA-genel.ovpn" />
+                <p>Bu terminali kapatma, kapatırsan VPN kesilir.</p>
+              </>
+            )}
+            <Gormeli>
+              &quot;Connected&quot; (bağlandı). Kafe, yurt ya da okul Wi-Fi&apos;ında bağlanmazsa telefonundan hotspot açıp dene.
+            </Gormeli>
+            <p>Sonraki her TRUBA kullanımında önce bu adımla VPN&apos;i açarsın.</p>
+          </Adim>
+
+          <Adim id="paket">
+            <p>
+              Bağlantı bir Google Drive klasörüne gider. İçindeki <Kod>vasp-6.6.0-hymf.tar.gz</Kod> dosyasını (yaklaşık 300 MB){' '}
+              <em>İndir</em> ile İndirilenler klasörüne kaydet. &quot;Virüs taraması yapılamadı&quot; derse <em>Yine de indir</em>
+              &apos;e bas. Dosyayı açmaya çalışma, olduğu gibi kalsın.
+            </p>
+            <Uyari tone="tehlike">
+              Bu paket grubumuzun VASP lisansı kapsamındadır. Bağlantıyı ve dosyayı grup dışında hiç kimseyle paylaşmayın, başka
+              bir yere yüklemeyin. Paylaşım nedeniyle doğacak lisans ihlalinin sorumluluğu paylaşan kişiye aittir; HYMF ve portal
+              yöneticileri sorumlu tutulamaz.
+            </Uyari>
+            {vaspPaketUrl ? (
+              <a href={vaspPaketUrl} target="_blank" rel="noopener noreferrer" className={buttonClass({ variant: 'primary' })}>
+                <Download className="size-4" aria-hidden="true" />
+                <span className="whitespace-normal">VASP paketini indir (yalnız lisanslı grup üyeleri)</span>
+              </a>
+            ) : (
+              <Uyari tone="uyari">Paket bağlantısı henüz eklenmedi, Ata&apos;ya yazın.</Uyari>
+            )}
+          </Adim>
+
+          <Adim id="terminal">
+            {sistem === 'mac' && (
+              <p>
+                <strong className="text-ink">Cmd + Boşluk</strong>&apos;a bas, <Kod>Terminal</Kod> yaz, Enter. Yapıştırmak için{' '}
+                <strong className="text-ink">Cmd + V</strong>.
+              </p>
+            )}
+            {sistem === 'windows' && (
+              <p>
+                Başlat&apos;a <Kod>PowerShell</Kod> yaz, <em>Windows PowerShell</em>&apos;i aç. Yapıştırmak için{' '}
+                <strong className="text-ink">Ctrl + V</strong> ya da sağ tık.
+              </p>
+            )}
+            {sistem === 'linux' && (
+              <p>
+                Terminal&apos;i aç (çoğu dağıtımda <strong className="text-ink">Ctrl + Alt + T</strong>). Yapıştırmak için{' '}
+                <strong className="text-ink">Ctrl + Shift + V</strong>.
+              </p>
+            )}
+            <p>
+              Bu pencere adım 12&apos;ye kadar açık kalsın. Komutlar bu pencereye yazılır; adım 7&apos;de pencere TRUBA&apos;ya
+              bağlanır.
+            </p>
+          </Adim>
+
+          <Adim id="gonder">
+            <p>Yapıştır ve Enter:</p>
+            {windows ? (
+              <CodeBlock
+                title="Paketi gönder (PowerShell)"
+                language="powershell"
+                code={'scp $HOME\\Downloads\\vasp-6.6.0-hymf.tar.gz kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/'}
+              />
+            ) : (
+              <CodeBlock
+                title="Paketi gönder (Terminal)"
+                language="bash"
+                code="scp ~/Downloads/vasp-6.6.0-hymf.tar.gz kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/"
+              />
+            )}
+            <p>
+              İlk seferde &quot;Are you sure you want to continue connecting&quot; diye sorarsa <Kod>yes</Kod> yaz, Enter. Sonra
+              TRUBA şifreni yaz, Enter. <strong className="text-ink">Şifre yazarken ekranda hiçbir şey görünmez</strong>, bu
+              normaldir.
+            </p>
+            <Gormeli>
+              <Kod>100%</Kod> ile biten bir satır.
+            </Gormeli>
+          </Adim>
+
+          <Adim id="gir">
+            <p>Aynı pencerede:</p>
+            <CodeBlock
+              title={`TRUBA'ya gir (${kabuk})`}
+              language={windows ? 'powershell' : 'bash'}
+              code="ssh kullanici_adiniz@172.16.6.12"
+            />
+            <p>Şifreni yaz (yine görünmez), Enter. Satırın başı değişir:</p>
+            <Gormeli>
+              <Kod>[kullanici_adiniz@arf-ui2 ~]$</Kod>. Artık bu pencere TRUBA&apos;da; buradan sonraki komutlar TRUBA&apos;da
+              çalışır.
+            </Gormeli>
+            <p>Çalışma klasörüne geç:</p>
+            <CodeBlock title="Scratch'e geç (TRUBA)" language="bash" code="cd /arf/scratch/$USER && pwd && ls -lh" />
+            <Gormeli>
+              <Kod>/arf/scratch/kullanici_adiniz</Kod> ve listede <Kod>vasp-6.6.0-hymf.tar.gz</Kod>.
+            </Gormeli>
+          </Adim>
+
+          <Adim id="ac" truba>
+            <CodeBlock
+              title="Paketi aç (TRUBA)"
+              language="bash"
+              code="cd /arf/scratch/$USER && tar xzf vasp-6.6.0-hymf.tar.gz && ls && ls vasp.6.6.0/bin_cpu"
+            />
+            <Gormeli>
+              <Kod>pseudoPOT  vasp.6.6.0  vaspkit.1.5.1.linux.x64.tar.gz ...</Kod> ve <Kod>vasp_gam  vasp_ncl  vasp_std</Kod>.
+            </Gormeli>
+            <p>
+              Bu kurulumun kendisiydi; VASP artık TRUBA&apos;da. İstersen arşivi silebilirsin:{' '}
+              <Kod>rm vasp-6.6.0-hymf.tar.gz</Kod> (TRUBA&apos;da çöp kutusu yok, <Kod>rm</Kod> geri alınmaz).
+            </p>
+          </Adim>
+
+          <Adim id="test" truba>
+            <p>
+              Şimdi VASP&apos;ın çalıştığını küçük bir Si hesabıyla deneyeceğiz. Bloğun tamamını tek seferde kopyala ve yapıştır.
+              Hiçbir şey çalıştırmaz, yalnız dosya oluşturur; değiştirmen gereken bir şey yok.
+            </p>
+            <CodeBlock title="Test dosyaları (TRUBA)" language="bash" code={TEST_HAZIRLA} />
+            <Gormeli>
+              son satırda <Kod>INCAR  job.sh  KPOINTS  POSCAR  POTCAR</Kod>. Ekranda bir satır bozuk görünebilir (ör.{' '}
+              <Kod>lsF</Kod>), sorun değil.
+            </Gormeli>
+            <p>Emin olmak için:</p>
+            <CodeBlock title="Kontrol (TRUBA)" language="bash" code={TEST_KONTROL} />
+            <Gormeli>
+              <Kod>#SBATCH -A kullanici_adiniz</Kod>, son satır <Kod>mpirun ...vasp_std</Kod>, <Kod>PAW_PBE Si 05Jan2001</Kod>,
+              satır sayıları 10, 7, 5.
+            </Gormeli>
+            <details className="rounded-md border border-line">
+              <summary className="cursor-pointer px-4 py-2 font-medium text-ink">
+                <Kod>job.sh</Kod> ne yapıyor? (merak edersen)
+              </summary>
+              <div className="border-t border-line px-4 py-3">
+                {/* Telefonda alt alta, geniş ekranda iki sütun: yatay kaydırma olmasın. */}
+                <dl className="divide-y divide-line">
+                  {BETIK_SATIRLARI.map((s) => (
+                    <div key={s.satir} className="py-2 sm:grid sm:grid-cols-[16rem_1fr] sm:gap-6">
+                      <dt className="font-mono text-ink">{s.satir}</dt>
+                      <dd className="mt-0.5 text-ink-2 sm:mt-0">{s.anlam}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="mt-2 text-ink-3">
+                  Kaynak: TRUBA <Dis href={BETIK}>SLURM Betik Özellikleri</Dis> ve <Dis href={KUYRUK}>ARF Kuyruk Bilgisi</Dis>.{' '}
+                  <Kod>-C weka</Kod> ve modül adları grubun denediği betikten.
+                </p>
+              </div>
+            </details>
+          </Adim>
+
+          <Adim id="calistir" truba>
+            <CodeBlock title="İşi gönder (TRUBA)" language="bash" code="sbatch job.sh" />
+            <Gormeli>
+              <Kod>Submitted batch job 1234567 on cluster arf</Kod> (numara sende farklı olur).
+            </Gormeli>
+            <p>İş kuyrukta bekler, sonra çalışır. Durumuna bak:</p>
+            <CodeBlock title="İşlerim (TRUBA)" language="bash" code="squeue -M arf -u $USER" />
+            <p>
+              <Kod>ST</Kod> sütununda <Kod>PD</Kod> sırada bekliyor, <Kod>R</Kod> çalışıyor demek. Satır kalmadıysa iş bitmiştir.
+              Bu test bir dakikadan kısa sürer; birkaç kez tekrar bak.
+            </p>
+          </Adim>
+
+          <Adim id="sonuc" truba>
+            <CodeBlock title="Sonuç (TRUBA)" language="bash" code={SONUC_OKU} />
+            <Gormeli>
+              <Kod>free  energy   TOTEN  =       -10.81434575 eV</Kod> (son basamaklarda küçük fark normal) ve{' '}
+              <Kod>General timing</Kod> satırı. <Kod>err</Kod> kısmındaki uzun <Kod>comp/oneapi/2024-modules/...</Kod> listesi
+              hata değil.
+            </Gormeli>
+            <Uyari tone="basari">Bu sayıyı gördüysen kurulum tamam, VASP çalışıyor.</Uyari>
+          </Adim>
+
+          <Adim id="indir">
+            <p>
+              <Kod>exit</Kod> yazıp TRUBA&apos;dan çık (pencere yeniden kendi bilgisayarına döner), sonra:
+            </p>
+            {windows ? (
+              <CodeBlock
+                title="Sonucu çek (PowerShell)"
+                language="powershell"
+                code={'scp -r kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/test_si $HOME\\Downloads\\'}
+              />
+            ) : (
+              <CodeBlock
+                title="Sonucu çek (Terminal)"
+                language="bash"
+                code="scp -r kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/test_si ~/Downloads/"
+              />
+            )}
+            <Gormeli>
+              İndirilenler&apos;de <Kod>test_si</Kod> klasörü.
+            </Gormeli>
+            <p>
+              TRUBA scratch&apos;teki dosyaları en fazla 30 gün tutar ve kendiliğinden siler (
+              <Dis href={DEPOLAMA}>Dosya Sistemleri ve Depolama</Dis>); önemli sonucu bekletmeden çek.
+            </p>
+          </Adim>
+        </ol>
+      </Kart>
+
+      <Kart baslik="Sonra: kendi hesabın">
+        <ol className="list-decimal space-y-2 pl-5 text-sm leading-relaxed text-ink-2 marker:text-ink-3">
+          <li>VPN&apos;i aç (adım 3), terminali aç ve TRUBA&apos;ya gir (adım 7).</li>
+          <li>
+            Test klasörünü kopyala: <Kod>cd /arf/scratch/$USER && cp -r test_si yeni_hesap && cd yeni_hesap</Kod>
+          </li>
+          <li>
+            INCAR, POSCAR, KPOINTS ve POTCAR&apos;ı kendi hesabınınkilerle değiştir; <Kod>job.sh</Kod>&apos;ta{' '}
+            <Kod>--time</Kod>&apos;ı ve kuyruğu işine göre ayarla. Hesap türlerine göre ayrıntı yukarıdaki hesap
+            kılavuzlarında.
+          </li>
+          <li>
+            <Kod>sbatch job.sh</Kod> ile gönder, bitince sonucu adım 12&apos;deki gibi çek.
+          </li>
+        </ol>
+      </Kart>
+
+      <Uyari tone="uyari" baslik="Kurallar">
+        <ol className="mt-1 list-decimal space-y-2 pl-5">
+          <li>
+            <strong>Hesap kişiye özel.</strong> Kendi kullanıcı adınla gir, şifreni kimseyle paylaşma. TRUBA başkasının hesabını
+            kullananın hesabını kapatır (<Dis href={KURALLAR}>Kullanım Kuralları</Dis>).
+          </li>
+          <li>
+            <strong>Her şey scratch&apos;te çalışır.</strong> Çalışma klasörün <Kod>/arf/scratch/kullanici_adiniz</Kod>. Home (
+            <Kod>/arf/home/kullanici_adiniz</Kod>) yalnız saklamak içindir. Scratch 30 gün sonra silinir, yedeklenmez (
+            <Dis href={DEPOLAMA}>Dosya Sistemleri ve Depolama</Dis>).
+          </li>
+          <li>
+            <strong>Hesap her zaman <Kod>sbatch</Kod> ile gönderilir.</strong> Girdiğin sunucuda (<Kod>arf-ui2</Kod>) doğrudan
+            ağır iş çalıştırırsan TRUBA sonlandırır, ısrar edenin hesabını askıya alır (<Dis href={SSS}>Sıkça Sorulan Sorular</Dis>
+            ). Başkasının <Kod>job.sh</Kod>&apos;ını kopyalarsan <Kod>#SBATCH -A</Kod>, <Kod>-p</Kod> ve program yolunu kendine
+            göre değiştir.
+          </li>
+        </ol>
+      </Uyari>
+
+      <Kart baslik="Sorun giderme" id="sorun-giderme">
+        <ul className="space-y-3 text-sm leading-relaxed text-ink-2">
+          <li>
+            <strong className="text-ink">Hangi penceredeyim?</strong> Satırın başı <Kod>[kullanici_adiniz@arf-ui2 ~]$</Kod> ise
+            TRUBA&apos;dasın; <Kod>...MacBook... %</Kod> ya da <Kod>{'PS C:\\Users\\...>'}</Kod> gibiyse kendi bilgisayarındasın.
+          </li>
+          <li>
+            <strong className="text-ink">
+              <Kod>command not found: sinfo</Kod> / <Kod>no such file or directory: /arf/...</Kod>:
+            </strong>{' '}
+            komutu kendi bilgisayarına yazdın; önce adım 7 ile TRUBA&apos;ya gir.
+          </li>
+          <li>
+            <strong className="text-ink">ssh ya da scp zaman aşımı veriyor:</strong> VPN bağlı değil. Adım 3&apos;e dön.
+          </li>
+          <li>
+            <strong className="text-ink">VPN bağlanmıyor, zaman aşımı veriyor:</strong> VPN, TRUBA sunucusuna UDP 1195 portundan
+            bağlanır; bulunduğun ağ bunu engelliyor olabilir. Telefondan hotspot açıp dene; orada bağlanıyorsa sorun ağdadır.
+            Grubun denediği: kafe Wi-Fi&apos;ında bağlanmadı, hotspot&apos;ta bağlandı.
+          </li>
+          <li>
+            <strong className="text-ink">VPN &quot;trying to connect&quot;te kalıyor, ağ değiştirdim:</strong> (grubun denediği)
+            OpenVPN Connect eski ağın rotasını tutuyor olabilir (günlükte <Kod>Can&apos;t assign requested address</Kod>).
+            Uygulamayı tamamen kapatıp (Mac&apos;te Cmd+Q) yeniden aç. Mac&apos;te düzelmezse Terminal&apos;de şunu çalıştır; Mac
+            şifreni ister, &quot;not in table&quot; derse rota zaten temizdir:
+            <CodeBlock title="Eski VPN rotasını sil (Mac)" language="bash" code="sudo route -n delete 193.140.99.241" />
+          </li>
+          <li>
+            <strong className="text-ink">Mac&apos;te TRUBA-ios.ovpn ile bağlanamıyorum:</strong> profili sil,{' '}
+            <Kod>TRUBA-genel.ovpn</Kod> ile yeniden ekle: <OvpnIndir dosya="TRUBA-genel.ovpn" />
+          </li>
+          <li>
+            <strong className="text-ink">Eski OpenVPN kurulu:</strong> 2.4.0&apos;dan eski sürümler kullanıcı adı-şifre ile
+            bağlanamaz, güncelle.
+          </li>
+          <li>
+            <strong className="text-ink">
+              Windows&apos;ta <Kod>ssh</Kod> ya da <Kod>scp</Kod> bulunamadı:
+            </strong>{' '}
+            Windows 10 (1803 ve sonrası) bunlarla gelir; <Kod>ssh -V</Kod> ile kontrol et. Yoksa{' '}
+            <em>Ayarlar → Uygulamalar → İsteğe Bağlı Özellikler</em>&apos;de <em>OpenSSH Client</em>&apos;ı{' '}
+            <em>Özellik ekle</em> ile yükle.
+          </li>
+          <li>
+            <strong className="text-ink">
+              SSH: <Kod>Exceeded MaxStartups</Kod> / <Kod>Connection closed by ... port 22</Kod>:
+            </strong>{' '}
+            (grubun denediği) sunucuya aynı anda çok kişi bağlanıyor; birkaç saniye bekleyip tekrar dene.
+          </li>
+          <li>
+            <strong className="text-ink">
+              <Kod>sbatch: error: ... account</Kod> / <Kod>Invalid account</Kod>:
+            </strong>{' '}
+            <Kod>job.sh</Kod> içindeki <Kod>-A</Kod> satırı kendi kullanıcı adın değil; adım 9&apos;daki kontrol komutunu çalıştır.
+          </li>
+          <li>
+            <strong className="text-ink">
+              <Kod>sbatch</Kod> <Kod>-C weka</Kod> satırı yüzünden reddederse:
+            </strong>{' '}
+            o satırı silip tekrar gönder.
+          </li>
+          <li>
+            <strong className="text-ink">İş hemen bitti ama OUTCAR yok:</strong> <Kod>cat err</Kod> ile hatayı oku; modül
+            hatasıysa <Kod>module avail comp/oneapi/2024 lib/hdf5/1.14.3-oneapi-2024</Kod> ile modüllerin durduğuna bak, değilse
+            genelde POTCAR eksik ya da yol yanlıştır.
+          </li>
+          <li>
+            <strong className="text-ink">Hâlâ olmuyor:</strong> gruba yaz ya da{' '}
+            <Dis href={`${TRUBA_DOCS}/0-truba/truba_iletisim.html`}>TRUBA teknik destek</Dis>.
+          </li>
+        </ul>
+      </Kart>
+
+      <Ek baslik="Sık kullanılan komutlar">
+        {/* Telefonda alt alta, geniş ekranda üç sütun: yatay kaydırma olmasın. */}
+        <div className="text-sm">
+          <div className="hidden border-b border-line py-2 text-ink-3 sm:grid sm:grid-cols-[minmax(0,1fr)_14rem_8rem] sm:gap-6">
+            <span className="font-medium">Komut</span>
+            <span className="font-medium">Ne yapar</span>
+            <span className="font-medium">Nerede</span>
+          </div>
+          <ul className="divide-y divide-line">
+            {KOMUTLAR.map((k) => (
+              <li key={k.komut} className="py-2 sm:grid sm:grid-cols-[minmax(0,1fr)_14rem_8rem] sm:gap-6">
+                <span className="block text-ink">
+                  <Kod>{k.komut}</Kod>
+                </span>
+                <span className="mt-0.5 block text-ink-2 sm:mt-0">{k.ne}</span>
+                <span className="block text-ink-3 sm:text-ink-2">
+                  <span className="sm:hidden">Nerede: </span>
+                  {k.nerede}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
-
-      <Kart baslik="Sunucular ve dosya aktarımı">
+        <Uyari tone="tehlike">
+          <Kod>rm -r</Kod> geri alınmaz, TRUBA&apos;da çöp kutusu yok.
+        </Uyari>
         <p className="text-sm leading-relaxed text-ink-2">
-          ARF hesaplama kümesinin kullanıcı arayüzü sunucuları. Hepsine VPN açıkken{' '}
-          <Kod>ssh kullanici_adiniz@&lt;adres&gt;</Kod> ile bağlanılır.
+          <Denendi /> Bağlanınca TRUBA bir <strong className="text-ink">USAGE</strong> kutusu gösterir: harcadığın çekirdek-saati
+          ve home ile scratch kotanın ne kadarının dolu olduğu. Kota sınırları{' '}
+          <Dis href={DEPOLAMA}>Dosya Sistemleri ve Depolama</Dis> sayfasında.
+        </p>
+      </Ek>
+
+      <Ek baslik="Sunucular ve dosya aktarımı">
+        <p className="text-sm leading-relaxed text-ink-2">
+          ARF kümesinin kullanıcı arayüzü sunucuları. Hepsine VPN açıkken <Kod>ssh kullanici_adiniz@&lt;adres&gt;</Kod> ile
+          bağlanılır.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -440,305 +780,7 @@ scp POSCAR kullanici_adiniz@172.16.6.14:/hedef/dizin/
 # TRUBA'dan bilgisayara (klasör için -r)
 scp -r kullanici_adiniz@172.16.6.14:/uzak/dizin/ ./`}
         />
-      </Kart>
-
-      <Kart baslik="VASP kurulumu" id="vasp-kurulum">
-        <div className="space-y-3 text-sm leading-relaxed text-ink-2">
-          <Denendi />
-          <p>
-            VASP 6.6.0 kurulumu ve Si test hesabı (<Kod>debug</Kod> kuyruğu, 4 çekirdek). Komutları sırayla, değiştirmeden
-            çalıştır.
-          </p>
-          <p>İşletim sistemi:</p>
-          <SistemSekmeleri sistem={sistem} sec={setSistem} />
-          {sistem === 'linux' && <p className="text-ink-3">Linux&apos;ta komutlar macOS ile aynıdır.</p>}
-        </div>
-
-        <div className="space-y-8 text-sm leading-relaxed text-ink-2">
-          <section className="space-y-3">
-            <AdimBasligi no={1} baslik="Paketi indir" />
-            <p>
-              Bağlantı bir Google Drive klasörüne gider. İçindeki <Kod>vasp-6.6.0-hymf.tar.gz</Kod> (yaklaşık 300 MB) dosyasını{' '}
-              <em>İndir</em> ile İndirilenler klasörüne kaydet. &quot;Virüs taraması yapılamadı&quot; uyarısı çıkarsa{' '}
-              <em>Yine de indir</em>&apos;e bas.
-            </p>
-            <Uyari tone="tehlike">
-              Bu paket grubumuzun VASP lisansı kapsamındadır. Bağlantıyı ve dosyayı grup dışında hiç kimseyle paylaşmayın, başka
-              bir yere yüklemeyin. Paylaşım nedeniyle doğacak lisans ihlalinin sorumluluğu paylaşan kişiye aittir; HYMF ve portal
-              yöneticileri sorumlu tutulamaz.
-            </Uyari>
-            {vaspPaketUrl ? (
-              <a href={vaspPaketUrl} target="_blank" rel="noopener noreferrer" className={buttonClass({ variant: 'primary' })}>
-                <Download className="size-4" aria-hidden="true" />
-                <span className="whitespace-normal">VASP paketini indir (yalnız lisanslı grup üyeleri)</span>
-              </a>
-            ) : (
-              <Uyari tone="uyari">Paket bağlantısı henüz eklenmedi, Ata&apos;ya yazın.</Uyari>
-            )}
-          </section>
-
-          <section className="space-y-3">
-            <AdimBasligi no={2} baslik="VPN'e bağlan" />
-            <p>
-              Yukarıdaki <a href="#truba-baglanti" className="text-link underline">TRUBA&apos;ya bağlanma</a> bölümündeki gibi
-              OpenVPN&apos;i aç. Yeşil &quot;Connected&quot; görünmeden devam etme.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <AdimBasligi no={3} baslik="Paketi TRUBA'ya gönder" />
-            <p>Yeni bir {kabuk} penceresi aç ve yapıştır:</p>
-            {windows ? (
-              <CodeBlock
-                title="Paketi gönder (PowerShell)"
-                language="powershell"
-                code={'scp $HOME\\Downloads\\vasp-6.6.0-hymf.tar.gz kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/'}
-              />
-            ) : (
-              <CodeBlock
-                title="Paketi gönder (Terminal)"
-                language="bash"
-                code="scp ~/Downloads/vasp-6.6.0-hymf.tar.gz kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/"
-              />
-            )}
-            <Gormeli>
-              şifre sorulur (yazarken görünmez), sonra <Kod>100%</Kod> ile biten bir satır.
-            </Gormeli>
-          </section>
-
-          <section className="space-y-3">
-            <AdimBasligi no={4} baslik="TRUBA'ya bağlan" />
-            <p>Aynı {kabuk} penceresinde bağlan:</p>
-            <CodeBlock
-              title={`SSH bağlantısı (${kabuk})`}
-              language={windows ? 'powershell' : 'bash'}
-              code="ssh kullanici_adiniz@172.16.6.12"
-            />
-            <p>
-              Satırın başı <Kod>[kullanici_adiniz@arf-ui2 ~]$</Kod> olunca artık TRUBA&apos;dasın <Pencere truba />:
-            </p>
-            <CodeBlock title="Scratch'e geç (TRUBA)" language="bash" code="cd /arf/scratch/$USER && pwd && ls -lh" />
-            <Gormeli>
-              <Kod>/arf/scratch/kullanici_adiniz</Kod> ve listede <Kod>vasp-6.6.0-hymf.tar.gz</Kod>.
-            </Gormeli>
-          </section>
-
-          <section className="space-y-3">
-            <AdimBasligi no={5} baslik="Paketi aç" truba />
-            <CodeBlock
-              title="Paketi aç (TRUBA)"
-              language="bash"
-              code="cd /arf/scratch/$USER && tar xzf vasp-6.6.0-hymf.tar.gz && ls && ls vasp.6.6.0/bin_cpu"
-            />
-            <Gormeli>
-              <Kod>pseudoPOT  vasp.6.6.0  vaspkit.1.5.1.linux.x64.tar.gz ...</Kod> ve <Kod>vasp_gam  vasp_ncl  vasp_std</Kod>.
-            </Gormeli>
-            <p>Sonra arşivi silebilirsin (TRUBA&apos;da çöp kutusu yok, <Kod>rm</Kod> geri alınmaz):</p>
-            <CodeBlock title="Arşivi sil (TRUBA, isteğe bağlı)" language="bash" code="rm vasp-6.6.0-hymf.tar.gz" />
-          </section>
-
-          <section className="space-y-3">
-            <AdimBasligi no={6} baslik="Modül kontrolü" truba />
-            <CodeBlock
-              title="Modül kontrolü (TRUBA)"
-              language="bash"
-              code="module avail comp/oneapi/2024 lib/hdf5/1.14.3-oneapi-2024 2>&1 | tail -15"
-            />
-            <Gormeli>
-              listenin sonunda <Kod>lib/hdf5/1.14.3-oneapi-2024</Kod>.
-            </Gormeli>
-          </section>
-
-          <section className="space-y-3">
-            <AdimBasligi no={7} baslik="Test dosyaları" truba />
-            <p>
-              Bloğun tamamını tek seferde TRUBA penceresine yapıştır. Hiçbir şey çalıştırmaz, yalnız dosya oluşturur. Bu blokta
-              yer tutucu yok, <Kod>$USER</Kod> kendiliğinden kullanıcı adın olur.
-            </p>
-            <CodeBlock title="test_si klasörü (TRUBA)" language="bash" code={TEST_HAZIRLA} />
-            <Gormeli>
-              son satırda <Kod>INCAR  job.sh  KPOINTS  POSCAR  POTCAR</Kod>. Ekranda bir satır bozuk görünebilir (ör.{' '}
-              <Kod>lsF</Kod>), dosyalar yine de doğrudur; şu kontrol emin olmanı sağlar:
-            </Gormeli>
-            <CodeBlock title="Kontrol (TRUBA)" language="bash" code={TEST_KONTROL} />
-            <Gormeli>
-              <Kod>#SBATCH -A kullanici_adiniz</Kod>, son satır <Kod>mpirun ...vasp_std</Kod>, <Kod>PAW_PBE Si 05Jan2001</Kod>,
-              satır sayıları 10, 7, 5.
-            </Gormeli>
-
-            <div>
-              <p className="mb-2 font-semibold text-ink">
-                <Kod>job.sh</Kod> satır satır
-              </p>
-              {/* Telefonda alt alta, geniş ekranda iki sütun: yatay kaydırma olmasın. */}
-              <dl className="divide-y divide-line border-y border-line">
-                {BETIK_SATIRLARI.map((s) => (
-                  <div key={s.satir} className="py-2 sm:grid sm:grid-cols-[16rem_1fr] sm:gap-6">
-                    <dt className="font-mono text-ink">{s.satir}</dt>
-                    <dd className="mt-0.5 text-ink-2 sm:mt-0">{s.anlam}</dd>
-                  </div>
-                ))}
-              </dl>
-              <p className="mt-2 text-ink-3">
-                Kaynak: TRUBA <Dis href={BETIK}>SLURM Betik Özellikleri</Dis> ve <Dis href={KUYRUK}>ARF Kuyruk Bilgisi</Dis>.{' '}
-                <Kod>-C weka</Kod> ve modül adları grubun denediği betikten.
-              </p>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <AdimBasligi no={8} baslik="İşi gönder" truba />
-            <CodeBlock title="İşi gönder (TRUBA)" language="bash" code="sbatch job.sh" />
-            <Gormeli>
-              <Kod>Submitted batch job 1234567 on cluster arf</Kod> (numara seninkinde farklı olur).
-            </Gormeli>
-            <CodeBlock title="İşlerim (TRUBA)" language="bash" code="squeue -M arf -u $USER" />
-            <p>
-              <Kod>ST</Kod> sütunu: <Kod>PD</Kod> sırada bekliyor, <Kod>R</Kod> çalışıyor; satır yoksa iş bitmiştir. Bu test bir
-              dakikadan kısa sürer.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <AdimBasligi no={9} baslik="Sonucu oku" truba />
-            <CodeBlock title="Sonuç (TRUBA)" language="bash" code={SONUC_OKU} />
-            <Gormeli>
-              <Kod>free  energy   TOTEN  =       -10.81434575 eV</Kod> (son basamaklarda küçük fark normal) ve{' '}
-              <Kod>General timing</Kod> satırı. <Kod>err</Kod> dosyasında uzun bir <Kod>comp/oneapi/2024-modules/...</Kod>{' '}
-              listesi görünür: hata değil, yüklenen modüllerin listesidir.
-            </Gormeli>
-            <Uyari tone="basari">
-              Bu sayıyı gördüysen kurulum tamam. Kendi hesabın için <Kod>test_si</Kod> klasörünü kopyala (
-              <Kod>cp -r test_si yeni_hesap</Kod>), INCAR, POSCAR, KPOINTS ve POTCAR&apos;ı değiştir, <Kod>--time</Kod>&apos;ı ve
-              kuyruğu işine göre ayarla.
-            </Uyari>
-          </section>
-
-          <section className="space-y-3">
-            <AdimBasligi no={10} baslik="Sonuçları indir" />
-            <p>
-              TRUBA&apos;dan <Kod>exit</Kod> ile çık ya da yeni bir {kabuk} penceresi aç:
-            </p>
-            {windows ? (
-              <CodeBlock
-                title="Sonuçları çek (PowerShell)"
-                language="powershell"
-                code={'scp -r kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/test_si $HOME\\Downloads\\'}
-              />
-            ) : (
-              <CodeBlock
-                title="Sonuçları çek (Terminal)"
-                language="bash"
-                code="scp -r kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/test_si ~/Downloads/"
-              />
-            )}
-            <p>
-              TRUBA scratch&apos;teki dosyaları en fazla 30 gün tutar ve kendiliğinden siler (
-              <Dis href={DEPOLAMA}>Dosya Sistemleri ve Depolama</Dis>); önemli sonucu bekletmeden çek.
-            </p>
-          </section>
-        </div>
-      </Kart>
-
-      <Kart baslik="Komutlar">
-        {/* Telefonda alt alta, geniş ekranda üç sütun: yatay kaydırma olmasın. */}
-        <div className="text-sm">
-          <div className="hidden border-b border-line py-2 text-ink-3 sm:grid sm:grid-cols-[minmax(0,1fr)_14rem_8rem] sm:gap-6">
-            <span className="font-medium">Komut</span>
-            <span className="font-medium">Ne yapar</span>
-            <span className="font-medium">Nerede</span>
-          </div>
-          <ul className="divide-y divide-line">
-            {KOMUTLAR.map((k) => (
-              <li key={k.komut} className="py-2 sm:grid sm:grid-cols-[minmax(0,1fr)_14rem_8rem] sm:gap-6">
-                <span className="block text-ink">
-                  <Kod>{k.komut}</Kod>
-                </span>
-                <span className="mt-0.5 block text-ink-2 sm:mt-0">{k.ne}</span>
-                <span className="block text-ink-3 sm:text-ink-2">
-                  <span className="sm:hidden">Nerede: </span>
-                  {k.nerede}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <Uyari tone="tehlike">
-          <Kod>rm -r</Kod> geri alınmaz, TRUBA&apos;da çöp kutusu yok.
-        </Uyari>
-        <p className="text-sm leading-relaxed text-ink-2">
-          <Denendi /> Bağlanınca TRUBA bir <strong className="text-ink">USAGE</strong> kutusu gösterir: hesabınızın şimdiye
-          kadar harcadığı çekirdek-saati ve home ile scratch&apos;teki disk ve dosya sayısı kotanızın ne kadarının dolu olduğunu
-          özetler. Kota sınırları <Dis href={DEPOLAMA}>Dosya Sistemleri ve Depolama</Dis> sayfasında.
-        </p>
-      </Kart>
-
-      <Kart baslik="Sorun giderme">
-        <ul className="space-y-3 text-sm leading-relaxed text-ink-2">
-          <li>
-            <strong className="text-ink">ssh zaman aşımı veriyor:</strong> VPN bağlı değildir. TRUBA sunucularına VPN olmadan
-            ulaşılamaz; önce OpenVPN bağlantısını kurun.
-          </li>
-          <li>
-            <strong className="text-ink">VPN bağlanmıyor, zaman aşımı veriyor:</strong> yapılandırma dosyası TRUBA&apos;nın VPN
-            sunucusuna UDP 1195 portundan bağlanır. Bulunduğunuz ağ bu portu engelliyor olabilir. Telefonunuzdan hotspot açıp
-            deneyin; orada bağlanıyorsa sorun ağdadır.
-          </li>
-          <li>
-            <strong className="text-ink">Kafe, yurt, okul Wi-Fi&apos;ında bağlanmıyor:</strong> yukarıdaki UDP 1195 maddesi.
-            Grubun denediği: kafe Wi-Fi&apos;ında bağlanmadı, telefon hotspot&apos;unda bağlandı.
-          </li>
-          <li>
-            <strong className="text-ink">VPN &quot;trying to connect&quot;te kalıyor, ağ değiştirdim:</strong> (grubun
-            denediği) OpenVPN Connect eski ağın rotasını tutuyor olabilir (günlükte <Kod>Can&apos;t assign requested address</Kod>
-            ). Uygulamayı tamamen kapatıp (Mac&apos;te Cmd+Q) yeniden açın. Mac&apos;te düzelmezse Terminal&apos;de şunu
-            çalıştırın; Mac şifresini ister, &quot;not in table&quot; derse rota zaten temizdir:
-            <CodeBlock title="Eski VPN rotasını sil (Mac)" language="bash" code="sudo route -n delete 193.140.99.241" />
-          </li>
-          <li>
-            <strong className="text-ink">
-              SSH: <Kod>Exceeded MaxStartups</Kod> / <Kod>Connection closed by ... port 22</Kod>:
-            </strong>{' '}
-            (grubun denediği) sunucuya aynı anda çok kişi bağlanıyor; birkaç saniye bekleyip tekrar deneyin ya da{' '}
-            <Kod>172.16.6.12</Kod>&apos;yi kullanın.
-          </li>
-          <li>
-            <strong className="text-ink">
-              <Kod>command not found: sinfo</Kod> / <Kod>no such file or directory: /arf/...</Kod>:
-            </strong>{' '}
-            komut kendi bilgisayarınıza yazıldı, TRUBA penceresine yazın.
-          </li>
-          <li>
-            <strong className="text-ink">
-              <Kod>sbatch: error: ... account</Kod> / <Kod>Invalid account</Kod>:
-            </strong>{' '}
-            <Kod>job.sh</Kod> içindeki <Kod>-A</Kod> satırı kendi kullanıcı adınız değil; Adım 7&apos;deki kontrol komutunu
-            çalıştırın.
-          </li>
-          <li>
-            <strong className="text-ink">
-              <Kod>sbatch</Kod> <Kod>-C weka</Kod> satırı yüzünden reddederse:
-            </strong>{' '}
-            o satırı silip tekrar gönderin.
-          </li>
-          <li>
-            <strong className="text-ink">İş hemen bitti ama OUTCAR yok:</strong> <Kod>cat err</Kod> ile hatayı okuyun; genelde
-            POTCAR eksik ya da yol yanlış.
-          </li>
-          <li>
-            <strong className="text-ink">Mac&apos;te iOS dosyasıyla bağlanamıyorum:</strong> profili silin,{' '}
-            <Kod>TRUBA-genel.ovpn</Kod> ile yeniden ekleyin.
-          </li>
-          <li>
-            <strong className="text-ink">Eski OpenVPN kurulu:</strong> 2.4.0&apos;dan eski sürümler kullanıcı adı-şifre ile
-            bağlanamaz, güncelleyin.
-          </li>
-          <li>
-            <strong className="text-ink">Hâlâ olmuyor:</strong>{' '}
-            <Dis href={`${TRUBA_DOCS}/0-truba/truba_iletisim.html`}>TRUBA teknik destek</Dis> sayfasından yazın.
-          </li>
-        </ul>
-      </Kart>
+      </Ek>
 
       <Uyari tone="bilgi">
         Bu bölüm TRUBA&apos;nın kendi belgelerine göre yazıldı (13 Ekim 2026). &quot;Grubun denediği&quot; diye işaretli yerler

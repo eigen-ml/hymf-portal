@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Download } from 'lucide-react';
 import { requireMember } from '@/lib/auth/dal';
 import { KILAVUZLAR } from '@/lib/kilavuz/liste';
-import { BosDurum, Panel, SayfaBasligi, buttonClass } from '@/components/ui';
+import { BosDurum, Panel, SayfaBasligi, Uyari, buttonClass } from '@/components/ui';
 import { GenelNotlar } from './GenelNotlar';
 
 export default async function Page() {
@@ -20,6 +20,14 @@ export default async function Page() {
         baslik="Kılavuzlar"
         aciklama="Grubun VASP hesap kılavuzları. Açmak için başlığa basın."
       />
+
+      <Uyari tone="bilgi" baslik="Yeni misin?">
+        Önce{' '}
+        <a href="#kurulum" className="underline">
+          TRUBA ve VASP kurulumunu
+        </a>{' '}
+        adım adım yap (sayfanın altında), sonra aşağıdaki hesap kılavuzlarına geç.
+      </Uyari>
 
       <Panel baslik="Hesap kılavuzları" govdeSinifi="p-0">
         {pdfler.length === 0 ? (

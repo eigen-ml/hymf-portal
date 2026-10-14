@@ -16,11 +16,11 @@ export function GenelNotlar({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
   const [activeTab, setActiveTab] = useState<'truba' | 'vasp' | 'lammps' | 'vpn'>('truba');
 
   return (
-    <div className="space-y-8">
+    <div id="kurulum" className="scroll-mt-24 space-y-8">
       <div>
         <h2 className="font-serif text-2xl text-ink">Genel notlar</h2>
         <p className="text-base text-ink-2 mt-2 max-w-prose">
-          TRUBA bağlantısı, örnek VASP ve LAMMPS dosyaları, kampüs dışından makale erişimi.
+          TRUBA ve VASP kurulumu, örnek VASP ve LAMMPS dosyaları, kampüs dışından makale erişimi.
         </p>
       </div>
 
@@ -35,7 +35,7 @@ export function GenelNotlar({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
           }`}
         >
           <Cpu className="w-4 h-4" />
-          <span>TRUBA bağlantısı</span>
+          <span>TRUBA ve VASP kurulumu</span>
         </button>
 
         <button
