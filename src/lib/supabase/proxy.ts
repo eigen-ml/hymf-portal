@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { GECICI_OTURUM_CEREZI, oturumSecenekleri } from './hatirla';
+import { CANLI_ADRES } from '@/lib/site';
 
 // Girişsiz ziyaretçi yalnız ana sayfayı, giriş sayfasını ve e-posta bağlantısı dönüşünü görür;
 // geri kalan her yol girişe yönlendirilir. Takvim akışı oturumsuz çağrılır, kendi anahtarını
@@ -9,7 +10,17 @@ const ACIK_YOLLAR = ['/giris', '/auth', '/takvim-akisi', '/api/telegram'];
 // Şifre değiştirmesi gereken kişinin girebildiği yollar (ana sayfa dahil geri kalan her şey kapalı).
 const SIFRE_SAYFASI_YOLLARI = ['/sifre-yenile', '/auth', '/takvim-akisi'];
 
+// Aynı site iki adresten açılıyor; tarayıcı oturum çerezini adrese göre ayrı tuttuğu için kısa
+// adresten gelen kişi "Beni hatırla"ya rağmen yeniden giriş görüyordu. Tek adrese toplanır.
+const IKINCI_ADRES = 'hymf.vercel.app';
+
 export async function updateSession(request: NextRequest) {
+  const yontem = request.method;
+  if (request.headers.get('host') === IKINCI_ADRES && (yontem === 'GET' || yontem === 'HEAD')) {
+    const url = new URL(request.nextUrl.pathname + request.nextUrl.search, CANLI_ADRES);
+    return NextResponse.redirect(url, 308);
+  }
+
   let response = NextResponse.next({ request });
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

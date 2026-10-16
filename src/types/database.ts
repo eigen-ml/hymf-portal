@@ -331,6 +331,8 @@ export interface Meeting {
   location?: string | null;
   notes?: string | null;
   presentation_url?: string | null;
+  /** Hocayla birebir görüşmede hocanın adı; boşsa grup toplantısı (20261016000000_toplanti_hoca.sql). */
+  hoca_adi?: string | null;
   creator_id: string;
   created_at: string;
   updated_at?: string;

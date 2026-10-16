@@ -3,6 +3,7 @@
 import React, { useId, useState, useTransition } from 'react';
 import { Alan, Button, Uyari, inputSinifi, textareaSinifi } from '@/components/ui';
 import { cn } from '@/lib/cn';
+import { kisaAd } from '@/lib/etiketler';
 import { gunISO } from '@/lib/zaman';
 import { toplantiDuzenle, toplantiEkle } from '@/app/toplantilar/actions';
 import { Pencere } from './Pencere';
@@ -10,6 +11,7 @@ import { birSaatSonra, saatMetni, sureyiKoruyarakBitis } from './takvimYardim';
 
 const BASLIK_MAX = 200;
 const YER_MAX = 300;
+const HOCA_MAX = 120;
 const NOT_MAX = 5000;
 const TEKRAR_MAX = 20;
 
@@ -26,6 +28,7 @@ export interface DuzenlenenToplanti {
   location: string | null;
   notes: string | null;
   presentation_url: string | null;
+  hoca_adi?: string | null;
 }
 
 export interface KayitSonucu {
@@ -35,7 +38,7 @@ export interface KayitSonucu {
 }
 
 /**
- * Grup toplantısı ekleme veya düzenleme penceresi. Saatler İstanbul saatidir; bitiş varsayılan
+ * Grup toplantısı ya da hocayla birebir görüşme ekleme veya düzenleme penceresi. Saatler İstanbul saatidir; bitiş varsayılan
  * olarak başlangıçtan 1 saat sonradır. Haftalık tekrar yalnız eklerken seçilir.
  */
 export function ToplantiFormu({
@@ -43,12 +46,18 @@ export function ToplantiFormu({
   varsayilanGun,
   onKapat,
   onKaydedildi,
+  hocalar,
 }: {
   /** Varsa düzenleme, yoksa yeni toplantı. */
   mevcut?: DuzenlenenToplanti;
   varsayilanGun?: string;
   onKapat: () => void;
   onKaydedildi: (sonuc: KayitSonucu) => void;
+  /**
+   * Verilirse "Hocayla görüşme" alanı görünür (adlar yalnız öneri, başka ad da yazılır); verilmezse
+   * (takvimden düzenleme) hoca alanına dokunulmaz.
+   */
+  hocalar?: string[];
 }) {
   const kimlik = useId();
   const id = (ad: string) => `${kimlik}-${ad}`;
@@ -64,6 +73,9 @@ export function ToplantiFormu({
   const [notlar, setNotlar] = useState(mevcut?.notes ?? '');
   const [sunum, setSunum] = useState(mevcut?.presentation_url ?? '');
   const [tekrar, setTekrar] = useState('0');
+  const [hoca, setHoca] = useState(mevcut?.hoca_adi ?? '');
+  const hocaAlani = hocalar !== undefined;
+  const hocaAdi = hoca.trim();
   const [alanHatasi, setAlanHatasi] = useState<{ alan: AlanAdi; mesaj: string } | null>(null);
   const [sunucuHatasi, setSunucuHatasi] = useState<string | null>(null);
   const [bekliyor, basla] = useTransition();
@@ -89,7 +101,8 @@ export function ToplantiFormu({
     setAlanHatasi(null);
     setSunucuHatasi(null);
 
-    const baslik = ad.trim();
+    // Birebir görüşmede ad boşsa "Y. Moğulkoç ile görüşme" olur.
+    const baslik = ad.trim() || (hocaAdi ? `${kisaAd(hocaAdi)} ile görüşme` : '');
     if (!baslik) return hata('ad', 'Toplantı adını yazın.');
     if (baslik.length > BASLIK_MAX) return hata('ad', `Ad ${BASLIK_MAX} karakteri aşamaz.`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(tarih) || Number.isNaN(Date.parse(`${tarih}T12:00:00Z`))) {
@@ -111,6 +124,7 @@ export function ToplantiFormu({
       location: yer.trim(),
       notes: notlar.trim(),
       presentation_url: url,
+      ...(hocaAlani ? { hoca_adi: hocaAdi || null } : {}),
     };
 
     basla(async () => {
@@ -134,16 +148,44 @@ export function ToplantiFormu({
   const gecersiz = (alan: AlanAdi) => alanHatasi?.alan === alan || undefined;
 
   return (
-    <Pencere baslik={mevcut ? 'Toplantıyı düzenle' : 'Grup toplantısı ekle'} onKapat={onKapat}>
+    <Pencere baslik={mevcut ? 'Toplantıyı düzenle' : 'Toplantı ekle'} onKapat={onKapat}>
       <form onSubmit={gonder} noValidate className="space-y-4">
-        <Alan etiket="Toplantı adı" htmlFor={id('ad')} hata={hataMesaji('ad')}>
+        {hocaAlani && (
+          <Alan
+            etiket="Hocayla birebir mi? (isteğe bağlı)"
+            htmlFor={id('hoca')}
+            yardim={hocaAdi ? 'Kişisel görüşmen de herkesin listesinde görünür.' : 'Boş bırakırsan grup toplantısı olur.'}
+          >
+            <input
+              id={id('hoca')}
+              type="text"
+              list={id('hocalar')}
+              value={hoca}
+              onChange={(e) => setHoca(e.target.value)}
+              maxLength={HOCA_MAX}
+              placeholder="Örn. Yeşim Moğulkoç"
+              className={alanSinifi}
+            />
+            <datalist id={id('hocalar')}>
+              {hocalar!.map((h) => (
+                <option key={h} value={h} />
+              ))}
+            </datalist>
+          </Alan>
+        )}
+
+        <Alan
+          etiket={hocaAdi ? 'Toplantı adı (isteğe bağlı)' : 'Toplantı adı'}
+          htmlFor={id('ad')}
+          hata={hataMesaji('ad')}
+        >
           <input
             id={id('ad')}
             type="text"
             value={ad}
             onChange={(e) => setAd(e.target.value)}
             maxLength={BASLIK_MAX}
-            placeholder="Örn. Haftalık grup toplantısı"
+            placeholder={hocaAdi ? `${kisaAd(hocaAdi)} ile görüşme` : 'Örn. Haftalık grup toplantısı'}
             data-ilk-odak
             aria-invalid={gecersiz('ad')}
             className={alanSinifi}

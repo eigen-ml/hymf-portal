@@ -20,6 +20,7 @@ export interface ToplantiKaydi {
   location: string | null;
   notes: string | null;
   presentation_url: string | null;
+  hoca_adi?: string | null;
   creator_id: string;
   created_at: string;
   creator?: ProfileSummary | null;
@@ -46,7 +47,10 @@ function KayitKarti({
   return (
     <Panel className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Rozet tone="bilgi">{zamanMetni(m)}</Rozet>
+        <div className="flex flex-wrap items-center gap-2">
+          <Rozet tone="bilgi">{zamanMetni(m)}</Rozet>
+          {m.hoca_adi ? <Rozet tone="inceleme">Birebir · {m.hoca_adi}</Rozet> : <Rozet tone="notr">Grup</Rozet>}
+        </div>
 
         <div className="flex items-center gap-2 text-sm text-ink-3">
           Kayıt: {kisaTarih(m.created_at)}
@@ -116,16 +120,20 @@ interface ToplantilarIstemciProps {
   simdi: string;
   benId: string;
   yonetebilir: boolean;
+  /** "Hocayla görüşme" alanındaki öneriler. */
+  hocalar: string[];
+  /** Panodaki "Toplantı ekle" düğmesinden gelindi (?yeni=1). */
+  formAcik?: boolean;
 }
 
-export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: ToplantilarIstemciProps) {
+export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir, hocalar, formAcik }: ToplantilarIstemciProps) {
   const router = useRouter();
   const simdiMs = Date.parse(simdi);
   // Bitmemiş toplantı (şu an süren dahil) yaklaşanlarda kalır.
   const yaklasan = kayitlar.filter((m) => Date.parse(toplantiBitisi(m)) >= simdiMs);
   const gecmis = kayitlar.filter((m) => Date.parse(toplantiBitisi(m)) < simdiMs).reverse();
 
-  const [form, setForm] = useState<{ mevcut?: DuzenlenenToplanti } | null>(null);
+  const [form, setForm] = useState<{ mevcut?: DuzenlenenToplanti } | null>(formAcik ? {} : null);
   const [bildirim, setBildirim] = useState<string | null>(null);
   const [silHata, setSilHata] = useState<string | null>(null);
   const [islemde, startTransition] = useTransition();
@@ -168,7 +176,7 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
     <div className="space-y-8">
       <SayfaBasligi
         baslik="Toplantılar"
-        aciklama="Haftalık grup toplantısı notları, seminer sunumları, TRUBA değerlendirmeleri ve alınan kararlar."
+        aciklama="Grup toplantıları ve hocalarla birebir görüşmeler. Hocayla toplantın varsa sen ekle, herkes görsün."
         eylemler={
           <>
             <Link href="/takvim" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
@@ -219,6 +227,7 @@ export function ToplantilarIstemci({ kayitlar, simdi, benId, yonetebilir }: Topl
       {form && (
         <ToplantiFormu
           mevcut={form.mevcut}
+          hocalar={hocalar}
           varsayilanGun={gunISO(simdi)}
           onKapat={() => setForm(null)}
           onKaydedildi={kaydedildi}

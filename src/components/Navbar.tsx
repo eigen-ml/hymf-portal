@@ -16,29 +16,22 @@ import { TemaSecici } from '@/components/TemaSecici';
 
 type Baglanti = { href: string; etiket: string };
 
-// Günlük işler doğrudan çubukta; seyrek bakılanlar "Diğer" altında.
+// Site artık öğrenciler arası (hocalar bakmıyor): çubukta toplantı, takvim ve VASP; seyrek
+// bakılanlar "Diğer" altında. Gizlenen sayfalar adresle yine açılır.
 const anaBaglantilar: Baglanti[] = [
   { href: '/', etiket: 'Pano' },
-  { href: '/takvim', etiket: 'Takvim' },
-  { href: '/gorevler', etiket: 'Görevler' },
-  { href: '/duyurular', etiket: 'Duyurular' },
   { href: '/toplantilar', etiket: 'Toplantılar' },
+  { href: '/takvim', etiket: 'Takvim' },
+  { href: '/kilavuzlar', etiket: 'VASP' },
+  { href: '/duyurular', etiket: 'Duyurular' },
 ];
 
 const digerBaglantilar: Baglanti[] = [
-  { href: '/kilavuzlar', etiket: 'Kılavuzlar' },
+  { href: '/gorevler', etiket: 'Görevler' },
   { href: '/formlar', etiket: 'Formlar' },
   { href: '/kaynaklar', etiket: 'Kaynaklar' },
   { href: '/dersler', etiket: 'Dersler' },
   { href: '/uyeler', etiket: 'Üyeler' },
-];
-
-// Hoca "çok uğraşamam" dedi: menüde yalnız bunlar. Diğer sayfalar adresle yine açılır.
-const hocaBaglantilari: Baglanti[] = [
-  { href: '/', etiket: 'Pano' },
-  { href: '/takvim', etiket: 'Takvim' },
-  { href: '/gorevler', etiket: 'Görevler' },
-  { href: '/kilavuzlar', etiket: 'Kılavuzlar' },
 ];
 
 function aktifMi(pathname: string, href: string) {
@@ -90,8 +83,8 @@ export function Navbar() {
 
   const uye = isMember(profile);
   // Girişsiz ziyaretçi yalnız ana sayfayı (marka bağlantısı) ve giriş düğmesini görür.
-  const ana = uye ? (isHoca ? hocaBaglantilari : anaBaglantilar) : [];
-  const diger = uye && !isHoca ? digerBaglantilar : [];
+  const ana = uye ? anaBaglantilar : [];
+  const diger = uye ? digerBaglantilar : [];
   const ozel: Baglanti[] = uye
     ? [
         { href: '/calisma-alani', etiket: isHoca ? 'Öğrencilerim' : 'Çalışma alanım' },

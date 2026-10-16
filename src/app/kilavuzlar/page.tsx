@@ -17,8 +17,8 @@ export default async function Page() {
   return (
     <div className="space-y-10">
       <SayfaBasligi
-        baslik="Kılavuzlar"
-        aciklama="Grubun VASP hesap kılavuzları. Açmak için başlığa basın."
+        baslik="VASP"
+        aciklama="TRUBA'da VASP kurulumu, grubun hesap kılavuzları ve örnek dosyalar. Açmak için başlığa basın."
       />
 
       <Uyari tone="bilgi" baslik="Yeni misin?">

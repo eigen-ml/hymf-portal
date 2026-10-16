@@ -17,6 +17,8 @@ export interface ToplantiGirdisi {
   location?: string;
   notes: string;
   presentation_url: string;
+  /** Hocayla birebir görüşmede hocanın adı; boş: grup toplantısı. Hiç gönderilmezse dokunulmaz. */
+  hoca_adi?: string | null;
   /** 0: tek toplantı. 1–20: aynı gün ve saatte bu kadar hafta daha eklenir. */
   tekrar_hafta?: number;
 }
@@ -27,6 +29,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 const URL_REGEX = /^https?:\/\//i;
 const BASLIK_MAX = 200;
 const YER_MAX = 300;
+const HOCA_MAX = 120;
 const NOT_MAX = 5000;
 const URL_MAX = 2000;
 const TEKRAR_MAX = 20;
@@ -43,6 +46,7 @@ type TemizGirdi = {
   location: string | null;
   notes: string | null;
   presentation_url: string | null;
+  hoca_adi?: string | null;
 };
 
 function temizle(input: ToplantiDuzenlemesi): TemizGirdi | string {
@@ -74,7 +78,7 @@ function temizle(input: ToplantiDuzenlemesi): TemizGirdi | string {
     if (!URL_REGEX.test(presentationUrl)) return 'Sunum bağlantısı http:// veya https:// ile başlamalıdır.';
   }
 
-  return {
+  const temiz: TemizGirdi = {
     title,
     meeting_date: new Date(baslangic).toISOString(),
     ends_at,
@@ -82,6 +86,13 @@ function temizle(input: ToplantiDuzenlemesi): TemizGirdi | string {
     notes: notes || null,
     presentation_url: presentationUrl || null,
   };
+  // Takvimden düzenlemede alan gelmez; o zaman mevcut değer korunur.
+  if (input.hoca_adi !== undefined) {
+    const hoca = typeof input.hoca_adi === 'string' ? input.hoca_adi.trim() : '';
+    if (hoca.length > HOCA_MAX) return `Hoca adı ${HOCA_MAX} karakteri aşamaz.`;
+    temiz.hoca_adi = hoca || null;
+  }
+  return temiz;
 }
 
 function yenile() {

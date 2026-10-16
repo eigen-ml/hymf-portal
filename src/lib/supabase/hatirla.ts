@@ -25,3 +25,23 @@ export function hatirlamaTercihiniYaz(beniHatirla: boolean) {
     document.cookie = `${GECICI_OTURUM_CEREZI}=1; path=/; samesite=lax${guvenli}`;
   }
 }
+
+const EPOSTA_ANAHTARI = 'hymf-son-eposta';
+
+/** "Beni hatırla" işaretliyse giriş ekranı son e-postayla dolu gelir; işaretsizse kayıt silinir. */
+export function epostaHatirla(eposta: string | null) {
+  try {
+    if (eposta) localStorage.setItem(EPOSTA_ANAHTARI, eposta);
+    else localStorage.removeItem(EPOSTA_ANAHTARI);
+  } catch {
+    // depolama kapalı olabilir
+  }
+}
+
+export function hatirlananEposta(): string {
+  try {
+    return localStorage.getItem(EPOSTA_ANAHTARI) ?? '';
+  } catch {
+    return '';
+  }
+}

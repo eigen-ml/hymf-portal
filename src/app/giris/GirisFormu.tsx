@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { hatirlamaTercihiniYaz } from '@/lib/supabase/hatirla';
+import { epostaHatirla, hatirlamaTercihiniYaz, hatirlananEposta } from '@/lib/supabase/hatirla';
 import { DEMO_MODU } from '@/lib/demo';
 import { INITIAL_PROFILES } from '@/lib/mockData';
 import { useAuth } from '@/context/AuthContext';
@@ -16,11 +16,17 @@ interface GirisFormuProps {
   hataParam: string | null;
 }
 
+// Kayıtlı e-posta sayfa açıkken değişmez; abonelik gerekmez.
+const aboneOlma = () => () => {};
+
 export function GirisFormu({ next, hataParam }: GirisFormuProps) {
   const router = useRouter();
   const { loginAs } = useAuth();
 
-  const [email, setEmail] = useState('');
+  // Kişi yazana kadar kutuda "Beni hatırla" ile kaydedilmiş son e-posta durur (yalnız tarayıcıda okunur).
+  const [yazilanEposta, setEmail] = useState<string | null>(null);
+  const kayitliEposta = useSyncExternalStore(aboneOlma, hatirlananEposta, () => '');
+  const email = yazilanEposta ?? kayitliEposta;
   const [password, setPassword] = useState('');
   const [beniHatirla, setBeniHatirla] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +58,7 @@ export function GirisFormu({ next, hataParam }: GirisFormuProps) {
           return;
         }
 
+        epostaHatirla(beniHatirla ? email.trim() : null);
         router.replace(next);
         router.refresh();
         return;
@@ -87,7 +94,9 @@ export function GirisFormu({ next, hataParam }: GirisFormuProps) {
         <Alan etiket="E-posta adresi" htmlFor="email">
           <input
             id="email"
+            name="email"
             type="email"
+            autoComplete="username"
             required
             placeholder="ad.soyad@ankara.edu.tr"
             value={email}
@@ -99,6 +108,7 @@ export function GirisFormu({ next, hataParam }: GirisFormuProps) {
         <Alan etiket="Şifre" htmlFor="password">
           <SifreInput
             id="password"
+            name="password"
             required
             autoComplete="current-password"
             placeholder="••••••••"
