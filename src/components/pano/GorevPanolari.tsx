@@ -15,7 +15,7 @@ function TumGorevler({ etiket = 'Tüm görevler' }: { etiket?: string }) {
   );
 }
 
-/** Bana verilmiş, tamamlanmamış görevler; her satırda "Teslim ettim". */
+/** Bana yazılmış görevler. */
 export function GorevlerimPaneli({
   gorevler,
   benId,

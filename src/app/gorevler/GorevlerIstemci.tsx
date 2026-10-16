@@ -1,17 +1,10 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { BasHarfAvatar, BosDurum, Button, Panel, Rozet, SayfaBasligi, Uyari } from '@/components/ui';
+import { BasHarfAvatar, BosDurum, Button, Panel, SayfaBasligi, Uyari } from '@/components/ui';
 import { GorevFormu, type KisiSecenegi, type ToplantiSecenegi } from '@/components/gorevler/GorevFormu';
 import { GorevSatiri } from '@/components/gorevler/GorevSatiri';
-import {
-  FILTRELER,
-  filtreyeUyuyor,
-  kisiSayilari,
-  kisiyeGoreGrupla,
-  siralaGorevler,
-  type GorevFiltresi,
-} from '@/components/gorevler/yardimci';
+import { kisiyeGoreGrupla, siralaGorevler } from '@/components/gorevler/yardimci';
 import { cn } from '@/lib/cn';
 import { KADRO_ETIKETI } from '@/lib/etiketler';
 import type { GroupTask } from '@/types/database';
@@ -43,7 +36,6 @@ export function GorevlerIstemci({
   bugun,
   formAcikBaslasin,
 }: GorevlerIstemciProps) {
-  const [filtre, setFiltre] = useState<GorevFiltresi>('guncel');
   const [gorunum, setGorunum] = useState<Gorunum>(hocaMi ? 'kisi' : 'liste');
   const [formAcik, setFormAcik] = useState(formAcikBaslasin);
   const [mesaj, setMesaj] = useState<string | null>(null);
@@ -51,22 +43,16 @@ export function GorevlerIstemci({
   // Görevi olmayan hoca dışındakiler önce kendi görevlerini görür.
   const benimBolumu = !hocaMi;
 
+  // Görevler yalnız yazılı liste: teslim/onay adımı ve durum filtresi yok.
   const veri = useMemo(() => {
-    const sayilar = Object.fromEntries(
-      FILTRELER.map((f) => [f.id, gorevler.filter((g) => filtreyeUyuyor(g, f.id, bugun)).length])
-    ) as Record<GorevFiltresi, number>;
-    const filtreli = gorevler.filter((g) => filtreyeUyuyor(g, filtre, bugun));
-    const benim = benimBolumu ? siralaGorevler(filtreli.filter((g) => g.assignee_id === benId)) : [];
-    const digerleri = benimBolumu ? filtreli.filter((g) => g.assignee_id !== benId) : filtreli;
+    const benim = benimBolumu ? siralaGorevler(gorevler.filter((g) => g.assignee_id === benId)) : [];
+    const digerleri = benimBolumu ? gorevler.filter((g) => g.assignee_id !== benId) : gorevler;
     return {
-      sayilar,
       benim,
       digerleri: siralaGorevler(digerleri),
       kisiGruplari: kisiyeGoreGrupla(digerleri),
-      kisiBasina: kisiSayilari(gorevler, bugun),
-      teslimSayisi: gorevler.filter((g) => g.status === 'teslim_edildi').length,
     };
-  }, [gorevler, filtre, bugun, benimBolumu, benId]);
+  }, [gorevler, benimBolumu, benId]);
 
   const satir = (g: GroupTask, kisiGoster: boolean) => (
     <GorevSatiri key={g.id} gorev={g} benId={benId} yonetebilir={yonetebilir} bugun={bugun} kisiGoster={kisiGoster} />
@@ -78,7 +64,7 @@ export function GorevlerIstemci({
     <div className="space-y-8">
       <SayfaBasligi
         baslik="Görevler"
-        aciklama="Haftalık toplantıda verilen görevler. Herkes görebilir."
+        aciklama="Toplantıda konuşulan görevler, kim ne yapacak. Herkes görebilir."
         eylemler={
           yonetebilir && !formAcik ? (
             <Button
@@ -122,37 +108,6 @@ export function GorevlerIstemci({
         />
       ) : (
         <>
-          {yonetebilir && veri.teslimSayisi > 0 && filtre !== 'teslim_edildi' && (
-            <Uyari tone="bilgi">
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="mr-auto font-medium">{veri.teslimSayisi} görev teslim edildi, onayınızı bekliyor.</p>
-                <Button variant="secondary" onClick={() => setFiltre('teslim_edildi')}>
-                  Göster
-                </Button>
-              </div>
-            </Uyari>
-          )}
-
-          <div role="group" aria-label="Duruma göre göster" className="flex flex-wrap gap-2">
-            {FILTRELER.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                aria-pressed={filtre === f.id}
-                onClick={() => setFiltre(f.id)}
-                className={cn(
-                  'inline-flex min-h-10 items-center gap-2 rounded-lg border px-3.5 text-sm font-semibold',
-                  filtre === f.id
-                    ? 'border-accent bg-accent-soft text-accent-ink'
-                    : 'border-line-strong bg-surface text-ink-2 hover:bg-sunken hover:text-ink'
-                )}
-              >
-                {f.etiket}
-                <span className="tabular-nums">{veri.sayilar[f.id]}</span>
-              </button>
-            ))}
-          </div>
-
           {benimBolumu && (
             <Panel
               baslik="Benim görevlerim"
@@ -161,7 +116,7 @@ export function GorevlerIstemci({
             >
               {veri.benim.length === 0 ? (
                 <p className="py-5 text-sm text-ink-2">
-                  {filtre === 'guncel' ? 'Size verilmiş açık görev yok.' : 'Bu seçimde size ait görev yok.'}
+                  Size yazılmış görev yok.
                 </p>
               ) : (
                 <ul className="mt-3 divide-y divide-line border-t border-line">{veri.benim.map((g) => satir(g, false))}</ul>
@@ -196,7 +151,7 @@ export function GorevlerIstemci({
             </div>
 
             {veri.digerleri.length === 0 ? (
-              <p className="text-sm text-ink-2">{filtre === 'guncel' ? 'Şu an bekleyen görev yok.' : 'Bu seçimde görev yok.'}</p>
+              <p className="text-sm text-ink-2">Başka görev yok.</p>
             ) : gorunum === 'liste' ? (
               <Panel govdeSinifi="px-5 py-0 sm:px-6 sm:py-0">
                 <ul className="divide-y divide-line">{veri.digerleri.map((g) => satir(g, true))}</ul>
@@ -204,9 +159,8 @@ export function GorevlerIstemci({
             ) : (
               <div className="space-y-4">
                 {veri.kisiGruplari.map((grup) => {
-                  const sayi = veri.kisiBasina.get(grup.kisiId) ?? { bekleyen: 0, teslim: 0, gecikmis: 0 };
                   const kadro = grup.kadro ? KADRO_ETIKETI[grup.kadro] : null;
-                  const bekleyenMetni = sayi.bekleyen === 0 ? 'bekleyen görev yok' : `${sayi.bekleyen} bekleyen görev`;
+                  const sayiMetni = `${grup.gorevler.length} görev`;
                   return (
                     <Panel
                       key={grup.kisiId}
@@ -216,8 +170,7 @@ export function GorevlerIstemci({
                           <span>{grup.ad}</span>
                         </span>
                       }
-                      aciklama={kadro ? `${kadro}, ${bekleyenMetni}` : bekleyenMetni.charAt(0).toLocaleUpperCase('tr-TR') + bekleyenMetni.slice(1)}
-                      eylemler={sayi.teslim > 0 ? <Rozet tone="inceleme">{sayi.teslim} teslim edildi</Rozet> : undefined}
+                      aciklama={kadro ? `${kadro}, ${sayiMetni}` : sayiMetni}
                       govdeSinifi="px-5 py-0 sm:px-6 sm:py-0"
                     >
                       <ul className="mt-3 divide-y divide-line border-t border-line">{grup.gorevler.map((g) => satir(g, false))}</ul>

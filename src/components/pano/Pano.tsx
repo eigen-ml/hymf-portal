@@ -10,7 +10,7 @@ import { bugunISO } from '@/lib/zaman';
 import type { Profile } from '@/types/database';
 import { BuHafta } from './BuHafta';
 import { CalismaAlanimBaglantisi, OgrencilerOzeti } from './CalismaOzeti';
-import { GorevDagilimi, GorevlerimPaneli, OnayBekleyenler } from './GorevPanolari';
+import { GorevDagilimi, GorevlerimPaneli } from './GorevPanolari';
 import { SonDuyurular, type PanoDuyurusu } from './SonDuyurular';
 import { TakvimEkleKutusu } from './TakvimEkleKutusu';
 import { YaklasanToplantilar, type PanoToplantisi } from './YaklasanToplantilar';
@@ -98,7 +98,6 @@ export async function Pano({ ben }: { ben: Profile }) {
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-8 lg:col-span-2">
-          {hocaMi && <OnayBekleyenler gorevler={gorevler} benId={ben.id} bugun={bugun} />}
           {gorevlerimGoster && <GorevlerimPaneli gorevler={gorevler} benId={ben.id} yonetebilir={yonetebilir} bugun={bugun} />}
           <BuHafta ogeler={hafta} benId={ben.id} bugun={bugun} />
         </div>

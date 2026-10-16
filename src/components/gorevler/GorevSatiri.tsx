@@ -2,30 +2,29 @@
 
 import React, { useId, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { gorevDuzenle, gorevDurumu, gorevNotu, gorevSil, type ActionSonucu } from '@/app/gorevler/actions';
-import { Alan, Button, Rozet, Uyari, inputSinifi, textareaSinifi } from '@/components/ui';
+import { gorevDuzenle, gorevNotu, gorevSil, type ActionSonucu } from '@/app/gorevler/actions';
+import { Alan, Button, Uyari, inputSinifi, textareaSinifi } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { kisaAd } from '@/lib/etiketler';
 import { bugunISO, kisaTarih, sonTarihMetni, tarih } from '@/lib/zaman';
-import type { GorevDurum, GroupTask } from '@/types/database';
-import { DURUM_METNI, DURUM_TONU, gecikmisMi } from './yardimci';
+import type { GroupTask } from '@/types/database';
+import { gecikmisMi } from './yardimci';
 
 type Mod = 'goster' | 'duzenle' | 'not' | 'sil';
 
 export interface GorevSatiriProps {
   gorev: GroupTask;
   benId: string;
-  /** Hoca veya yönetici: tamamlandı işaretler, düzenler, siler. */
+  /** Hoca veya yönetici: düzenler, siler. */
   yonetebilir: boolean;
   /** Sunucunun hesapladığı bugün (YYYY-MM-DD); sunucu ve tarayıcı aynı günü görsün. */
   bugun?: string;
-  /** Pano için: yalnız başlık, kişi, son tarih ve tek ana eylem. */
+  /** Pano için: yalnız başlık, kişi ve son tarih. */
   kompakt?: boolean;
   /** Görevi alan kişinin adını göster; kişiye göre listede gerekmez. */
   kisiGoster?: boolean;
 }
 
-const BUYUK_DUGME = 'w-full sm:w-auto';
 
 export function GorevSatiri({ gorev, benId, yonetebilir, bugun: bugunProp, kompakt = false, kisiGoster = true }: GorevSatiriProps) {
   const router = useRouter();
@@ -35,7 +34,6 @@ export function GorevSatiri({ gorev, benId, yonetebilir, bugun: bugunProp, kompa
   const [aciklamaAcik, setAciklamaAcik] = useState(false);
 
   const bugun = bugunProp ?? bugunISO();
-  const tamam = gorev.status === 'tamamlandi';
   const benimki = gorev.assignee_id === benId;
   const gecikti = gecikmisMi(gorev, bugun);
   const uzunAciklama =
@@ -54,10 +52,6 @@ export function GorevSatiri({ gorev, benId, yonetebilir, bugun: bugunProp, kompa
     });
   }
 
-  function durumDegistir(yeni: GorevDurum) {
-    calistir(() => gorevDurumu(gorev.id, yeni));
-  }
-
   if (mod === 'duzenle') {
     return (
       <li className="py-4">
@@ -67,44 +61,6 @@ export function GorevSatiri({ gorev, benId, yonetebilir, bugun: bugunProp, kompa
           onVazgec={() => setMod('goster')}
         />
       </li>
-    );
-  }
-
-  // Ana eylemler: hocada "Tamamlandı ✓", görevi alanda "Teslim ettim".
-  const anaEylemler: React.ReactNode[] = [];
-  if (yonetebilir) {
-    if (!tamam) {
-      anaEylemler.push(
-        <Button
-          key="tamamla"
-          variant={gorev.status === 'teslim_edildi' ? 'primary' : 'secondary'}
-          size="lg"
-          className={BUYUK_DUGME}
-          disabled={bekliyor}
-          onClick={() => durumDegistir('tamamlandi')}
-        >
-          Tamamlandı ✓
-        </Button>
-      );
-    } else {
-      anaEylemler.push(
-        <Button key="geri" variant="secondary" size="lg" className={BUYUK_DUGME} disabled={bekliyor} onClick={() => durumDegistir('acik')}>
-          Geri al
-        </Button>
-      );
-    }
-  }
-  if (benimki && !tamam) {
-    anaEylemler.push(
-      gorev.status === 'acik' ? (
-        <Button key="teslim" variant="primary" size="lg" className={BUYUK_DUGME} disabled={bekliyor} onClick={() => durumDegistir('teslim_edildi')}>
-          Teslim ettim
-        </Button>
-      ) : (
-        <Button key="teslim-geri" variant="secondary" size="lg" className={BUYUK_DUGME} disabled={bekliyor} onClick={() => durumDegistir('acik')}>
-          Teslimi geri al
-        </Button>
-      )
     );
   }
 
@@ -120,14 +76,7 @@ export function GorevSatiri({ gorev, benId, yonetebilir, bugun: bugunProp, kompa
       </span>
     );
   }
-  if (tamam && gorev.completed_at) {
-    ayrintilar.push(
-      <span key="bitti" suppressHydrationWarning>
-        Tamamlandı: {kisaTarih(gorev.completed_at)}
-      </span>
-    );
-  }
-  if (!tamam && gorev.due_date) {
+  if (gorev.due_date) {
     ayrintilar.push(
       <span key="tarih" className={cn(gecikti && 'font-medium text-warn')} title={tarih(gorev.due_date)}>
         {gecikti ? sonTarihMetni(gorev.due_date, bugun) : `Son tarih: ${sonTarihMetni(gorev.due_date, bugun)}`}
@@ -135,7 +84,7 @@ export function GorevSatiri({ gorev, benId, yonetebilir, bugun: bugunProp, kompa
     );
   }
 
-  const notYazabilir = benimki && !tamam;
+  const notYazabilir = benimki;
   const ikincilVar = !kompakt && (notYazabilir || yonetebilir);
 
   return (
@@ -144,7 +93,6 @@ export function GorevSatiri({ gorev, benId, yonetebilir, bugun: bugunProp, kompa
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <p className="text-base font-medium text-ink">{gorev.title}</p>
-            <Rozet tone={DURUM_TONU[gorev.status]}>{DURUM_METNI[gorev.status]}</Rozet>
           </div>
 
           {kisiGoster && gorev.assignee && (
@@ -180,7 +128,6 @@ export function GorevSatiri({ gorev, benId, yonetebilir, bugun: bugunProp, kompa
           )}
         </div>
 
-        {anaEylemler.length > 0 && <div className="mt-3 flex shrink-0 flex-wrap gap-2 sm:mt-0">{anaEylemler}</div>}
       </div>
 
       {ikincilVar && mod === 'goster' && (
