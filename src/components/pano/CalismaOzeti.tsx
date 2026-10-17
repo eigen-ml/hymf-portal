@@ -48,9 +48,9 @@ export function OgrencilerOzeti({ satirlar }: { satirlar: PanoSatiri[] | null })
 /** Hoca olmayan üye için: çalışma alanına kısayol. */
 export function CalismaAlanimBaglantisi() {
   return (
-    <Panel baslik="Çalışma alanım" aciklama="Tez planınız, ilerleme notlarınız ve dosyalarınız.">
+    <Panel baslik="Çalışma alanı" aciklama="Kısa notların ve grubun fikirleri.">
       <Link href="/calisma-alani" className="text-sm text-link underline">
-        Çalışma alanıma git
+        Çalışma alanına git
       </Link>
     </Panel>
   );

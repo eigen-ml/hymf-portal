@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Download, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { Download, ExternalLink, FileText } from 'lucide-react';
 import { CodeBlock } from '@/components/CodeBlock';
 import { useDoldur } from '@/components/KodDegiskenleri';
 import { Rozet, Uyari, buttonClass } from '@/components/ui';
@@ -102,6 +103,44 @@ mpirun -np $SLURM_NTASKS /arf/scratch/$USER/vasp.6.6.0/bin_cpu/vasp_std
 EOF
 sed -i "s/^#SBATCH -A KULLANICI$/#SBATCH -A $USER/" job.sh
 ls`;
+
+// Gerçek hesap betiği: icerik/kilavuzlar/walk_std ile aynı içerik. Kuyruk değerleri TRUBA ARF Kuyruk Bilgisi'nden
+// (orfoz en az 56 çekirdek, en fazla 3 gün; 17 Eki 2026). Modül ve vasp_std yolu Si testinde denenen betikten.
+const WALK_KUR = `cd /arf/scratch/$USER && cat > walk_std <<'EOF'
+#!/bin/bash
+# HYMF örnek walk_std: gerçek hesap için iş betiği (Si testindeki job.sh değil).
+# Her hesap klasörüne kopyala, değerleri işine göre ayarla, klasörün içinde "sbatch walk_std" ile gönder.
+# Kuyruk değerleri TRUBA ARF Kuyruk Bilgisi sayfasından: orfoz en az 56 çekirdek, en fazla 3 gün.
+#SBATCH -M arf
+#SBATCH -p orfoz
+#SBATCH -A KULLANICI_ADINIZ
+#SBATCH -J hesap
+#SBATCH -N 1
+#SBATCH -n 56
+#SBATCH -c 1
+#SBATCH --time=1-00:00:00
+#SBATCH --output=out
+#SBATCH --error=err
+#SBATCH -C weka
+
+. /usr/share/Modules/init/bash
+module load comp/oneapi/2024
+module load lib/hdf5/1.14.3-oneapi-2024
+
+ulimit -s unlimited
+export OMP_NUM_THREADS=1
+cd $SLURM_SUBMIT_DIR
+mpirun -np $SLURM_NTASKS /arf/scratch/$USER/vasp.6.6.0/bin_cpu/vasp_std
+EOF
+sed -i "s/^#SBATCH -A KULLANICI_ADINIZ$/#SBATCH -A $USER/" walk_std
+grep -E "^#SBATCH -(A|p) " walk_std`;
+
+const WALK_DOSYA = 'walk_std';
+
+const WALK_KULLAN = `cd /arf/scratch/$USER && mkdir -p yeni_hesap && cd yeni_hesap
+cp ../walk_std .
+# INCAR, POSCAR, KPOINTS ve POTCAR'ı bu klasöre koy, sonra:
+sbatch walk_std`;
 
 const TEST_KONTROL = `grep -- "-A" job.sh; tail -1 job.sh; head -1 POTCAR; wc -l POSCAR INCAR KPOINTS`;
 
@@ -328,6 +367,14 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
               Hesabın varsa bu adımı geç. Yoksa <Dis href={`${TRUBA_DOCS}/0-truba/kullanici_basvurulari.html`}>TRUBA kullanıcı
               başvurusu</Dis> sayfasından başvur. Hesap kişiye özeldir; şifreni kimseyle paylaşma, başkasının hesabıyla girme.
             </p>
+            <p>
+              Kayıttan sonra hesabın açılması için TRUBA&apos;ya mail atman gerekiyor: kime, CC&apos;ye kim, ne yazılacağı ve hazır
+              mail metni bu PDF&apos;te.
+            </p>
+            <Link href="/kilavuzlar/truba-hesap-aktivasyonu.pdf" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+              <FileText className="size-4" aria-hidden="true" />
+              <span className="whitespace-normal">Hesap aktivasyonu ve mail örneği (PDF)</span>
+            </Link>
             <p>Hesap açılınca kullanıcı adını yukarıdaki kutuya yaz; sayfadaki komutlar ona göre dolar.</p>
           </Adim>
 
@@ -594,21 +641,40 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
         </ol>
       </Kart>
 
-      <Kart baslik="Sonra: kendi hesabın">
-        <ol className="list-decimal space-y-2 pl-5 text-sm leading-relaxed text-ink-2 marker:text-ink-3">
-          <li>VPN&apos;i aç (adım 3), terminali aç ve TRUBA&apos;ya gir (adım 7).</li>
+      <Kart baslik="Sonra: kendi hesabın (walk_std)" id="walk-std">
+        <Uyari tone="uyari" baslik="Testle karıştırma">
+          Si testindeki <Kod>job.sh</Kod> yalnız deneme içindir: <Kod>debug</Kod> kuyruğu, 4 çekirdek, 10 dakika. Gerçek
+          hesapları <Kod>walk_std</Kod> ile gönder; kılavuzlardaki <Kod>sbatch walk_std</Kod> bu dosya.
+        </Uyari>
+        <p className="text-sm leading-relaxed text-ink-2">
+          <strong className="text-ink">Bir kez:</strong> VPN&apos;i aç (adım 3), TRUBA&apos;ya gir (adım 7) ve{' '}
+          <Kod>walk_std</Kod>&apos;yi scratch&apos;e kur. Bloğun tamamını yapıştır; <Kod>-A</Kod> satırı kendi adınla dolar.
+        </p>
+        <CodeBlock title="walk_std'yi kur (TRUBA)" language="bash" code={WALK_KUR} />
+        <Gormeli>
+          <Kod>#SBATCH -p orfoz</Kod> ve <Kod>#SBATCH -A kullanici_adiniz</Kod>.
+        </Gormeli>
+        <p className="text-sm leading-relaxed text-ink-2">
+          <strong className="text-ink">Her hesapta:</strong> yeni bir klasör aç, <Kod>walk_std</Kod>&apos;yi scratch&apos;ten
+          oraya kopyala, giriş dosyalarını koy ve klasörün içinden gönder. Klasör adını hesabına göre değiştir.
+        </p>
+        <CodeBlock title="Yeni hesap (TRUBA)" language="bash" code={WALK_KULLAN} />
+        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-2 marker:text-ink-3">
           <li>
-            Test klasörünü kopyala: <Kod>cd /arf/scratch/$USER && cp -r test_si yeni_hesap && cd yeni_hesap</Kod>
+            <Kod>--time=1-00:00:00</Kod> bir gün demek; orfoz&apos;da en fazla <Kod>3-00:00:00</Kod>. Süre dolunca iş
+            kesilir, işine yetecek kadar ver.
           </li>
           <li>
-            INCAR, POSCAR, KPOINTS ve POTCAR&apos;ı kendi hesabınınkilerle değiştir; <Kod>job.sh</Kod>&apos;ta{' '}
-            <Kod>--time</Kod>&apos;ı ve kuyruğu işine göre ayarla. Hesap türlerine göre ayrıntı yukarıdaki hesap
-            kılavuzlarında.
+            <Kod>-n 56</Kod>: orfoz en az 56 çekirdek ister, bir sunucuda 112 çekirdek var (
+            <Dis href={KUYRUK}>ARF Kuyruk Bilgisi</Dis>). Kuyruk ve çekirdek sayısı TRUBA belgesinden, grup henüz
+            denemedi; sorun çıkarsa gruba yaz.
           </li>
-          <li>
-            <Kod>sbatch job.sh</Kod> ile gönder, bitince sonucu adım 12&apos;deki gibi çek.
-          </li>
-        </ol>
+          <li>İşi izlemek ve sonucu çekmek Si testindeki gibi (adım 10–12); yalnız klasör adı farklı.</li>
+        </ul>
+        <a href={`/kilavuzlar/dosya/${WALK_DOSYA}?indir=1`} download={WALK_DOSYA} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+          <Download className="size-4" aria-hidden="true" />
+          walk_std indir
+        </a>
       </Kart>
 
       <Uyari tone="uyari" baslik="Kurallar">

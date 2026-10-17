@@ -6,7 +6,7 @@ import { isMember } from '@/lib/yetki';
 import { GrupLogosu } from '@/components/ui';
 
 const grupBaglantilari = [
-  { href: '/kilavuzlar', etiket: 'TRUBA ve VASP kılavuzları' },
+  { href: '/kilavuzlar', etiket: 'Kurulum ve Kılavuzlar' },
   { href: '/formlar', etiket: 'Enstitü formları' },
   { href: '/kaynaklar', etiket: 'Kaynaklar' },
   { href: '/dersler', etiket: 'Dersler' },

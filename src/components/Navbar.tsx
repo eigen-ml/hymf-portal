@@ -16,13 +16,13 @@ import { TemaSecici } from '@/components/TemaSecici';
 
 type Baglanti = { href: string; etiket: string };
 
-// Site artık öğrenciler arası (hocalar bakmıyor): çubukta toplantı, takvim ve VASP; seyrek
+// Site artık öğrenciler arası (hocalar bakmıyor): çubukta toplantı, takvim ve Kurulum ve Kılavuzlar; seyrek
 // bakılanlar "Diğer" altında. Gizlenen sayfalar adresle yine açılır.
 const anaBaglantilar: Baglanti[] = [
   { href: '/', etiket: 'Pano' },
   { href: '/toplantilar', etiket: 'Toplantılar' },
   { href: '/takvim', etiket: 'Takvim' },
-  { href: '/kilavuzlar', etiket: 'VASP' },
+  { href: '/kilavuzlar', etiket: 'Kurulum ve Kılavuzlar' },
   { href: '/duyurular', etiket: 'Duyurular' },
 ];
 
@@ -87,7 +87,7 @@ export function Navbar() {
   const diger = uye ? digerBaglantilar : [];
   const ozel: Baglanti[] = uye
     ? [
-        { href: '/calisma-alani', etiket: isHoca ? 'Öğrencilerim' : 'Çalışma alanım' },
+        { href: '/calisma-alani', etiket: isHoca ? 'Öğrencilerim' : 'Çalışma alanı' },
         ...(isHoca ? [] : [{ href: '/drive', etiket: "Drive'ım" }]),
         ...(isAdmin ? [{ href: '/yonetim', etiket: 'Yönetim' }] : []),
       ]

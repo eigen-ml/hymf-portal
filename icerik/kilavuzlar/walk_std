@@ -1,0 +1,24 @@
+#!/bin/bash
+# HYMF örnek walk_std: gerçek hesap için iş betiği (Si testindeki job.sh değil).
+# Her hesap klasörüne kopyala, değerleri işine göre ayarla, klasörün içinde "sbatch walk_std" ile gönder.
+# Kuyruk değerleri TRUBA ARF Kuyruk Bilgisi sayfasından: orfoz en az 56 çekirdek, en fazla 3 gün.
+#SBATCH -M arf
+#SBATCH -p orfoz
+#SBATCH -A KULLANICI_ADINIZ
+#SBATCH -J hesap
+#SBATCH -N 1
+#SBATCH -n 56
+#SBATCH -c 1
+#SBATCH --time=1-00:00:00
+#SBATCH --output=out
+#SBATCH --error=err
+#SBATCH -C weka
+
+. /usr/share/Modules/init/bash
+module load comp/oneapi/2024
+module load lib/hdf5/1.14.3-oneapi-2024
+
+ulimit -s unlimited
+export OMP_NUM_THREADS=1
+cd $SLURM_SUBMIT_DIR
+mpirun -np $SLURM_NTASKS /arf/scratch/$USER/vasp.6.6.0/bin_cpu/vasp_std

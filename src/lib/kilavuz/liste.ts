@@ -13,6 +13,13 @@ export interface KilavuzDosyasi {
 
 export const KILAVUZLAR: readonly KilavuzDosyasi[] = [
   {
+    dosya: 'truba-hesap-aktivasyonu.pdf',
+    baslik: 'TRUBA hesap aktivasyonu ve mail örneği',
+    aciklama: 'Portal kaydı, grid-teknik@ulakbim.gov.tr adresine atılacak mail (danışman CC\'de) ve hazır mail metni.',
+    bilgi: '2 sayfa',
+    tur: 'pdf',
+  },
+  {
     dosya: 'komutlar.pdf',
     baslik: 'Sık kullanılan komutlar',
     aciklama: 'İş gönderme, dosya işlemleri, POTCAR, phonopy, vaspkit kodları ve Bader komutları tek sayfada.',
@@ -66,6 +73,13 @@ export const KILAVUZLAR: readonly KilavuzDosyasi[] = [
     baslik: 'POSCAR_SnSSe.vasp',
     aciklama: 'Örnek SnSSe 4×4 hücresi (48 atom), Bader kılavuzunda kullanılıyor.',
     bilgi: 'VASP yapı dosyası',
+    tur: 'veri',
+  },
+  {
+    dosya: 'walk_std',
+    baslik: 'walk_std',
+    aciklama: 'Gerçek hesap için iş betiği (orfoz kuyruğu, 56 çekirdek, 1 gün). Kılavuzlardaki "sbatch walk_std" bu. Si testindeki job.sh ile karıştırmayın.',
+    bilgi: 'SLURM iş betiği',
     tur: 'veri',
   },
 ];

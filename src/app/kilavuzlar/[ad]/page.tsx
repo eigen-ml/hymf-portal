@@ -16,7 +16,7 @@ export default async function KilavuzPage({ params }: { params: Promise<{ ad: st
   return (
     <div className="space-y-8">
       <Link href="/kilavuzlar" className="text-sm font-medium text-link hover:underline">
-        ← VASP
+        ← Kurulum ve Kılavuzlar
       </Link>
 
       <SayfaBasligi baslik={kilavuz.baslik} aciklama={kilavuz.aciklama} />
