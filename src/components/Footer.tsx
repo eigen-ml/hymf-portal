@@ -16,7 +16,31 @@ const disBaglantilar = [
   { href: 'https://hymf.ankara.edu.tr', etiket: 'HYMF web sitesi' },
   { href: 'https://fenbilimleri.ankara.edu.tr', etiket: 'Fen Bilimleri Enstitüsü' },
   { href: 'https://truba.gov.tr', etiket: 'TRUBA' },
+  { href: 'https://vasp.at/wiki/Welcome', etiket: 'VASP Wiki' },
+  { href: 'https://next-gen.materialsproject.org/', etiket: 'Materials Project' },
 ];
+
+const programlar = [
+  { href: 'https://jp-minerals.org/vesta/en/', etiket: 'VESTA' },
+  { href: 'https://www.chemcraftprog.com/', etiket: 'Chemcraft' },
+  { href: 'https://www.originlab.com/origin', etiket: 'Origin' },
+  { href: 'https://winscp.net/eng/index.php', etiket: 'WinSCP' },
+];
+
+function DisBaglanti({ href, etiket }: { href: string; etiket: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 text-ink-2 hover:text-accent-ink hover:underline"
+    >
+      {etiket}
+      <ExternalLink className="size-3.5" aria-hidden="true" />
+      <span className="sr-only">(yeni sekmede açılır)</span>
+    </a>
+  );
+}
 
 export async function Footer() {
   // Grup sayfaları yalnız üyelere açık; girişsiz ziyaretçiye bağlantıları gösterilmez.
@@ -24,7 +48,7 @@ export async function Footer() {
 
   return (
     <footer className="mt-16 border-t border-line bg-surface text-sm">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
         <div>
           <p className="flex items-center gap-2.5 font-serif text-lg text-ink">
             <GrupLogosu genislik={44} />
@@ -59,16 +83,20 @@ export async function Footer() {
           <ul className="mt-3 space-y-2">
             {disBaglantilar.map((b) => (
               <li key={b.href}>
-                <a
-                  href={b.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-ink-2 hover:text-accent-ink hover:underline"
-                >
-                  {b.etiket}
-                  <ExternalLink className="size-3.5" aria-hidden="true" />
-                  <span className="sr-only">(yeni sekmede açılır)</span>
-                </a>
+                <DisBaglanti {...b} />
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <nav aria-labelledby="footer-program">
+          <h2 id="footer-program" className="font-bold text-ink">
+            Programlar
+          </h2>
+          <ul className="mt-3 space-y-2">
+            {programlar.map((b) => (
+              <li key={b.href}>
+                <DisBaglanti {...b} />
               </li>
             ))}
           </ul>
