@@ -280,6 +280,8 @@ export interface Announcement {
   telegram_sent: boolean;
   telegram_message_id?: string | null;
   created_at: string;
+  /** Son düzenleme; hiç düzenlenmediyse boş. */
+  updated_at?: string | null;
   author?: Profile;
 }
 

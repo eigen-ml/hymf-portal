@@ -24,6 +24,7 @@ export default async function DuyurularPage() {
       kayitlar={(data ?? []) as DuyuruKaydi[]}
       benId={ben.id}
       yonetebilir={yonetebilir}
+      admin={isAdmin(ben)}
     />
   );
 }

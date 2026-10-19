@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { CheckCircle2, Plus, Send, Trash2, User } from 'lucide-react';
+import { CheckCircle2, Pencil, Plus, Send, Trash2, User } from 'lucide-react';
 import type { Announcement, AnnouncementPriority, Profile } from '@/types/database';
 import { SayfaBasligi, Panel, Button, Rozet, YetkiRozeti, Uyari } from '@/components/ui';
 import type { RozetTonu } from '@/components/ui';
 import { tarih } from '@/lib/zaman';
-import { duyuruEkle, duyuruSil } from './actions';
+import { duyuruDuzenle, duyuruEkle, duyuruSil } from './actions';
 
 export type DuyuruKaydi = Omit<Announcement, 'author'> & {
   author?: Pick<Profile, 'id' | 'full_name' | 'academic_title' | 'kadro' | 'yetki'> | null;
@@ -16,6 +16,8 @@ interface DuyurularIstemciProps {
   kayitlar: DuyuruKaydi[];
   benId: string;
   yonetebilir: boolean;
+  /** Yönetici her duyuruyu düzenleyebilir; diğerleri yalnız kendininkini. */
+  admin: boolean;
 }
 
 const FILTRELER: { id: 'all' | AnnouncementPriority; label: string }[] = [
@@ -47,9 +49,11 @@ const FORM_SECENEKLERI: { value: AnnouncementPriority; label: string; desc: stri
   { value: 'kaynak_paylasimi', label: 'Kaynak paylaşımı', desc: 'Portal içi akış' },
 ];
 
-export function DuyurularIstemci({ kayitlar, benId, yonetebilir }: DuyurularIstemciProps) {
+export function DuyurularIstemci({ kayitlar, benId, yonetebilir, admin }: DuyurularIstemciProps) {
   const [filterPriority, setFilterPriority] = useState<'all' | AnnouncementPriority>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  /** Düzenlenen duyurunun kimliği; boşsa pencere yeni duyuru içindir. */
+  const [duzenlenenId, setDuzenlenenId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [priority, setPriority] = useState<AnnouncementPriority>('toplanti');
@@ -61,9 +65,34 @@ export function DuyurularIstemci({ kayitlar, benId, yonetebilir }: DuyurularIste
 
   const filtered = kayitlar.filter((kayit) => filterPriority === 'all' || kayit.priority === filterPriority);
 
+  const formuSifirla = () => {
+    setTitle('');
+    setContent('');
+    setPriority('toplanti');
+    setDuzenlenenId(null);
+  };
+
   const closeModal = () => {
+    // Yarım kalan yeni duyuru taslağı korunur; düzenleme taslağı atılır.
+    if (duzenlenenId) formuSifirla();
     setIsModalOpen(false);
     setFormHatasi(null);
+  };
+
+  const yeniAc = () => {
+    if (duzenlenenId) formuSifirla();
+    setFormHatasi(null);
+    setIsModalOpen(true);
+  };
+
+  const duzenleAc = (kayit: DuyuruKaydi) => {
+    setDuzenlenenId(kayit.id);
+    setTitle(kayit.title);
+    setContent(kayit.content);
+    setPriority(kayit.priority);
+    setFormHatasi(null);
+    setIslemHatasi(null);
+    setIsModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -74,6 +103,19 @@ export function DuyurularIstemci({ kayitlar, benId, yonetebilir }: DuyurularIste
     setFeedbackMessage(null);
 
     startGonderim(async () => {
+      if (duzenlenenId) {
+        const sonuc = await duyuruDuzenle(duzenlenenId, { title, content, priority });
+        if (!sonuc.ok) {
+          setFormHatasi(sonuc.error);
+          return;
+        }
+        setFeedbackMessage('Duyuru güncellendi.');
+        formuSifirla();
+        setIsModalOpen(false);
+        setTimeout(() => setFeedbackMessage(null), 5000);
+        return;
+      }
+
       const sonuc = await duyuruEkle({ title, content, priority });
       if (!sonuc.ok) {
         setFormHatasi(sonuc.error);
@@ -85,9 +127,7 @@ export function DuyurularIstemci({ kayitlar, benId, yonetebilir }: DuyurularIste
           ? 'Duyuru başarıyla yayınlandı ve Telegram grubuna iletildi!'
           : 'Duyuru portalda yayınlandı, ancak Telegram grubuna iletilemedi.'
       );
-      setTitle('');
-      setContent('');
-      setPriority('toplanti');
+      formuSifirla();
       setIsModalOpen(false);
       setTimeout(() => setFeedbackMessage(null), 5000);
     });
@@ -109,7 +149,7 @@ export function DuyurularIstemci({ kayitlar, benId, yonetebilir }: DuyurularIste
         baslik="Duyurular"
         aciklama="Tüm grup üyelerinin ortak akışı. Acil ve toplantı duyuruları doğrudan Telegram grubuna iletilir."
         eylemler={
-          <Button variant="primary" size="sm" onClick={() => setIsModalOpen(true)}>
+          <Button variant="primary" size="sm" onClick={yeniAc}>
             <Plus className="w-4 h-4" />
             <span>Duyuru ekle</span>
           </Button>
@@ -150,6 +190,7 @@ export function DuyurularIstemci({ kayitlar, benId, yonetebilir }: DuyurularIste
 
         {filtered.map((kayit) => {
           const silebilir = kayit.author_id === benId || yonetebilir;
+          const duzenleyebilir = kayit.author_id === benId || admin;
 
           return (
             <Panel key={kayit.id} className="space-y-4">
@@ -167,6 +208,18 @@ export function DuyurularIstemci({ kayitlar, benId, yonetebilir }: DuyurularIste
 
                 <div className="flex items-center gap-2 text-sm text-ink-3">
                   {tarih(kayit.created_at)}
+                  {kayit.updated_at && <span title={tarih(kayit.updated_at)}>(düzenlendi)</span>}
+                  {duzenleyebilir && (
+                    <button
+                      onClick={() => duzenleAc(kayit)}
+                      disabled={siliniyor}
+                      className="text-ink-3 hover:text-link transition p-1 disabled:opacity-50"
+                      title="Duyuruyu düzenle"
+                      aria-label="Duyuruyu düzenle"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
                   {silebilir && (
                     <button
                       onClick={() => handleDelete(kayit.id)}
@@ -198,13 +251,19 @@ export function DuyurularIstemci({ kayitlar, benId, yonetebilir }: DuyurularIste
         })}
       </div>
 
-      {/* YENİ DUYURU MODALI */}
+      {/* YENİ DUYURU / DÜZENLEME MODALI */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-paper/80">
           <div className="bg-surface border border-line rounded-lg max-w-lg w-full p-6 space-y-5">
             <div className="border-b border-line pb-3">
-              <h2 className="text-lg font-semibold text-ink">Yeni duyuru paylaşımı</h2>
-              <p className="text-sm text-ink-3 mt-1">Öncelik seçiminiz Telegram bildirim davranışını belirler.</p>
+              <h2 className="text-lg font-semibold text-ink">
+                {duzenlenenId ? 'Duyuruyu düzenle' : 'Yeni duyuru paylaşımı'}
+              </h2>
+              <p className="text-sm text-ink-3 mt-1">
+                {duzenlenenId
+                  ? 'Değişiklik yalnız portalda görünür; Telegram\'a yeniden gönderilmez.'
+                  : 'Öncelik seçiminiz Telegram bildirim davranışını belirler.'}
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
@@ -268,7 +327,9 @@ export function DuyurularIstemci({ kayitlar, benId, yonetebilir }: DuyurularIste
                   İptal
                 </Button>
                 <Button variant="primary" size="sm" type="submit" disabled={gonderiliyor}>
-                  {gonderiliyor ? 'Gönderiliyor...' : 'Yayınla ve bildir'}
+                  {gonderiliyor
+                    ? duzenlenenId ? 'Kaydediliyor...' : 'Gönderiliyor...'
+                    : duzenlenenId ? 'Kaydet' : 'Yayınla ve bildir'}
                 </Button>
               </div>
             </form>

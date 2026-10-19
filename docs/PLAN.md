@@ -352,7 +352,7 @@ kendi kolonları kullanılır.
 | `workspace_files` | `can_view_workspace(workspace_id)` | `can_view_workspace(workspace_id)` | yok | `can_view_workspace(workspace_id) and (uploaded_by = auth.uid() or is_advisor_of(workspace_student(workspace_id)))` |
 | `workspace_logs` | `can_view_workspace(workspace_id)` | **yok** (yalnız trigger) | yok | yok |
 | `uyelik_logs` | `is_admin()` | yok | yok | yok |
-| `announcements` | `is_member()` | `is_member() and author_id = auth.uid()` | yok | `author_id = auth.uid() or is_hoca() or is_admin()` |
+| `announcements` | `is_member()` | `is_member() and author_id = auth.uid()` | `author_id = auth.uid() or is_admin()` (başlık, metin, tür; 20261019000000) | `author_id = auth.uid() or is_hoca() or is_admin()` |
 | `resources` | `is_member()` | `is_member() and uploader_id = auth.uid()` | yok | `uploader_id = auth.uid() or is_hoca() or is_admin()` |
 | `courses`, `course_materials` | `is_member()` | `is_hoca() or is_admin()` | yok | yok |
 | `meetings` | `is_member()` | `is_member() and creator_id = auth.uid()` | yok | yok |

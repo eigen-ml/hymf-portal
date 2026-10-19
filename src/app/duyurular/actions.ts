@@ -65,6 +65,43 @@ export async function duyuruEkle(input: {
   }
 }
 
+/** Yazan veya yönetici düzenler; RLS zorlar. Telegram'a yeniden gönderilmez. */
+export async function duyuruDuzenle(
+  id: string,
+  input: { title: string; content: string; priority: AnnouncementPriority }
+): Promise<ActionSonucu> {
+  try {
+    await requireMemberAction();
+
+    if (!validateUUID(id)) return { ok: false, error: 'Geçersiz duyuru ID.' };
+
+    const title = typeof input.title === 'string' ? input.title.trim() : '';
+    const content = typeof input.content === 'string' ? input.content.trim() : '';
+
+    if (!title) return { ok: false, error: 'Duyuru başlığı zorunludur.' };
+    if (title.length > 200) return { ok: false, error: 'Başlık en fazla 200 karakter olabilir.' };
+    if (!content) return { ok: false, error: 'Duyuru içeriği zorunludur.' };
+    if (content.length > 5000) return { ok: false, error: 'İçerik en fazla 5000 karakter olabilir.' };
+    if (!validateOncelik(input.priority)) return { ok: false, error: 'Geçersiz öncelik.' };
+
+    const sb = await createClient();
+    const { data, error } = await sb
+      .from('announcements')
+      .update({ title, content, priority: input.priority, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('id');
+
+    if (error) return { ok: false, error: 'Kaydedilemedi: ' + error.message };
+    if ((data ?? []).length === 0) return { ok: false, error: 'Bu duyuruyu düzenleme yetkiniz yok.' };
+
+    revalidatePath('/duyurular');
+    revalidatePath('/');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Beklenmeyen bir hata oluştu.' };
+  }
+}
+
 export async function duyuruSil(id: string): Promise<ActionSonucu> {
   try {
     await requireMemberAction();
