@@ -46,6 +46,21 @@ export async function notIsaretle(id: string, yapildi: boolean): Promise<ActionS
   });
 }
 
+/** Yalnız yazan, kendi notunun metnini düzeltir; RLS zorlar. */
+export async function notDuzenle(id: string, govde: string): Promise<ActionSonucu> {
+  return calistir(async () => {
+    await requireMemberAction();
+    if (!UUID_REGEX.test(id)) return 'Geçersiz not.';
+    const metin = typeof govde === 'string' ? govde.trim() : '';
+    if (!metin) return 'Not boş olamaz.';
+    if (metin.length > GOVDE_MAX) return `Not ${GOVDE_MAX} karakteri aşamaz.`;
+    const sb = await createClient();
+    const { data, error } = await sb.from('notlar').update({ govde: metin }).eq('id', id).select('id');
+    if (error) return 'Kaydedilemedi: ' + error.message;
+    return data?.length ? null : 'Bu notu yalnız yazan düzenleyebilir.';
+  });
+}
+
 export async function notSil(id: string): Promise<ActionSonucu> {
   return calistir(async () => {
     await requireMemberAction();

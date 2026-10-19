@@ -77,8 +77,8 @@ function Oge({
       ) : (
         (o.silebilir || o.tur === 'toplanti') && (
           <div className="flex flex-wrap gap-2 pt-1">
-            {/* Toplantıyı her üye düzenler; silme ekleyende, hocada, yöneticide. Etkinlikte düzenleme yok. */}
-            {o.tur === 'toplanti' && (
+            {/* Toplantıyı her üye düzenler; etkinliği ekleyen veya yönetici (silebilen). */}
+            {(o.tur === 'toplanti' || o.silebilir) && (
               <Button variant="secondary" size="sm" onClick={() => onDuzenle(o)} disabled={islemde}>
                 <Pencil className="size-4" />
                 Düzenle

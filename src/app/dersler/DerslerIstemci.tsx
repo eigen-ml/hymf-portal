@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { BookOpen, Download, Plus, ShieldAlert, Trash2, User } from 'lucide-react';
+import { BookOpen, Download, Pencil, Plus, ShieldAlert, Trash2, User } from 'lucide-react';
 import {
   Alan,
   BosDurum,
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui';
 import type { CourseMaterial, Profile } from '@/types/database';
 import { tarih } from '@/lib/zaman';
-import { dersEkle, dersSil, materyalEkle, materyalSil } from './actions';
+import { dersDuzenle, dersEkle, dersSil, materyalDuzenle, materyalEkle, materyalSil } from './actions';
 
 const VARSAYILAN_DONEM = '2026-2027 Güz';
 
@@ -47,7 +47,9 @@ function unvanliAd(p: { full_name: string; academic_title?: string | null }): st
 export function DerslerIstemci({ kayitlar, hocalar, benId, yonetebilir }: Props) {
   const [seciliId, setSeciliId] = useState<string | null>(null);
   const [dersModalAcik, setDersModalAcik] = useState(false);
+  const [duzenlenenDers, setDuzenlenenDers] = useState<DersKaydi | null>(null);
   const [materyalModalAcik, setMateryalModalAcik] = useState(false);
+  const [duzenlenenMateryal, setDuzenlenenMateryal] = useState<CourseMaterial | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, baslat] = useTransition();
 
@@ -162,6 +164,18 @@ export function DerslerIstemci({ kayitlar, hocalar, benId, yonetebilir }: Props)
                       variant="ghost"
                       size="sm"
                       disabled={bekliyor}
+                      onClick={() => { setHata(null); setDuzenlenenDers(secili); }}
+                      aria-label="Dersi düzenle"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      <span>Düzenle</span>
+                    </Button>
+                  )}
+                  {yonetebilir && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={bekliyor}
                       onClick={() => dersiSil(secili)}
                       aria-label="Dersi sil"
                     >
@@ -230,6 +244,17 @@ export function DerslerIstemci({ kayitlar, hocalar, benId, yonetebilir }: Props)
                             variant="ghost"
                             size="sm"
                             disabled={bekliyor}
+                            onClick={() => { setHata(null); setDuzenlenenMateryal(mat); }}
+                            aria-label={`${mat.title} materyalini düzenle`}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {(mat.uploader_id === benId || yonetebilir) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={bekliyor}
                             onClick={() => materyaliSil(mat)}
                             aria-label={`${mat.title} materyalini sil`}
                           >
@@ -255,6 +280,24 @@ export function DerslerIstemci({ kayitlar, hocalar, benId, yonetebilir }: Props)
           hocalar={hocalar}
           benId={benId}
           onKapat={() => setDersModalAcik(false)}
+        />
+      )}
+
+      {duzenlenenDers && (
+        <DersEkleModal
+          mevcut={duzenlenenDers}
+          hocalar={hocalar}
+          benId={benId}
+          onKapat={() => setDuzenlenenDers(null)}
+        />
+      )}
+
+      {duzenlenenMateryal && secili && (
+        <MateryalEkleModal
+          mevcut={duzenlenenMateryal}
+          dersId={secili.id}
+          dersKodu={secili.code}
+          onKapat={() => setDuzenlenenMateryal(null)}
         />
       )}
 
@@ -291,46 +334,50 @@ function ModalKabuk({
   );
 }
 
+/** Yeni ders; `mevcut` verilirse o dersi düzenler. */
 function DersEkleModal({
+  mevcut,
   hocalar,
   benId,
   onKapat,
 }: {
+  mevcut?: DersKaydi;
   hocalar: HocaSecenek[];
   benId: string;
   onKapat: () => void;
 }) {
-  const [kod, setKod] = useState('');
-  const [ad, setAd] = useState('');
+  const [kod, setKod] = useState(mevcut?.code ?? '');
+  const [ad, setAd] = useState(mevcut?.name ?? '');
   const [hocaId, setHocaId] = useState(
-    () => hocalar.find((h) => h.id === benId)?.id ?? hocalar[0]?.id ?? '',
+    () => mevcut?.instructor_id ?? hocalar.find((h) => h.id === benId)?.id ?? hocalar[0]?.id ?? '',
   );
-  const [donem, setDonem] = useState(VARSAYILAN_DONEM);
-  const [syllabus, setSyllabus] = useState('');
+  const [donem, setDonem] = useState(mevcut?.semester ?? VARSAYILAN_DONEM);
+  const [syllabus, setSyllabus] = useState(mevcut?.syllabus ?? '');
   const [hataMetni, setHataMetni] = useState<string | null>(null);
   const [bekliyor, baslat] = useTransition();
 
   const hocaYok = hocalar.length === 0;
+  // Dersin hocası artık listede değilse (pasif hesap) seçenek kaybolmasın.
+  const eskiHoca =
+    mevcut?.instructor && !hocalar.some((h) => h.id === mevcut.instructor_id) ? mevcut.instructor : null;
 
   function gonder(e: React.FormEvent) {
     e.preventDefault();
     setHataMetni(null);
     baslat(async () => {
-      const sonuc = await dersEkle({
-        code: kod,
-        name: ad,
-        instructor_id: hocaId,
-        semester: donem,
-        syllabus,
-      });
+      const girdi = { code: kod, name: ad, instructor_id: hocaId, semester: donem, syllabus };
+      const sonuc = mevcut ? await dersDuzenle(mevcut.id, girdi) : await dersEkle(girdi);
       if (sonuc.ok) onKapat();
       else setHataMetni(sonuc.error);
     });
   }
 
   return (
-    <ModalKabuk baslik="Yeni ders ekle" aciklama="Ders, öğretim üyesine bağlı olarak oluşturulur.">
-      {hocaYok ? (
+    <ModalKabuk
+      baslik={mevcut ? 'Dersi düzenle' : 'Yeni ders ekle'}
+      aciklama={mevcut ? undefined : 'Ders, öğretim üyesine bağlı olarak oluşturulur.'}
+    >
+      {hocaYok && !eskiHoca ? (
         <Uyari tone="uyari" baslik="Önce bir hoca hesabı eklenmeli">
           Onaylı ve aktif bir hoca hesabı olmadan ders oluşturulamaz.
         </Uyari>
@@ -371,11 +418,12 @@ function DersEkleModal({
           <select
             id="ders-hoca"
             required
-            disabled={hocaYok}
+            disabled={hocaYok && !eskiHoca}
             value={hocaId}
             onChange={(e) => setHocaId(e.target.value)}
             className={selectSinifi}
           >
+            {eskiHoca && <option value={eskiHoca.id}>{unvanliAd(eskiHoca)}</option>}
             {hocalar.map((h) => (
               <option key={h.id} value={h.id}>
                 {unvanliAd(h)}
@@ -410,7 +458,7 @@ function DersEkleModal({
           <Button variant="ghost" size="sm" onClick={onKapat} disabled={bekliyor}>
             İptal
           </Button>
-          <Button variant="primary" size="sm" type="submit" disabled={bekliyor || hocaYok}>
+          <Button variant="primary" size="sm" type="submit" disabled={bekliyor || (hocaYok && !eskiHoca)}>
             {bekliyor ? 'Kaydediliyor...' : 'Dersi kaydet'}
           </Button>
         </div>
@@ -419,19 +467,22 @@ function DersEkleModal({
   );
 }
 
+/** Yeni materyal; `mevcut` verilirse o materyali düzenler. */
 function MateryalEkleModal({
+  mevcut,
   dersId,
   dersKodu,
   onKapat,
 }: {
+  mevcut?: CourseMaterial;
   dersId: string;
   dersKodu: string;
   onKapat: () => void;
 }) {
-  const [hafta, setHafta] = useState('1');
-  const [baslik, setBaslik] = useState('');
-  const [aciklama, setAciklama] = useState('');
-  const [dosyaUrl, setDosyaUrl] = useState('');
+  const [hafta, setHafta] = useState(mevcut ? String(mevcut.week_number) : '1');
+  const [baslik, setBaslik] = useState(mevcut?.title ?? '');
+  const [aciklama, setAciklama] = useState(mevcut?.description ?? '');
+  const [dosyaUrl, setDosyaUrl] = useState(mevcut?.file_url ?? '');
   const [hataMetni, setHataMetni] = useState<string | null>(null);
   const [bekliyor, baslat] = useTransition();
 
@@ -439,20 +490,20 @@ function MateryalEkleModal({
     e.preventDefault();
     setHataMetni(null);
     baslat(async () => {
-      const sonuc = await materyalEkle({
-        course_id: dersId,
-        week_number: Number(hafta),
-        title: baslik,
-        description: aciklama,
-        file_url: dosyaUrl,
-      });
+      const girdi = { week_number: Number(hafta), title: baslik, description: aciklama, file_url: dosyaUrl };
+      const sonuc = mevcut
+        ? await materyalDuzenle(mevcut.id, girdi)
+        : await materyalEkle({ ...girdi, course_id: dersId });
       if (sonuc.ok) onKapat();
       else setHataMetni(sonuc.error);
     });
   }
 
   return (
-    <ModalKabuk baslik={`Ders materyali ekle (${dersKodu})`} aciklama="Materyal, sizin adınızla kaydedilir.">
+    <ModalKabuk
+      baslik={mevcut ? `Materyali düzenle (${dersKodu})` : `Ders materyali ekle (${dersKodu})`}
+      aciklama={mevcut ? undefined : 'Materyal, sizin adınızla kaydedilir.'}
+    >
       {hataMetni && <Uyari tone="tehlike">{hataMetni}</Uyari>}
 
       <form onSubmit={gonder} className="space-y-4 text-sm">

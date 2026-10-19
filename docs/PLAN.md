@@ -353,8 +353,8 @@ kendi kolonları kullanılır.
 | `workspace_logs` | `can_view_workspace(workspace_id)` | **yok** (yalnız trigger) | yok | yok |
 | `uyelik_logs` | `is_admin()` | yok | yok | yok |
 | `announcements` | `is_member()` | `is_member() and author_id = auth.uid()` | `author_id = auth.uid() or is_admin()` (başlık, metin, tür; 20261019000000) | `author_id = auth.uid() or is_hoca() or is_admin()` |
-| `resources` | `is_member()` | `is_member() and uploader_id = auth.uid()` | yok | `uploader_id = auth.uid() or is_hoca() or is_admin()` |
-| `courses`, `course_materials` | `is_member()` | `is_hoca() or is_admin()` | yok | yok |
+| `resources` | `is_member()` | `is_member() and uploader_id = auth.uid()` | `uploader_id = auth.uid() or is_admin()` (20261019010000) | `uploader_id = auth.uid() or is_hoca() or is_admin()` |
+| `courses`, `course_materials` | `is_member()` | `is_hoca() or is_admin()` | ders: `is_hoca() or is_admin()`; materyal: yükleyen, hoca, admin (20261019010000) | ders: hoca, admin; materyal: yükleyen, hoca, admin (20261010000000) |
 | `meetings` | `is_member()` | `is_member() and creator_id = auth.uid()` | yok | yok |
 
 ### 2.6 Storage

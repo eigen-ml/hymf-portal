@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { BosDurum, Button, Rozet, SayfaBasligi, Uyari, buttonClass } from '@/components/ui';
 import { TakvimAboneligi } from '@/components/takvim/TakvimAboneligi';
-import { EtkinlikFormu, type EklemeSonucu } from '@/components/takvim/EtkinlikFormu';
+import { EtkinlikFormu, type DuzenlenenEtkinlik, type EklemeSonucu } from '@/components/takvim/EtkinlikFormu';
 import { ToplantiFormu, type DuzenlenenToplanti } from '@/components/takvim/ToplantiFormu';
 import { GunDetayi } from '@/components/takvim/GunDetayi';
 import {
@@ -104,6 +104,7 @@ export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir, abonelik }: Takv
   const [acikGun, setAcikGun] = useState<string | null>(null);
   const [formGunu, setFormGunu] = useState<string | null>(null);
   const [duzenlenen, setDuzenlenen] = useState<DuzenlenenToplanti | null>(null);
+  const [duzenlenenEtkinlik, setDuzenlenenEtkinlik] = useState<DuzenlenenEtkinlik | null>(null);
   const [bildirim, setBildirim] = useState<{ mesaj: string; ay: string } | null>(null);
   const [silHatasi, setSilHatasi] = useState<string | null>(null);
   const [silmede, silBasla] = useTransition();
@@ -147,6 +148,19 @@ export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir, abonelik }: Takv
   function duzenle(o: TakvimOgesi) {
     setAcikGun(null);
     setBildirim(null);
+    if (o.tur === 'etkinlik') {
+      setDuzenlenenEtkinlik({
+        id: o.kayitId,
+        title: o.baslik,
+        gun: o.gun,
+        baslangic: o.baslangic,
+        bitis: o.bitis,
+        tumGun: o.tumGun,
+        yer: o.yer,
+        aciklama: o.aciklama,
+      });
+      return;
+    }
     setDuzenlenen({
       id: o.kayitId,
       title: o.baslik,
@@ -374,6 +388,19 @@ export function TakvimIstemci({ ogeler, ay, bugun, yonetebilir, abonelik }: Takv
           onKapat={() => setDuzenlenen(null)}
           onKaydedildi={(sonuc) => {
             setDuzenlenen(null);
+            eklendi(sonuc);
+          }}
+        />
+      )}
+
+      {duzenlenenEtkinlik && (
+        <EtkinlikFormu
+          mevcut={duzenlenenEtkinlik}
+          varsayilanGun={duzenlenenEtkinlik.gun}
+          toplantiEkleyebilir={false}
+          onKapat={() => setDuzenlenenEtkinlik(null)}
+          onEklendi={(sonuc) => {
+            setDuzenlenenEtkinlik(null);
             eklendi(sonuc);
           }}
         />

@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { kisaAd } from '@/lib/etiketler';
 import { kisaTarih } from '@/lib/zaman';
 import { cn } from '@/lib/cn';
 import { BasHarfAvatar, Button, Panel, Uyari, textareaSinifi } from '@/components/ui';
-import { notEkle, notIsaretle, notSil, type ActionSonucu } from './actions';
+import { notDuzenle, notEkle, notIsaretle, notSil, type ActionSonucu } from './actions';
 
 export interface NotKaydi {
   id: string;
@@ -69,6 +69,7 @@ function YeniNot({ tur, yerTutucu, calistir, bekliyor }: { tur: 'not' | 'fikir';
 function NotSatiri({
   kayit,
   isaretlenebilir,
+  duzenlenebilir,
   silinebilir,
   yazarGoster,
   calistir,
@@ -76,11 +77,23 @@ function NotSatiri({
 }: {
   kayit: NotKaydi;
   isaretlenebilir?: boolean;
+  /** Yalnız yazan metni düzeltir. */
+  duzenlenebilir?: boolean;
   silinebilir?: boolean;
   yazarGoster?: boolean;
   calistir: Calistir;
   bekliyor: boolean;
 }) {
+  const [duzenleniyor, setDuzenleniyor] = useState(false);
+  const [taslak, setTaslak] = useState(kayit.govde);
+
+  async function kaydet(e: React.FormEvent) {
+    e.preventDefault();
+    if (!taslak.trim()) return;
+    if (taslak.trim() === kayit.govde) return setDuzenleniyor(false);
+    if (await calistir(() => notDuzenle(kayit.id, taslak))) setDuzenleniyor(false);
+  }
+
   return (
     <li className="flex items-start gap-3 py-3">
       {isaretlenebilir ? (
@@ -101,14 +114,57 @@ function NotSatiri({
         )
       )}
       <div className="min-w-0 flex-1">
-        <p className={cn('whitespace-pre-wrap break-words text-sm text-ink', kayit.yapildi && 'text-ink-3 line-through')}>
-          {kayit.govde}
-        </p>
+        {duzenleniyor ? (
+          <form onSubmit={kaydet} className="space-y-2">
+            <label className="sr-only" htmlFor={`duzenle-${kayit.id}`}>
+              Notu düzenle
+            </label>
+            <textarea
+              id={`duzenle-${kayit.id}`}
+              rows={2}
+              maxLength={2000}
+              value={taslak}
+              autoFocus
+              onChange={(e) => setTaslak(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) kaydet(e);
+                if (e.key === 'Escape') setDuzenleniyor(false);
+              }}
+              className={cn(textareaSinifi, 'min-h-16')}
+            />
+            <div className="flex gap-2">
+              <Button type="submit" variant="primary" size="sm" disabled={bekliyor || !taslak.trim()}>
+                Kaydet
+              </Button>
+              <Button type="button" variant="ghost" size="sm" disabled={bekliyor} onClick={() => setDuzenleniyor(false)}>
+                İptal
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <p className={cn('whitespace-pre-wrap break-words text-sm text-ink', kayit.yapildi && 'text-ink-3 line-through')}>
+            {kayit.govde}
+          </p>
+        )}
         <p className="mt-0.5 text-xs text-ink-3">
           {yazarGoster && kayit.yazar && <>{kisaAd(kayit.yazar.full_name)} · </>}
           {kisaTarih(kayit.created_at)}
         </p>
       </div>
+      {duzenlenebilir && !duzenleniyor && (
+        <button
+          type="button"
+          disabled={bekliyor}
+          onClick={() => {
+            setTaslak(kayit.govde);
+            setDuzenleniyor(true);
+          }}
+          className="shrink-0 cursor-pointer rounded p-1 text-ink-3 hover:bg-sunken hover:text-link"
+          aria-label="Notu düzenle"
+        >
+          <Pencil className="size-4" aria-hidden="true" />
+        </button>
+      )}
       {silinebilir && (
         <button
           type="button"
@@ -155,7 +211,7 @@ export function NotlarIstemci({ kayitlar, benId, yonetici }: { kayitlar: NotKayd
           {benimkiler.length > 0 ? (
             <ul className="mt-4 divide-y divide-line border-t border-line">
               {benimkiler.map((k) => (
-                <NotSatiri key={k.id} kayit={k} isaretlenebilir silinebilir {...ortak} />
+                <NotSatiri key={k.id} kayit={k} isaretlenebilir duzenlenebilir silinebilir {...ortak} />
               ))}
             </ul>
           ) : (
@@ -172,6 +228,7 @@ export function NotlarIstemci({ kayitlar, benId, yonetici }: { kayitlar: NotKayd
                   key={k.id}
                   kayit={k}
                   yazarGoster
+                  duzenlenebilir={k.yazar_id === benId}
                   silinebilir={k.yazar_id === benId || yonetici}
                   {...ortak}
                 />

@@ -19,7 +19,7 @@ sonundaki `GorevDurum`, `GroupTask`, `CalendarEvent`, `TakvimOgesi`, ayrıca `Me
 | Tablo | Kim görür | Kim yazar |
 | --- | --- | --- |
 | `group_tasks` | Onaylı her üye (görevler herkese açık) | Hoca/yönetici verir, düzenler, siler, "tamamlandı" yapar. Görevi alan kişi yalnız `acik` ↔ `teslim_edildi` ve kendi notunu (`assignee_note`) değiştirir. |
-| `calendar_events` | Onaylı her üye | Her üye ekler; yalnız ekleyen (veya admin) siler. |
+| `calendar_events` | Onaylı her üye | Her üye ekler; yalnız ekleyen (veya admin) düzenler ve siler. |
 | `meetings` | Onaylı her üye | Hoca veya yönetici ekler (grup toplantısı, `20261012000000_toplanti_yetki.sql`); ekleyen, hoca veya admin düzenler ve siler (`20261013000000`). `updated_at` ve `sequence`'ı trigger yazar, `creator_id` değişmez. |
 | `calendar_feed_tokens` | Yalnız kendisi; `anon` hiç okuyamaz | Anahtarı yalnız kendisi. `son_cekim`/`son_istemci`'yi yalnız `takvim_akisi_cekildi()` yazar; anahtar yenilenince sıfırlanır. Yönetici `takvim_baglantilari()` ile görür (anahtar dönmez). |
 

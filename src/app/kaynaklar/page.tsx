@@ -19,5 +19,5 @@ export default async function KaynaklarSayfasi() {
 
   const yonetebilir = isHoca(ben) || isAdmin(ben);
 
-  return <KaynaklarIstemci kayitlar={data ?? []} benId={ben.id} yonetebilir={yonetebilir} />;
+  return <KaynaklarIstemci kayitlar={data ?? []} benId={ben.id} yonetebilir={yonetebilir} admin={isAdmin(ben)} />;
 }

@@ -40,41 +40,71 @@ function zamanCoz(deger: string, tumGun: boolean): string | null {
   return Number.isNaN(t) ? null : new Date(t).toISOString();
 }
 
+type EtkinlikAlanlari = {
+  title: string;
+  starts_at: string;
+  ends_at: string | null;
+  all_day: boolean;
+  location: string | null;
+  notes: string | null;
+};
+
+/** Girdiyi denetler; hata varsa mesajı döner. */
+function etkinlikDenetle(input: EtkinlikGirdisi): EtkinlikAlanlari | string {
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return 'Etkinlik adı zorunludur.';
+  if (title.length > BASLIK_MAX) return `Ad ${BASLIK_MAX} karakteri aşamaz.`;
+
+  const tumGun = input.all_day === true;
+  const baslangic = typeof input.starts_at === 'string' ? zamanCoz(input.starts_at.trim(), tumGun) : null;
+  if (!baslangic) return 'Geçerli bir tarih girin.';
+
+  let bitis: string | null = null;
+  if (typeof input.ends_at === 'string' && input.ends_at.trim()) {
+    bitis = zamanCoz(input.ends_at.trim(), tumGun);
+    if (!bitis) return 'Geçerli bir bitiş tarihi girin.';
+    if (bitis < baslangic) return 'Bitiş, başlangıçtan önce olamaz.';
+  }
+
+  const location = typeof input.location === 'string' ? input.location.trim() : '';
+  if (location.length > YER_MAX) return `Yer ${YER_MAX} karakteri aşamaz.`;
+  const notes = typeof input.notes === 'string' ? input.notes.trim() : '';
+  if (notes.length > NOT_MAX) return `Not ${NOT_MAX} karakteri aşamaz.`;
+
+  return { title, starts_at: baslangic, ends_at: bitis, all_day: tumGun, location: location || null, notes: notes || null };
+}
+
 export async function etkinlikEkle(input: EtkinlikGirdisi): Promise<ActionSonucu> {
   try {
     const ben = await requireMemberAction();
 
-    const title = typeof input.title === 'string' ? input.title.trim() : '';
-    if (!title) return { ok: false, error: 'Etkinlik adı zorunludur.' };
-    if (title.length > BASLIK_MAX) return { ok: false, error: `Ad ${BASLIK_MAX} karakteri aşamaz.` };
-
-    const tumGun = input.all_day === true;
-    const baslangic = typeof input.starts_at === 'string' ? zamanCoz(input.starts_at.trim(), tumGun) : null;
-    if (!baslangic) return { ok: false, error: 'Geçerli bir tarih girin.' };
-
-    let bitis: string | null = null;
-    if (typeof input.ends_at === 'string' && input.ends_at.trim()) {
-      bitis = zamanCoz(input.ends_at.trim(), tumGun);
-      if (!bitis) return { ok: false, error: 'Geçerli bir bitiş tarihi girin.' };
-      if (bitis < baslangic) return { ok: false, error: 'Bitiş, başlangıçtan önce olamaz.' };
-    }
-
-    const location = typeof input.location === 'string' ? input.location.trim() : '';
-    if (location.length > YER_MAX) return { ok: false, error: `Yer ${YER_MAX} karakteri aşamaz.` };
-    const notes = typeof input.notes === 'string' ? input.notes.trim() : '';
-    if (notes.length > NOT_MAX) return { ok: false, error: `Not ${NOT_MAX} karakteri aşamaz.` };
+    const alanlar = etkinlikDenetle(input);
+    if (typeof alanlar === 'string') return { ok: false, error: alanlar };
 
     const sb = await createClient();
-    const { error } = await sb.from('calendar_events').insert({
-      title,
-      starts_at: baslangic,
-      ends_at: bitis,
-      all_day: tumGun,
-      location: location || null,
-      notes: notes || null,
-      creator_id: ben.id,
-    });
+    const { error } = await sb.from('calendar_events').insert({ ...alanlar, creator_id: ben.id });
     if (error) return { ok: false, error: 'Kaydedilemedi: ' + error.message };
+
+    yenile();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Beklenmeyen bir hata oluştu.' };
+  }
+}
+
+/** Ekleyen kişi (veya yönetici) düzenler; RLS zorlar, ekleyen değişmez (trigger). */
+export async function etkinlikDuzenle(id: string, input: EtkinlikGirdisi): Promise<ActionSonucu> {
+  try {
+    await requireMemberAction();
+    if (typeof id !== 'string' || !UUID_REGEX.test(id)) return { ok: false, error: 'Geçersiz kayıt.' };
+
+    const alanlar = etkinlikDenetle(input);
+    if (typeof alanlar === 'string') return { ok: false, error: alanlar };
+
+    const sb = await createClient();
+    const { data, error } = await sb.from('calendar_events').update(alanlar).eq('id', id).select('id');
+    if (error) return { ok: false, error: 'Kaydedilemedi: ' + error.message };
+    if ((data ?? []).length === 0) return { ok: false, error: 'Yalnız kendi eklediğiniz etkinliği düzenleyebilirsiniz.' };
 
     yenile();
     return { ok: true };

@@ -5,6 +5,7 @@ import {
   ExternalLink,
   FileText,
   Globe,
+  Pencil,
   Plus,
   Search,
   Tag,
@@ -15,7 +16,7 @@ import type { ProfileSummary, Resource, ResourceCategory } from '@/types/databas
 import { CodeBlock } from '@/components/CodeBlock';
 import { SayfaBasligi, Panel, Button, Rozet, Uyari } from '@/components/ui';
 import { tarih } from '@/lib/zaman';
-import { kaynakEkle, kaynakSil } from './actions';
+import { kaynakDuzenle, kaynakEkle, kaynakSil } from './actions';
 
 export type KaynakKaydi = Omit<Resource, 'uploader'> & { uploader?: ProfileSummary | null };
 
@@ -23,6 +24,8 @@ interface KaynaklarIstemciProps {
   kayitlar: KaynakKaydi[];
   benId: string;
   yonetebilir: boolean;
+  /** Yönetici her kaynağı düzenleyebilir; diğerleri yalnız kendininkini. */
+  admin: boolean;
 }
 
 const KATEGORI_FILTRELERI: { id: string; label: string }[] = [
@@ -48,11 +51,13 @@ const DIL_SECENEKLERI: { id: string; label: string }[] = [
 const inputSinifi =
   'w-full px-3 py-2 bg-sunken border border-control rounded-md text-ink placeholder-ink-3 focus:outline-none focus-visible:border-link focus-visible:ring-2 focus-visible:ring-link/30';
 
-export function KaynaklarIstemci({ kayitlar, benId, yonetebilir }: KaynaklarIstemciProps) {
+export function KaynaklarIstemci({ kayitlar, benId, yonetebilir, admin }: KaynaklarIstemciProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [modalAcik, setModalAcik] = useState(false);
+  /** Düzenlenen kaynağın kimliği; boşsa pencere yeni kaynak içindir. */
+  const [duzenlenenId, setDuzenlenenId] = useState<string | null>(null);
   const [formHata, setFormHata] = useState<string | null>(null);
   const [silmeHata, setSilmeHata] = useState<string | null>(null);
   const [bekliyor, startTransition] = useTransition();
@@ -83,9 +88,42 @@ export function KaynaklarIstemci({ kayitlar, benId, yonetebilir }: KaynaklarIste
     return matchesCategory && matchesTag && matchesSearch;
   });
 
+  function formuSifirla() {
+    setTitle('');
+    setDescription('');
+    setCategory('kod_script');
+    setLanguage('python');
+    setCodeSnippet('');
+    setExternalUrl('');
+    setTagsInput('');
+    setDuzenlenenId(null);
+  }
+
   function modalKapat() {
+    // Yarım kalan yeni kaynak taslağı korunur; düzenleme taslağı atılır.
+    if (duzenlenenId) formuSifirla();
     setModalAcik(false);
     setFormHata(null);
+  }
+
+  function yeniAc() {
+    if (duzenlenenId) formuSifirla();
+    setFormHata(null);
+    setModalAcik(true);
+  }
+
+  function duzenleAc(res: KaynakKaydi) {
+    setDuzenlenenId(res.id);
+    setTitle(res.title);
+    setDescription(res.description ?? '');
+    setCategory(res.category);
+    setLanguage(res.language || 'bash');
+    setCodeSnippet(res.code_snippet ?? '');
+    setExternalUrl(res.external_url ?? '');
+    setTagsInput(res.tags.join(', '));
+    setFormHata(null);
+    setSilmeHata(null);
+    setModalAcik(true);
   }
 
   function handleAddResource(e: React.FormEvent<HTMLFormElement>) {
@@ -93,7 +131,7 @@ export function KaynaklarIstemci({ kayitlar, benId, yonetebilir }: KaynaklarIste
     setFormHata(null);
 
     startTransition(async () => {
-      const sonuc = await kaynakEkle({
+      const girdi = {
         title,
         description,
         category,
@@ -101,18 +139,15 @@ export function KaynaklarIstemci({ kayitlar, benId, yonetebilir }: KaynaklarIste
         codeSnippet,
         externalUrl,
         etiketler: tagsInput,
-      });
+      };
+      const sonuc = duzenlenenId ? await kaynakDuzenle(duzenlenenId, girdi) : await kaynakEkle(girdi);
 
       if (!sonuc.ok) {
         setFormHata(sonuc.error);
         return;
       }
 
-      setTitle('');
-      setDescription('');
-      setCodeSnippet('');
-      setExternalUrl('');
-      setTagsInput('');
+      formuSifirla();
       setModalAcik(false);
     });
   }
@@ -137,7 +172,7 @@ export function KaynaklarIstemci({ kayitlar, benId, yonetebilir }: KaynaklarIste
           <Button
             variant="primary"
             size="sm"
-            onClick={() => setModalAcik(true)}
+            onClick={yeniAc}
           >
             <Plus className="w-4 h-4" />
             <span>Yeni kaynak ekle</span>
@@ -245,6 +280,17 @@ export function KaynaklarIstemci({ kayitlar, benId, yonetebilir }: KaynaklarIste
 
                 <div className="flex items-center gap-2 text-sm text-ink-3">
                   {tarih(res.created_at)}
+                  {(res.uploader_id === benId || admin) && (
+                    <button
+                      onClick={() => duzenleAc(res)}
+                      disabled={bekliyor}
+                      className="text-ink-3 hover:text-link transition p-1 disabled:opacity-50"
+                      title="Kaynağı düzenle"
+                      aria-label="Kaynağı düzenle"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
                   {(res.uploader_id === benId || yonetebilir) && (
                     <button
                       onClick={() => handleDelete(res.id, res.uploader_id)}
@@ -341,7 +387,7 @@ export function KaynaklarIstemci({ kayitlar, benId, yonetebilir }: KaynaklarIste
           <div className="bg-surface border border-line rounded-lg max-w-xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="border-b border-line pb-3">
               <h2 className="text-lg font-semibold text-ink">
-                Ortak havuzuna kaynak veya script ekle
+                {duzenlenenId ? 'Kaynağı düzenle' : 'Ortak havuzuna kaynak veya script ekle'}
               </h2>
               <p className="text-sm text-ink-3 mt-1">
                 Lütfen grup dosya isimlendirme kuralına (<code className="font-mono">Yil_Ay_Kategori_Konu_Ekleyen.uzanti</code>) dikkat ediniz.
@@ -412,6 +458,10 @@ export function KaynaklarIstemci({ kayitlar, benId, yonetebilir }: KaynaklarIste
                         {DIL_SECENEKLERI.map((d) => (
                           <option key={d.id} value={d.id}>{d.label}</option>
                         ))}
+                        {/* Listede olmayan eski dil kaybolmasın. */}
+                        {!DIL_SECENEKLERI.some((d) => d.id === language) && (
+                          <option value={language}>{language}</option>
+                        )}
                       </select>
                     </div>
                   </div>
@@ -479,7 +529,7 @@ export function KaynaklarIstemci({ kayitlar, benId, yonetebilir }: KaynaklarIste
                   type="submit"
                   disabled={bekliyor}
                 >
-                  {bekliyor ? 'Kaydediliyor...' : 'Kaydet ve ekle'}
+                  {bekliyor ? 'Kaydediliyor...' : duzenlenenId ? 'Kaydet' : 'Kaydet ve ekle'}
                 </Button>
               </div>
             </form>

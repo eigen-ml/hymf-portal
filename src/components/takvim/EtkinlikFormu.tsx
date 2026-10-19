@@ -3,10 +3,10 @@
 import React, { useId, useState, useTransition } from 'react';
 import { Alan, Button, Uyari, inputSinifi, textareaSinifi } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import { etkinlikEkle } from '@/app/takvim/actions';
+import { etkinlikDuzenle, etkinlikEkle } from '@/app/takvim/actions';
 import { toplantiEkle } from '@/app/toplantilar/actions';
 import { Pencere } from './Pencere';
-import { birSaatSonra } from './takvimYardim';
+import { birSaatSonra, saatMetni } from './takvimYardim';
 
 const BASLIK_MAX = 200;
 const YER_MAX = 300;
@@ -17,6 +17,20 @@ const alanSinifi = cn(inputSinifi, 'h-10');
 
 type AlanAdi = 'ad' | 'tarih' | 'saat' | 'bitis' | 'tekrar';
 
+/** Düzenlenen etkinliğin bugünkü hali (takvim öğesinden). */
+export interface DuzenlenenEtkinlik {
+  id: string;
+  title: string;
+  /** İstanbul günü, YYYY-MM-DD. */
+  gun: string;
+  /** ISO zaman; tüm günse kullanılmaz. */
+  baslangic: string;
+  bitis: string | null;
+  tumGun: boolean;
+  yer: string | null;
+  aciklama: string | null;
+}
+
 export interface EklemeSonucu {
   /** Eklenen kaydın (ilk) günü, YYYY-MM-DD. */
   gun: string;
@@ -24,15 +38,17 @@ export interface EklemeSonucu {
 }
 
 /**
- * Etkinlik veya (işaretlenirse) grup toplantısı ekleme penceresi. Saatler İstanbul saatidir.
- * Grup toplantısı seçeneğini yalnız hoca ve yöneticiler görür.
+ * Etkinlik veya (işaretlenirse) grup toplantısı ekleme penceresi; `mevcut` verilirse etkinliği
+ * düzenler (toplantı seçeneği görünmez). Saatler İstanbul saatidir.
  */
 export function EtkinlikFormu({
+  mevcut,
   varsayilanGun,
   toplantiEkleyebilir,
   onKapat,
   onEklendi,
 }: {
+  mevcut?: DuzenlenenEtkinlik;
   varsayilanGun: string;
   toplantiEkleyebilir: boolean;
   onKapat: () => void;
@@ -42,15 +58,16 @@ export function EtkinlikFormu({
   const id = (ad: string) => `${kimlik}-${ad}`;
 
   const [toplanti, setToplanti] = useState(false);
-  const [ad, setAd] = useState('');
-  const [tarih, setTarih] = useState(varsayilanGun);
-  const [tumGun, setTumGun] = useState(false);
-  const [baslangicSaat, setBaslangicSaat] = useState('');
-  const [bitisSaat, setBitisSaat] = useState('');
+  const saatli = mevcut && !mevcut.tumGun;
+  const [ad, setAd] = useState(mevcut?.title ?? '');
+  const [tarih, setTarih] = useState(mevcut?.gun ?? varsayilanGun);
+  const [tumGun, setTumGun] = useState(mevcut?.tumGun ?? false);
+  const [baslangicSaat, setBaslangicSaat] = useState(saatli ? saatMetni(mevcut.baslangic) : '');
+  const [bitisSaat, setBitisSaat] = useState(saatli && mevcut.bitis ? saatMetni(mevcut.bitis) : '');
   // Toplantıda bitiş, kişi elle seçmedikçe başlangıçtan 1 saat sonradır.
   const [bitisElle, setBitisElle] = useState(false);
-  const [yer, setYer] = useState('');
-  const [notlar, setNotlar] = useState('');
+  const [yer, setYer] = useState(mevcut?.yer ?? '');
+  const [notlar, setNotlar] = useState(mevcut?.aciklama ?? '');
   const [tekrar, setTekrar] = useState('0');
   const [alanHatasi, setAlanHatasi] = useState<{ alan: AlanAdi; mesaj: string } | null>(null);
   const [sunucuHatasi, setSunucuHatasi] = useState<string | null>(null);
@@ -111,28 +128,29 @@ export function EtkinlikFormu({
         return;
       }
 
-      const sonuc = await etkinlikEkle({
+      const girdi = {
         title: baslik,
         starts_at: tumGun ? tarih : `${tarih}T${baslangicSaat}:00+03:00`,
         ends_at: !tumGun && bitisSaat ? `${tarih}T${bitisSaat}:00+03:00` : '',
         all_day: tumGun,
         location: yer.trim(),
         notes: notMetni,
-      });
+      };
+      const sonuc = mevcut ? await etkinlikDuzenle(mevcut.id, girdi) : await etkinlikEkle(girdi);
       if (!sonuc.ok) {
         setSunucuHatasi(sonuc.error);
         return;
       }
-      onEklendi({ gun: tarih, mesaj: 'Etkinlik eklendi.' });
+      onEklendi({ gun: tarih, mesaj: mevcut ? 'Etkinlik güncellendi.' : 'Etkinlik eklendi.' });
     });
   }
 
   const hataMesaji = (alan: AlanAdi) => (alanHatasi?.alan === alan ? alanHatasi.mesaj : undefined);
 
   return (
-    <Pencere baslik={toplanti ? 'Toplantı ekle' : 'Etkinlik ekle'} onKapat={onKapat}>
+    <Pencere baslik={mevcut ? 'Etkinliği düzenle' : toplanti ? 'Toplantı ekle' : 'Etkinlik ekle'} onKapat={onKapat}>
       <form onSubmit={gonder} noValidate className="space-y-4">
-        {toplantiEkleyebilir && (
+        {toplantiEkleyebilir && !mevcut && (
           <label className="flex min-h-10 cursor-pointer items-start gap-3 text-sm text-ink">
             <input
               type="checkbox"
