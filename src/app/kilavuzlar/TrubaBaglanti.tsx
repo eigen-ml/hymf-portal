@@ -494,28 +494,86 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
           </Adim>
 
           <Adim id="gonder">
-            <p>Yapıştır ve Enter:</p>
             {windows ? (
-              <CodeBlock
-                title="Paketi gönder (PowerShell)"
-                language="powershell"
-                code={'scp $HOME\\Downloads\\vasp-6.6.0-hymf.tar.gz kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/'}
-              />
+              <>
+                {/* WinSCP adımları TRUBA'nın WinSCP sayfasından (docs.truba.gov.tr/2-temel_bilgiler/dosya_transferi/winscp.html).
+                    PowerShell'deki $HOME\Downloads yolu herkeste yok (OneDrive'a taşınmış ya da başka yere inmiş olabiliyor). */}
+                <p>
+                  <strong className="text-ink">Kolay yol: WinSCP.</strong> Dosyayı fareyle sürükleyip bırakırsın, klasör yolu
+                  yazmazsın.
+                </p>
+                <Liste>
+                  <li>
+                    <Dis href="https://winscp.net/eng/index.php">winscp.net</Dis>&apos;ten <em>Download Now</em> ile indir ve
+                    kur (Tipik Kurulum, arayüz olarak <em>Commander</em>).
+                  </li>
+                  <li>
+                    WinSCP&apos;yi aç. Oturum Aç penceresinde Sunucu adı <Kod>172.16.6.12</Kod>, Kullanıcı adı{' '}
+                    <Kod>kullanici_adiniz</Kod>, Parola TRUBA şifren. <em>Oturum Aç</em>&apos;a bas. İlk seferde sunucu
+                    anahtarıyla ilgili bir uyarı çıkarsa onayla. VPN açık olmalı (adım 3).
+                  </li>
+                  <li>
+                    Pencere ikiye ayrılır: <strong className="text-ink">sol taraf senin bilgisayarın, sağ taraf TRUBA</strong>.
+                    Sağ tarafa bir kez tıkla, <strong className="text-ink">Ctrl + O</strong>&apos;ya bas, açılan kutuya{' '}
+                    <Kod>/arf/scratch/kullanici_adiniz</Kod> yaz ve Tamam.
+                  </li>
+                  <li>
+                    <Kod>vasp-6.6.0-hymf.tar.gz</Kod> dosyasını bulunduğu yerden (sol taraf ya da Dosya Gezgini&apos;ndeki
+                    İndirilenler) sağ tarafa sürükleyip bırak. Çıkan pencerede Tamam.
+                  </li>
+                </Liste>
+                <Gormeli>
+                  aktarım bitince sağ tarafta <Kod>vasp-6.6.0-hymf.tar.gz</Kod> (yaklaşık 300 MB). WinSCP&apos;yi kapatabilirsin;
+                  adım 7&apos;den sonrası PowerShell&apos;de.
+                </Gormeli>
+                <details className="rounded-md border border-line">
+                  <summary className="cursor-pointer px-4 py-2 font-medium text-ink">WinSCP kurmadan, PowerShell ile</summary>
+                  <div className="space-y-3 border-t border-line px-4 py-3">
+                    <p>
+                      PowerShell&apos;e <Kod>scp</Kod> yaz ve bir boşluk bırak (henüz Enter&apos;a basma). Dosya Gezgini&apos;nde{' '}
+                      <Kod>vasp-6.6.0-hymf.tar.gz</Kod>&apos;yi bul ve PowerShell penceresinin üstüne sürükleyip bırak; dosyanın
+                      tam yolu kendiliğinden yazılır. Sonra bir boşluk bırakıp şunu yapıştır ve Enter:
+                    </p>
+                    <CodeBlock
+                      title="Satırın sonu (PowerShell)"
+                      language="powershell"
+                      code="kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/"
+                    />
+                    <p>
+                      İlk seferde &quot;Are you sure you want to continue connecting&quot; diye sorarsa <Kod>yes</Kod> yaz,
+                      Enter. Sonra TRUBA şifreni yaz, Enter.{' '}
+                      <strong className="text-ink">Şifre yazarken ekranda hiçbir şey görünmez</strong>, bu normaldir.
+                    </p>
+                    <Gormeli>
+                      <Kod>100%</Kod> ile biten bir satır.
+                    </Gormeli>
+                  </div>
+                </details>
+              </>
             ) : (
-              <CodeBlock
-                title="Paketi gönder (Terminal)"
-                language="bash"
-                code="scp ~/Downloads/vasp-6.6.0-hymf.tar.gz kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/"
-              />
+              <>
+                <p>Yapıştır ve Enter:</p>
+                <CodeBlock
+                  title="Paketi gönder (Terminal)"
+                  language="bash"
+                  code="scp ~/Downloads/vasp-6.6.0-hymf.tar.gz kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/"
+                />
+                <p>
+                  İlk seferde &quot;Are you sure you want to continue connecting&quot; diye sorarsa <Kod>yes</Kod> yaz, Enter.
+                  Sonra TRUBA şifreni yaz, Enter. <strong className="text-ink">Şifre yazarken ekranda hiçbir şey görünmez</strong>,
+                  bu normaldir.
+                </p>
+                <Gormeli>
+                  <Kod>100%</Kod> ile biten bir satır.
+                </Gormeli>
+                <p>
+                  &quot;No such file or directory&quot; derse dosya İndirilenler&apos;de değildir. <Kod>scp</Kod> yaz, bir boşluk
+                  bırak, dosyayı Finder&apos;dan (Linux&apos;ta dosya yöneticisinden) terminal penceresine sürükleyip bırak; yolu
+                  kendiliğinden yazılır. Sonra bir boşluk bırakıp{' '}
+                  <Kod>kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/</Kod> ekle ve Enter.
+                </p>
+              </>
             )}
-            <p>
-              İlk seferde &quot;Are you sure you want to continue connecting&quot; diye sorarsa <Kod>yes</Kod> yaz, Enter. Sonra
-              TRUBA şifreni yaz, Enter. <strong className="text-ink">Şifre yazarken ekranda hiçbir şey görünmez</strong>, bu
-              normaldir.
-            </p>
-            <Gormeli>
-              <Kod>100%</Kod> ile biten bir satır.
-            </Gormeli>
           </Adim>
 
           <Adim id="gir">
@@ -618,11 +676,22 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
               <Kod>exit</Kod> yazıp TRUBA&apos;dan çık (pencere yeniden kendi bilgisayarına döner), sonra:
             </p>
             {windows ? (
-              <CodeBlock
-                title="Sonucu çek (PowerShell)"
-                language="powershell"
-                code={'scp -r kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/test_si $HOME\\Downloads\\'}
-              />
+              <>
+                <p>
+                  <strong className="text-ink">WinSCP ile:</strong> adım 6&apos;daki gibi oturum aç, sağ tarafta{' '}
+                  <Kod>/arf/scratch/kullanici_adiniz</Kod>&apos;e geç (Ctrl + O) ve <Kod>test_si</Kod> klasörünü sol tarafa,
+                  istediğin klasöre sürükle.
+                </p>
+                <p>
+                  <strong className="text-ink">PowerShell ile:</strong> aşağıdaki komut klasörü PowerShell&apos;in açıldığı yere
+                  (kullanıcı klasörün) indirir, <Kod>explorer .</Kod> o klasörü açar.
+                </p>
+                <CodeBlock
+                  title="Sonucu çek (PowerShell)"
+                  language="powershell"
+                  code={'scp -r kullanici_adiniz@172.16.6.12:/arf/scratch/kullanici_adiniz/test_si .\nexplorer .'}
+                />
+              </>
             ) : (
               <CodeBlock
                 title="Sonucu çek (Terminal)"
@@ -631,7 +700,7 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
               />
             )}
             <Gormeli>
-              İndirilenler&apos;de <Kod>test_si</Kod> klasörü.
+              {windows ? 'bilgisayarında' : <>İndirilenler&apos;de</>} <Kod>test_si</Kod> klasörü.
             </Gormeli>
             <p>
               TRUBA scratch&apos;teki dosyaları en fazla 30 gün tutar ve kendiliğinden siler (
