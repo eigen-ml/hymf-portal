@@ -196,6 +196,8 @@ const KOMUTLAR: { komut: string; ne: string; nerede: 'TRUBA' | 'Bilgisayarınız
     nerede: 'TRUBA',
   },
   { komut: 'sinfo -s', ne: 'Kuyruklar ve boş sunucular', nerede: 'TRUBA' },
+  { komut: 'sinfo -o "%P %C"', ne: 'Kuyruk başına çekirdekler: dolu/boş/diğer/toplam', nerede: 'TRUBA' },
+  { komut: 'sbatch --test-only walk_std', ne: 'İşi göndermeden tahmini başlama zamanı', nerede: 'TRUBA' },
   { komut: 'tail -f out', ne: 'Çıktıyı canlı izle (çıkmak için Ctrl+C)', nerede: 'TRUBA' },
   { komut: 'tail -5 OSZICAR', ne: 'Adım adım enerji', nerede: 'TRUBA' },
   { komut: 'grep "free  energy" OUTCAR | tail -1', ne: 'Son enerji', nerede: 'TRUBA' },
@@ -753,8 +755,34 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
             CPU kuyruğu o. <Kod>-cuda</Kod> ile biten kuyruklar yalnız GPU kullanan işler içindir; paketteki VASP CPU
             sürümü (<Kod>bin_cpu</Kod>), oralara gönderme (<Dis href={KUYRUK}>ARF Kuyruk Bilgisi</Dis>, 22 Eki 2026).
           </li>
-          <li>İşi izlemek ve sonucu çekmek Si testindeki gibi (adım 10–12); yalnız klasör adı farklı.</li>
+          <li>
+            İşi izlemek ve sonucu çekmek Si testindeki gibi (adım 10–12); yalnız klasör adı farklı. İş bittikten sonra
+            nasıl bittiğini (<Kod>COMPLETED</Kod>, <Kod>FAILED</Kod>, <Kod>TIMEOUT</Kod>) ve ne kadar sürdüğünü{' '}
+            <Kod>sacct</Kod> gösterir; aşağıdaki komutlar tablosunda.
+          </li>
         </ul>
+        <p className="text-sm font-semibold text-ink">Hangi kuyruk boş?</p>
+        <p className="text-sm leading-relaxed text-ink-2">
+          İş uzun süre <Kod>PD</Kod>&apos;de bekliyorsa kuyruk dolu olabilir. Kuyrukların doluluğuna bak (
+          <Dis href={SSS}>Sıkça Sorulan Sorular</Dis>):
+        </p>
+        <CodeBlock title="Kuyruk doluluğu (TRUBA)" language="bash" code={'sinfo -o "%P %C"'} />
+        <p className="text-sm leading-relaxed text-ink-2">
+          Her kuyruk için çekirdekler <Kod>dolu/boş/diğer/toplam</Kod> diye yazar; boş sayısı büyük olan kuyruk daha çabuk
+          başlatır. İşi göndermeden önce ne zaman başlayacağını da sorabilirsin; <Kod>--test-only</Kod> işi göndermez,
+          yalnız tahmini başlama zamanını yazar (
+          <Dis href="https://slurm.schedmd.com/sbatch.html">Slurm sbatch belgesi</Dis>). İkinci satır aynı işi hamsi için
+          sorar; hamsi&apos;de bir sunucu 56 çekirdek, <Kod>walk_std</Kod>&apos;deki <Kod>-n 56</Kod>&apos;ya uyar.
+        </p>
+        <CodeBlock
+          title="Ne zaman başlar? (TRUBA)"
+          language="bash"
+          code={'sbatch --test-only walk_std\nsbatch --test-only -p hamsi walk_std'}
+        />
+        <p className="text-sm leading-relaxed text-ink-2">
+          Hamsi daha erken çıkarsa işi <Kod>sbatch -p hamsi walk_std</Kod> ile gönder; komuttaki <Kod>-p</Kod> dosyadakinin
+          yerine geçer. Barbun&apos;da bir sunucu 40 çekirdek olduğundan <Kod>walk_std</Kod> olduğu gibi oraya sığmaz.
+        </p>
         <a href={`/kilavuzlar/dosya/${WALK_DOSYA}?indir=1`} download={WALK_DOSYA} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
           <Download className="size-4" aria-hidden="true" />
           walk_std indir
