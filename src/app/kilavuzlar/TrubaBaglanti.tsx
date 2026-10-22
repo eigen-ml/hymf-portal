@@ -147,7 +147,15 @@ const TEST_KONTROL = `grep -- "-A" job.sh; tail -1 job.sh; head -1 POTCAR; wc -l
 const SONUC_OKU = `ls; echo '--- err'; tail -20 err; echo '--- out'; tail -15 out; echo '--- OUTCAR'; grep -E "free  energy|General timing|Total CPU" OUTCAR 2>/dev/null | tail -3`;
 
 const BETIK_SATIRLARI: { satir: string; anlam: React.ReactNode }[] = [
-  { satir: '#SBATCH -M arf', anlam: 'İşin gideceği küme: ARF.' },
+  {
+    satir: '#SBATCH -M arf',
+    anlam: (
+      <>
+        İşin gideceği küme: ARF (Slurm <Kod>--clusters</Kod>). TRUBA belgelerindeki örnek betiklerde yok; grubun denediği
+        betikte var ve çalıştı.
+      </>
+    ),
+  },
   { satir: '#SBATCH -p debug', anlam: 'Kuyruk: debug, kısa deneme işleri için, en fazla 4 saat.' },
   {
     satir: '#SBATCH -A ...',
@@ -737,6 +745,13 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
             <Kod>-n 56</Kod>: orfoz en az 56 çekirdek ister, bir sunucuda 112 çekirdek var (
             <Dis href={KUYRUK}>ARF Kuyruk Bilgisi</Dis>). Kuyruk ve çekirdek sayısı TRUBA belgesinden, grup henüz
             denemedi; sorun çıkarsa gruba yaz.
+          </li>
+          <li>
+            Kuyruklar ARF&apos;deki sunucu gruplarıdır, adları balık: <Kod>orfoz</Kod> (504 sunucu, sunucu başına 112
+            çekirdek, en az 56), <Kod>hamsi</Kod> (144 sunucu, 56 çekirdek, en az 28), <Kod>barbun</Kod> (119 sunucu, 40
+            çekirdek, en az 20). Hepsinde en fazla 3 gün. <Kod>walk_std</Kod> orfoz&apos;a gönderir: ARF&apos;nin en büyük
+            CPU kuyruğu o. <Kod>-cuda</Kod> ile biten kuyruklar yalnız GPU kullanan işler içindir; paketteki VASP CPU
+            sürümü (<Kod>bin_cpu</Kod>), oralara gönderme (<Dis href={KUYRUK}>ARF Kuyruk Bilgisi</Dis>, 22 Eki 2026).
           </li>
           <li>İşi izlemek ve sonucu çekmek Si testindeki gibi (adım 10–12); yalnız klasör adı farklı.</li>
         </ul>
