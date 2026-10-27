@@ -1,88 +1,96 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  CheckCircle2,
-  Cpu,
-  FileCode,
-  Layers,
-  Network,
-} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { BookOpen, CheckCircle2, Cpu, FileCode, FolderDown, Layers, Network } from 'lucide-react';
 import { CodeBlock } from '@/components/CodeBlock';
 import { KullaniciAdiSaglayici } from './KullaniciAdi';
 import { TrubaBaglanti } from './TrubaBaglanti';
 
-export function GenelNotlar({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
-  const [activeTab, setActiveTab] = useState<'truba' | 'vasp' | 'lammps' | 'vpn'>('truba');
+const SEKMELER = [
+  { id: 'kurulum', ad: 'Kurulum', Ikon: Cpu },
+  { id: 'kilavuzlar', ad: 'Hesap kılavuzları', Ikon: BookOpen },
+  { id: 'dosyalar', ad: 'Dosyalar', Ikon: FolderDown },
+  { id: 'vasp', ad: 'VASP örnekleri', Ikon: FileCode },
+  { id: 'lammps', ad: 'LAMMPS', Ikon: Layers },
+  { id: 'erisim', ad: 'Kampüs dışı erişim', Ikon: Network },
+] as const;
+
+type SekmeId = (typeof SEKMELER)[number]['id'];
+
+// Açık sekme adresteki #'den okunur: /kilavuzlar#dosyalar doğru sekmeyi açar. Başka sekmedeyken kurulumdaki bir
+// başlığa (#adim-gonder, #walk-std) giden bağlantı önce Kurulum sekmesine geçer, sonra o başlığa kayar.
+export function GenelNotlar({
+  vaspPaketUrl,
+  kilavuzlar,
+  dosyalar,
+}: {
+  vaspPaketUrl?: string;
+  kilavuzlar: React.ReactNode;
+  dosyalar: React.ReactNode;
+}) {
+  const [activeTab, setActiveTab] = useState<SekmeId>('kurulum');
+  const hedef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const adrestenAc = () => {
+      const h = decodeURIComponent(window.location.hash.slice(1));
+      if (!h) return;
+      const sekme = SEKMELER.find((s) => s.id === h);
+      if (sekme) setActiveTab(sekme.id);
+      else if (!document.getElementById(h)) {
+        hedef.current = h;
+        setActiveTab('kurulum');
+      }
+    };
+    adrestenAc();
+    window.addEventListener('hashchange', adrestenAc);
+    return () => window.removeEventListener('hashchange', adrestenAc);
+  }, []);
+
+  useEffect(() => {
+    if (!hedef.current) return;
+    document.getElementById(hedef.current)?.scrollIntoView();
+    hedef.current = null;
+  }, [activeTab]);
+
+  const sekmeAc = (id: SekmeId) => {
+    setActiveTab(id);
+    window.history.replaceState(null, '', `#${id}`);
+  };
 
   return (
-    <div id="kurulum" className="scroll-mt-24 space-y-8">
-      <div>
-        <h2 className="font-serif text-2xl text-ink">Genel notlar</h2>
-        <p className="text-base text-ink-2 mt-2 max-w-prose">
-          TRUBA ve VASP kurulumu, örnek VASP ve LAMMPS dosyaları, kampüs dışından makale erişimi.
-        </p>
+    <div className="space-y-8">
+      <div role="tablist" aria-label="Bölümler" className="flex flex-wrap gap-2 border-b border-line pb-2">
+        {SEKMELER.map(({ id, ad, Ikon }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === id}
+            onClick={() => sekmeAc(id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition cursor-pointer ${
+              activeTab === id
+                ? 'bg-primary text-on-primary'
+                : 'bg-sunken text-ink-2 hover:bg-sunken border border-line'
+            }`}
+          >
+            <Ikon className="w-4 h-4" />
+            <span>{ad}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Sekmeler (Tabs) */}
-      <div className="flex flex-wrap gap-2 border-b border-line pb-2">
-        <button
-          onClick={() => setActiveTab('truba')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition cursor-pointer ${
-            activeTab === 'truba'
-              ? 'bg-primary text-on-primary'
-              : 'bg-sunken text-ink-2 hover:bg-sunken border border-line'
-          }`}
-        >
-          <Cpu className="w-4 h-4" />
-          <span>TRUBA ve VASP kurulumu</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('vasp')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition cursor-pointer ${
-            activeTab === 'vasp'
-              ? 'bg-primary text-on-primary'
-              : 'bg-sunken text-ink-2 hover:bg-sunken border border-line'
-          }`}
-        >
-          <FileCode className="w-4 h-4" />
-          <span>VASP kılavuzu</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('lammps')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition cursor-pointer ${
-            activeTab === 'lammps'
-              ? 'bg-primary text-on-primary'
-              : 'bg-sunken text-ink-2 hover:bg-sunken border border-line'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          <span>LAMMPS moleküler dinamik</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('vpn')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition cursor-pointer ${
-            activeTab === 'vpn'
-              ? 'bg-primary text-on-primary'
-              : 'bg-sunken text-ink-2 hover:bg-sunken border border-line'
-          }`}
-        >
-          <Network className="w-4 h-4" />
-          <span>Kampüs dışı erişim</span>
-        </button>
-      </div>
-
-      {/* SEKME 1: TRUBA */}
-      {activeTab === 'truba' && (
+      {activeTab === 'kurulum' && (
         <KullaniciAdiSaglayici>
           <TrubaBaglanti vaspPaketUrl={vaspPaketUrl} />
         </KullaniciAdiSaglayici>
       )}
 
-      {/* SEKME 2: VASP */}
+      {activeTab === 'kilavuzlar' && kilavuzlar}
+
+      {activeTab === 'dosyalar' && dosyalar}
+
+      {/* VASP örnekleri */}
       {activeTab === 'vasp' && (
         <div className="space-y-6">
           <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
@@ -157,7 +165,7 @@ LCHARG = .TRUE.    # CHGCAR çıktısını al`}
         </div>
       )}
 
-      {/* SEKME 3: LAMMPS */}
+      {/* LAMMPS */}
       {activeTab === 'lammps' && (
         <div className="space-y-6">
           <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
@@ -198,8 +206,8 @@ run            50000   # 50 ps`}
         </div>
       )}
 
-      {/* SEKME 4: Kampüs dışı erişim. Kaynak: kutuphane.ankara.edu.tr/kampus-disi-erisim ve bid.ankara.edu.tr/proxy (13 Eki 2026). */}
-      {activeTab === 'vpn' && (
+      {/* Kampüs dışı erişim. Kaynak: kutuphane.ankara.edu.tr/kampus-disi-erisim ve bid.ankara.edu.tr/proxy (13 Eki 2026). */}
+      {activeTab === 'erisim' && (
         <div className="space-y-6">
           <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
             <h2 className="text-lg font-semibold text-ink">

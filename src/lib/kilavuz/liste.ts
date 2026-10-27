@@ -8,7 +8,7 @@ export interface KilavuzDosyasi {
   aciklama: string;
   /** Sayfa sayısı (PDF) veya kısa tür bilgisi. */
   bilgi: string;
-  tur: 'pdf' | 'veri' | 'ovpn' | 'sunum';
+  tur: 'pdf' | 'veri' | 'ovpn' | 'sunum' | 'paket';
 }
 
 export const KILAVUZLAR: readonly KilavuzDosyasi[] = [
@@ -81,6 +81,14 @@ export const KILAVUZLAR: readonly KilavuzDosyasi[] = [
     aciklama: 'Gerçek hesap için iş betiği (orfoz kuyruğu, 56 çekirdek, 1 gün). Kılavuzlardaki "sbatch walk_std" bu. Si testindeki job.sh ile karıştırmayın.',
     bilgi: 'SLURM iş betiği',
     tur: 'veri',
+  },
+  {
+    dosya: 'hesap-betikleri.tar.gz',
+    baslik: 'hesap-betikleri.tar.gz',
+    aciklama:
+      'Grubun iş betikleri: barbun (40 çekirdek), hamsi (56) ve orfoz (112) için vasp_std, vasp_gam ve vasp_ncl. Bader kılavuzundaki chgsum.pl ve bader programı da içinde.',
+    bilgi: 'tar.gz, 11 dosya',
+    tur: 'paket',
   },
   {
     dosya: 'HYMF_Sunum_Taslagi.pptx',

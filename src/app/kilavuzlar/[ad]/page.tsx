@@ -15,7 +15,7 @@ export default async function KilavuzPage({ params }: { params: Promise<{ ad: st
 
   return (
     <div className="space-y-8">
-      <Link href="/kilavuzlar" className="text-sm font-medium text-link hover:underline">
+      <Link href="/kilavuzlar#kilavuzlar" className="text-sm font-medium text-link hover:underline">
         ← Kurulum ve Kılavuzlar
       </Link>
 
