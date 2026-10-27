@@ -8,7 +8,7 @@ export interface KilavuzDosyasi {
   aciklama: string;
   /** Sayfa sayısı (PDF) veya kısa tür bilgisi. */
   bilgi: string;
-  tur: 'pdf' | 'veri' | 'ovpn';
+  tur: 'pdf' | 'veri' | 'ovpn' | 'sunum';
 }
 
 export const KILAVUZLAR: readonly KilavuzDosyasi[] = [
@@ -81,6 +81,14 @@ export const KILAVUZLAR: readonly KilavuzDosyasi[] = [
     aciklama: 'Gerçek hesap için iş betiği (orfoz kuyruğu, 56 çekirdek, 1 gün). Kılavuzlardaki "sbatch walk_std" bu. Si testindeki job.sh ile karıştırmayın.',
     bilgi: 'SLURM iş betiği',
     tur: 'veri',
+  },
+  {
+    dosya: 'HYMF_Sunum_Taslagi.pptx',
+    baslik: 'HYMF sunum taslağı',
+    aciklama:
+      'Kapak (ad, öğrenci no, danışman), içindekiler, giriş, yöntem, bulgular, sonuç, APA kaynakça ve teşekkür slaytları. Sayfa numarası kendiliğinden gelir; her slaytta ne yazılacağı konuşmacı notlarında.',
+    bilgi: 'PowerPoint, 12 slayt',
+    tur: 'sunum',
   },
 ];
 

@@ -13,6 +13,7 @@ export default async function Page() {
 
   const pdfler = KILAVUZLAR.filter((k) => k.tur === 'pdf');
   const veriler = KILAVUZLAR.filter((k) => k.tur === 'veri');
+  const sunumlar = KILAVUZLAR.filter((k) => k.tur === 'sunum');
 
   return (
     <div className="space-y-10">
@@ -62,6 +63,26 @@ export default async function Page() {
                   <p className="mt-1 text-sm text-ink-2">{k.aciklama}</p>
                 </div>
                 <a href={`/kilavuzlar/dosya/${k.dosya}?indir=1`} className={buttonClass({ variant: 'secondary' })}>
+                  <Download className="size-4" aria-hidden="true" />
+                  İndir
+                </a>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
+
+      {sunumlar.length > 0 && (
+        <Panel baslik="Sunum şablonu" govdeSinifi="p-0">
+          <ul className="divide-y divide-line">
+            {sunumlar.map((k) => (
+              <li key={k.dosya} className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4 sm:px-6">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-ink">{k.baslik}</p>
+                  <p className="mt-1 text-sm text-ink-2">{k.aciklama}</p>
+                  <p className="mt-1 text-sm text-ink-3">{k.bilgi}</p>
+                </div>
+                <a href={`/kilavuzlar/dosya/${k.dosya}`} className={buttonClass({ variant: 'secondary' })}>
                   <Download className="size-4" aria-hidden="true" />
                   İndir
                 </a>

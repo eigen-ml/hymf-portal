@@ -20,9 +20,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ ad: 
   }
 
   const icerik = await readFile(path.join(process.cwd(), 'icerik', 'kilavuzlar', kayit.dosya));
-  const indir = kayit.tur === 'ovpn' || new URL(request.url).searchParams.has('indir');
+  const indir = kayit.tur === 'ovpn' || kayit.tur === 'sunum' || new URL(request.url).searchParams.has('indir');
   const tip =
-    kayit.tur === 'pdf' ? 'application/pdf' : kayit.tur === 'ovpn' ? 'application/x-openvpn-profile' : 'text/plain; charset=utf-8';
+    kayit.tur === 'pdf'
+      ? 'application/pdf'
+      : kayit.tur === 'ovpn'
+        ? 'application/x-openvpn-profile'
+        : kayit.tur === 'sunum'
+          ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+          : 'text/plain; charset=utf-8';
 
   return new Response(new Uint8Array(icerik), {
     headers: {
