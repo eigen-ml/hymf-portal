@@ -157,7 +157,7 @@ export async function gorevDurumu(id: string, status: GorevDurum): Promise<Actio
 
     const ad = htmlKacis(ben.full_name);
     if (status === 'teslim_edildi') gorevBildir([gorev.assigned_by], `📥 ${ad} görevini teslim etti`, gorev.title);
-    if (status === 'tamamlandi' && gorev.assignee_id !== ben.id) gorevBildir([gorev.assignee_id], '✅ Görevin onaylandı', gorev.title);
+    if (status === 'tamamlandi' && gorev.assignee_id !== ben.id) gorevBildir([gorev.assignee_id], '✅ Görevin tamamlandı olarak işaretlendi', gorev.title);
 
     yenile();
     return { ok: true };

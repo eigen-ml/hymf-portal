@@ -2,7 +2,7 @@
 
 import React, { useId, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { gorevDuzenle, gorevNotu, gorevSil, type ActionSonucu } from '@/app/gorevler/actions';
+import { gorevDurumu, gorevDuzenle, gorevNotu, gorevSil, type ActionSonucu } from '@/app/gorevler/actions';
 import { Alan, Button, Uyari, inputSinifi, textareaSinifi } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { kisaAd } from '@/lib/etiketler';
@@ -15,7 +15,7 @@ type Mod = 'goster' | 'duzenle' | 'not' | 'sil';
 export interface GorevSatiriProps {
   gorev: GroupTask;
   benId: string;
-  /** Hoca veya yönetici: düzenler, siler. */
+  /** Hoca veya yönetici: tamamlandı tikler, düzenler, siler. */
   yonetebilir: boolean;
   /** Sunucunun hesapladığı bugün (YYYY-MM-DD); sunucu ve tarayıcı aynı günü görsün. */
   bugun?: string;
@@ -35,6 +35,9 @@ export function GorevSatiri({ gorev, benId, yonetebilir, bugun: bugunProp, kompa
 
   const bugun = bugunProp ?? bugunISO();
   const benimki = gorev.assignee_id === benId;
+  const tamam = gorev.status === 'tamamlandi';
+  // Tamamlandı işaretini veritabanı da yalnız hocaya ve yöneticiye bırakır.
+  const isaretlenebilir = yonetebilir;
   const gecikti = gecikmisMi(gorev, bugun);
   const uzunAciklama =
     !!gorev.description && (gorev.description.length > 120 || (gorev.description.match(/\n/g)?.length ?? 0) >= 2);
@@ -89,103 +92,114 @@ export function GorevSatiri({ gorev, benId, yonetebilir, bugun: bugunProp, kompa
 
   return (
     <li className={cn(kompakt ? 'py-3' : 'py-4')} aria-busy={bekliyor}>
-      <div className="sm:flex sm:items-start sm:justify-between sm:gap-6">
+      <div className="flex items-start gap-3">
+        {isaretlenebilir && (
+          <input
+            type="checkbox"
+            checked={tamam}
+            disabled={bekliyor}
+            onChange={(e) => calistir(() => gorevDurumu(gorev.id, e.target.checked ? 'tamamlandi' : 'acik'))}
+            aria-label={`${tamam ? 'Tamamlanmadı olarak işaretle' : 'Tamamlandı olarak işaretle'}: ${gorev.title}`}
+            className="mt-1 size-4 shrink-0 cursor-pointer accent-accent"
+          />
+        )}
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <p className="text-base font-medium text-ink">{gorev.title}</p>
+          <div className={cn(tamam && 'opacity-60')}>
+            <p className={cn('text-base font-medium text-ink', tamam && 'line-through')}>
+              {tamam && !isaretlenebilir && <span className="sr-only">Tamamlandı: </span>}
+              {gorev.title}
+            </p>
+            {kisiGoster && gorev.assignee && (
+              <p className="mt-1 text-sm font-medium text-ink-2">{benimki ? `${gorev.assignee.full_name} (siz)` : gorev.assignee.full_name}</p>
+            )}
+
+            {!kompakt && gorev.description && (
+              <div className="mt-1">
+                <p className={cn('whitespace-pre-line text-sm text-ink-2', !aciklamaAcik && 'line-clamp-2')}>{gorev.description}</p>
+                {uzunAciklama && (
+                  <button
+                    type="button"
+                    onClick={() => setAciklamaAcik((a) => !a)}
+                    aria-expanded={aciklamaAcik}
+                    className="mt-1 rounded text-sm text-link underline"
+                  >
+                    {aciklamaAcik ? 'Daha az göster' : 'Tamamını göster'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {ayrintilar.length > 0 && (
+              <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-3">{ayrintilar}</p>
+            )}
+
+            {!kompakt && gorev.assignee_note && mod !== 'not' && (
+              <blockquote className="mt-2 border-l-2 border-line-strong pl-3 text-sm text-ink-2">
+                <p className="whitespace-pre-line">
+                  <span className="font-medium text-ink">Not:</span> {gorev.assignee_note}
+                </p>
+              </blockquote>
+            )}
           </div>
 
-          {kisiGoster && gorev.assignee && (
-            <p className="mt-1 text-sm font-medium text-ink-2">{benimki ? `${gorev.assignee.full_name} (siz)` : gorev.assignee.full_name}</p>
-          )}
-
-          {!kompakt && gorev.description && (
-            <div className="mt-1">
-              <p className={cn('whitespace-pre-line text-sm text-ink-2', !aciklamaAcik && 'line-clamp-2')}>{gorev.description}</p>
-              {uzunAciklama && (
-                <button
-                  type="button"
-                  onClick={() => setAciklamaAcik((a) => !a)}
-                  aria-expanded={aciklamaAcik}
-                  className="mt-1 rounded text-sm text-link underline"
-                >
-                  {aciklamaAcik ? 'Daha az göster' : 'Tamamını göster'}
-                </button>
+          {ikincilVar && mod === 'goster' && (
+            <div className="mt-2 flex flex-wrap gap-1 sm:-ml-3">
+              {notYazabilir && (
+                <Button variant="ghost" disabled={bekliyor} onClick={() => setMod('not')} aria-label={`${gorev.assignee_note ? 'Notu düzenle' : 'Not yaz'}: ${gorev.title}`}>
+                  {gorev.assignee_note ? 'Notu düzenle' : 'Not yaz'}
+                </Button>
+              )}
+              {yonetebilir && (
+                <>
+                  <Button variant="ghost" disabled={bekliyor} onClick={() => setMod('duzenle')} aria-label={`Düzenle: ${gorev.title}`}>
+                    Düzenle
+                  </Button>
+                  <Button variant="ghost" disabled={bekliyor} onClick={() => setMod('sil')} aria-label={`Sil: ${gorev.title}`}>
+                    Sil
+                  </Button>
+                </>
               )}
             </div>
           )}
 
-          {ayrintilar.length > 0 && (
-            <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-3">{ayrintilar}</p>
+          {mod === 'not' && (
+            <GorevNotFormu
+              baslangic={gorev.assignee_note ?? ''}
+              bekliyor={bekliyor}
+              onKaydet={(metin) => calistir(() => gorevNotu(gorev.id, metin), () => setMod('goster'))}
+              onVazgec={() => {
+                setHata(null);
+                setMod('goster');
+              }}
+            />
           )}
 
-          {!kompakt && gorev.assignee_note && mod !== 'not' && (
-            <blockquote className="mt-2 border-l-2 border-line-strong pl-3 text-sm text-ink-2">
-              <p className="whitespace-pre-line">
-                <span className="font-medium text-ink">Not:</span> {gorev.assignee_note}
-              </p>
-            </blockquote>
+          {mod === 'sil' && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
+              <p className="mr-auto">“{gorev.title}” silinsin mi? Bu işlem geri alınamaz.</p>
+              <Button variant="danger" disabled={bekliyor} onClick={() => calistir(() => gorevSil(gorev.id))}>
+                Evet, sil
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={bekliyor}
+                onClick={() => {
+                  setHata(null);
+                  setMod('goster');
+                }}
+              >
+                Vazgeç
+              </Button>
+            </div>
+          )}
+
+          {hata && (
+            <Uyari tone="tehlike" className="mt-3">
+              {hata}
+            </Uyari>
           )}
         </div>
-
       </div>
-
-      {ikincilVar && mod === 'goster' && (
-        <div className="mt-2 flex flex-wrap gap-1 sm:-ml-3">
-          {notYazabilir && (
-            <Button variant="ghost" disabled={bekliyor} onClick={() => setMod('not')} aria-label={`${gorev.assignee_note ? 'Notu düzenle' : 'Not yaz'}: ${gorev.title}`}>
-              {gorev.assignee_note ? 'Notu düzenle' : 'Not yaz'}
-            </Button>
-          )}
-          {yonetebilir && (
-            <>
-              <Button variant="ghost" disabled={bekliyor} onClick={() => setMod('duzenle')} aria-label={`Düzenle: ${gorev.title}`}>
-                Düzenle
-              </Button>
-              <Button variant="ghost" disabled={bekliyor} onClick={() => setMod('sil')} aria-label={`Sil: ${gorev.title}`}>
-                Sil
-              </Button>
-            </>
-          )}
-        </div>
-      )}
-
-      {mod === 'not' && (
-        <GorevNotFormu
-          baslangic={gorev.assignee_note ?? ''}
-          bekliyor={bekliyor}
-          onKaydet={(metin) => calistir(() => gorevNotu(gorev.id, metin), () => setMod('goster'))}
-          onVazgec={() => {
-            setHata(null);
-            setMod('goster');
-          }}
-        />
-      )}
-
-      {mod === 'sil' && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
-          <p className="mr-auto">“{gorev.title}” silinsin mi? Bu işlem geri alınamaz.</p>
-          <Button variant="danger" disabled={bekliyor} onClick={() => calistir(() => gorevSil(gorev.id))}>
-            Evet, sil
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={bekliyor}
-            onClick={() => {
-              setHata(null);
-              setMod('goster');
-            }}
-          >
-            Vazgeç
-          </Button>
-        </div>
-      )}
-
-      {hata && (
-        <Uyari tone="tehlike" className="mt-3">
-          {hata}
-        </Uyari>
-      )}
     </li>
   );
 }
