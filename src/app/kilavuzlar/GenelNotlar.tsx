@@ -162,6 +162,49 @@ LCHARG = .TRUE.    # CHGCAR çıktısını al`}
               />
             </div>
           </div>
+
+          {/* Sıra Rabia Hoca'nın grup için önerdiği yöntem (Ekim 2026). ISIF anlamları ve Pulay stresi notu VASP Wiki'nin
+              ISIF ve Pulay stress sayfalarından (30 Eki 2026). */}
+          <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-ink">Relax sırası</h2>
+            <p className="text-sm text-ink-2 leading-relaxed">
+              Hocanın önerdiği sıra: önce <strong>ISIF = 3</strong> ile relax, sonra onun <strong>CONTCAR</strong>&apos;ıyla{' '}
+              <strong>ISIF = 2</strong> ile ikinci bir relax. İki adımı da elle, ayrı klasörlerde gönder.
+            </p>
+            <ol className="list-decimal space-y-2 pl-5 text-sm text-ink-2 leading-relaxed marker:text-ink-3">
+              <li>
+                <strong className="text-ink">ISIF = 3:</strong> atom konumları, hücre şekli ve hücre hacmi birlikte gevşer.
+                Yukarıdaki örnek INCAR bu adım için.
+              </li>
+              <li>
+                <strong className="text-ink">ISIF = 2:</strong> hücre sabit kalır, yalnız atom konumları gevşer. Başlangıç
+                yapısı birinci adımın <strong>CONTCAR</strong>&apos;ı; INCAR, KPOINTS ve POTCAR aynı, yalnız ISIF satırı
+                değişir.
+              </li>
+            </ol>
+            <p className="text-sm text-ink-2 leading-relaxed">
+              Birinci adım bittikten sonra, onun klasöründe (örnekte <code className="font-mono">yeni_hesap</code>):
+            </p>
+            <CodeBlock
+              title="İkinci adımı hazırla (TRUBA)"
+              language="bash"
+              code={`mkdir ../yeni_hesap_isif2
+cp INCAR KPOINTS POTCAR walk_std ../yeni_hesap_isif2/
+cp CONTCAR ../yeni_hesap_isif2/POSCAR
+cd ../yeni_hesap_isif2
+sed -i 's/^\\( *ISIF *= *\\)3/\\12/' INCAR && grep ISIF INCAR`}
+            />
+            <p className="text-sm text-ink-2 leading-relaxed">
+              Son satır <code className="font-mono">ISIF   = 2</code> göstermeli. Sonra aynı klasörde{' '}
+              <code className="font-mono">sbatch walk_std</code>.
+            </p>
+            <p className="text-sm text-ink-3 leading-relaxed">
+              Hücre değişince VASP&apos;ın düzlem dalga tabanı hesap boyunca ilk hücreye göre kalır (Pulay stresi); hesabı yeni
+              hücreyle baştan başlatmak tabanı yeniler. Kaynak:{' '}
+              <a href="https://www.vasp.at/wiki/index.php/ISIF" target="_blank" rel="noopener noreferrer" className="text-link underline">VASP Wiki ISIF</a>,{' '}
+              <a href="https://www.vasp.at/wiki/index.php/Pulay_stress" target="_blank" rel="noopener noreferrer" className="text-link underline">Pulay stress</a>.
+            </p>
+          </div>
         </div>
       )}
 
