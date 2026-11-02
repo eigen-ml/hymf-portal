@@ -125,7 +125,7 @@ export default async function Page() {
     <div className="space-y-8">
       <SayfaBasligi
         baslik="Kurulum ve Kılavuzlar"
-        aciklama="TRUBA'da VASP kurulumu, grubun hesap kılavuzları, betikler ve örnek dosyalar. Yeni başlıyorsan Kurulum sekmesindeki adımları sırayla yap."
+        aciklama="TRUBA'da VASP kurulumu, giriş dosyaları, grubun hesap kılavuzları ve betikler."
       />
 
       <GenelNotlar

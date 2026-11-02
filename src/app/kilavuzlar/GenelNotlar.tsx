@@ -1,21 +1,30 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { BookOpen, CheckCircle2, Cpu, FileCode, FolderDown, Layers, Network } from 'lucide-react';
+import { BookOpen, CheckCircle2, Cpu, FileCode, FolderDown, Layers, Network, Send } from 'lucide-react';
 import { CodeBlock } from '@/components/CodeBlock';
+import { GirisDosyalari } from './GirisDosyalari';
 import { KullaniciAdiSaglayici } from './KullaniciAdi';
 import { TrubaBaglanti } from './TrubaBaglanti';
 
 const SEKMELER = [
   { id: 'kurulum', ad: 'Kurulum', Ikon: Cpu },
+  { id: 'giris', ad: 'Giriş dosyaları', Ikon: FileCode },
   { id: 'kilavuzlar', ad: 'Hesap kılavuzları', Ikon: BookOpen },
   { id: 'dosyalar', ad: 'Dosyalar', Ikon: FolderDown },
-  { id: 'vasp', ad: 'VASP örnekleri', Ikon: FileCode },
   { id: 'lammps', ad: 'LAMMPS', Ikon: Layers },
   { id: 'erisim', ad: 'Kampüs dışı erişim', Ikon: Network },
 ] as const;
 
 type SekmeId = (typeof SEKMELER)[number]['id'];
+
+// Yeni gelenin sırası. hedef bir sekme ya da Kurulum'daki bir başlık (#walk-std).
+const YOL: { ad: string; ne: string; hedef: string; Ikon: typeof Cpu }[] = [
+  { ad: 'Kurulum', ne: "TRUBA hesabı, VPN, VASP ve Si testi", hedef: 'kurulum', Ikon: Cpu },
+  { ad: 'Giriş dosyaları', ne: 'POSCAR, POTCAR, KPOINTS, INCAR: elle', hedef: 'giris', Ikon: FileCode },
+  { ad: 'İlk hesap', ne: 'walk_std ile gönder, sonucu izle', hedef: 'walk-std', Ikon: Send },
+  { ad: 'Hesap kılavuzları', ne: 'Bant, DOS, fonon, optik, Bader', hedef: 'kilavuzlar', Ikon: BookOpen },
+];
 
 // Açık sekme adresteki #'den okunur: /kilavuzlar#dosyalar doğru sekmeyi açar. Başka sekmedeyken kurulumdaki bir
 // başlığa (#adim-gonder, #walk-std) giden bağlantı önce Kurulum sekmesine geçer, sonra o başlığa kayar.
@@ -35,7 +44,7 @@ export function GenelNotlar({
     const adrestenAc = () => {
       const h = decodeURIComponent(window.location.hash.slice(1));
       if (!h) return;
-      const sekme = SEKMELER.find((s) => s.id === h);
+      const sekme = SEKMELER.find((s) => s.id === (h === 'vasp' ? 'giris' : h));
       if (sekme) setActiveTab(sekme.id);
       else if (!document.getElementById(h)) {
         hedef.current = h;
@@ -47,10 +56,20 @@ export function GenelNotlar({
     return () => window.removeEventListener('hashchange', adrestenAc);
   }, []);
 
+  // Kurulum içeriği bir kare sonra çizilebilir; başlık görünene kadar birkaç kare dene.
   useEffect(() => {
-    if (!hedef.current) return;
-    document.getElementById(hedef.current)?.scrollIntoView();
+    const id = hedef.current;
+    if (!id) return;
     hedef.current = null;
+    let kare = 0;
+    let istek = 0;
+    const kaydir = () => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView();
+      else if (++kare < 30) istek = requestAnimationFrame(kaydir);
+    };
+    kaydir();
+    return () => cancelAnimationFrame(istek);
   }, [activeTab]);
 
   const sekmeAc = (id: SekmeId) => {
@@ -60,6 +79,34 @@ export function GenelNotlar({
 
   return (
     <div className="space-y-8">
+      <nav aria-label="Nereden başlamalı" className="space-y-3">
+        <p className="text-sm font-semibold text-ink">Yeni geldiysen bu sırayla git</p>
+        <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {YOL.map(({ ad, ne, hedef, Ikon }, i) => (
+            <li key={hedef}>
+              <a
+                href={`#${hedef}`}
+                className="flex h-full items-start gap-3 rounded-lg border border-line bg-surface p-4 transition hover:border-primary"
+              >
+                <span
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-on-primary"
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5 font-semibold text-ink">
+                    <Ikon className="size-4 text-ink-3" aria-hidden="true" />
+                    {ad}
+                  </span>
+                  <span className="mt-0.5 block text-sm text-ink-2">{ne}</span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+
       <div role="tablist" aria-label="Bölümler" className="flex flex-wrap gap-2 border-b border-line pb-2">
         {SEKMELER.map(({ id, ad, Ikon }) => (
           <button
@@ -90,54 +137,33 @@ export function GenelNotlar({
 
       {activeTab === 'dosyalar' && dosyalar}
 
-      {/* VASP örnekleri */}
-      {activeTab === 'vasp' && (
+      {activeTab === 'giris' && (
         <div className="space-y-6">
+          <GirisDosyalari />
+
+          {/* Sıra Rabia Hoca'nın grup için önerdiği yöntem (Ekim 2026). ISIF anlamları ve Pulay stresi notu VASP Wiki'nin
+              ISIF ve Pulay stress sayfalarından (30 Eki 2026). */}
           <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-ink">
-              VASP giriş dosyaları: genel örnek
-            </h2>
+            <h2 className="text-lg font-semibold text-ink">Relax sırası</h2>
             <p className="text-sm text-ink-2 leading-relaxed">
-              VASP çalıştırmak için çalışma dizininde 4 dosya bulunmalıdır: <strong>INCAR</strong> (hesaplama parametreleri), <strong>POSCAR</strong> (atomik koordinatlar), <strong>KPOINTS</strong> (Brillouin bölgesi örneklemesi) ve <strong>POTCAR</strong> (pseudopotansiyeller).
+              Hocanın önerdiği sıra: önce <strong>ISIF = 3</strong> ile relax, sonra onun <strong>CONTCAR</strong>&apos;ıyla{' '}
+              <strong>ISIF = 2</strong> ile ikinci bir relax. İki adımı da elle, ayrı klasörlerde gönder.
             </p>
-            <p className="text-sm text-ink-2 leading-relaxed">
-              Aşağıdaki değerler genel bir başlangıç örneğidir, grubun standardı değildir. ENCUT ve k-noktası ağını kendi
-              sisteminiz için yakınsama testiyle seçin. Grubun kullandığı adımlar yukarıdaki hesap kılavuzlarındadır.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 rounded-md bg-sunken border border-line space-y-2">
-                <span className="text-sm font-semibold text-ink">KPOINTS (Monkhorst-Pack şablonu)</span>
-                <CodeBlock
-                  title="KPOINTS Dosyası"
-                  language="text"
-                  code={`Automatic mesh
-0
-Monkhorst-Pack
- 12  12   1
- 0   0   0`}
-                />
-              </div>
-
-              <div className="p-4 rounded-md bg-sunken border border-line space-y-2">
-                <span className="text-sm font-semibold text-ink">POTCAR birleştirme komutu</span>
-                <CodeBlock
-                  title="POTCAR hazırlama (Mo ve S örneği)"
-                  language="bash"
-                  code={`# Klasör yolunu kendi POTCAR kütüphanenize göre değiştirin; sıra POSCAR'daki element sırasıyla aynı olmalı
-cat [potcar_klasoru]/Mo_pv/POTCAR [potcar_klasoru]/S/POTCAR > POTCAR`}
-                />
-              </div>
-            </div>
-
-            <div className="pt-3">
-              <h3 className="text-sm font-semibold text-ink mb-2">
-                Örnek geometri optimizasyonu INCAR&apos;ı
-              </h3>
-              <CodeBlock
-                title="INCAR (geometri optimizasyonu, örnek)"
-                language="text"
-                code={`# Örnek geometri optimizasyonu INCAR'ı
+            <ol className="list-decimal space-y-2 pl-5 text-sm text-ink-2 leading-relaxed marker:text-ink-3">
+              <li>
+                <strong className="text-ink">ISIF = 3:</strong> atom konumları, hücre şekli ve hücre hacmi birlikte gevşer.
+                Aşağıdaki örnek INCAR bu adım için.
+              </li>
+              <li>
+                <strong className="text-ink">ISIF = 2:</strong> hücre sabit kalır, yalnız atom konumları gevşer. Başlangıç
+                yapısı birinci adımın <strong>CONTCAR</strong>&apos;ı; INCAR, KPOINTS ve POTCAR aynı, yalnız ISIF satırı
+                değişir.
+              </li>
+            </ol>
+            <CodeBlock
+              title="Örnek INCAR, ISIF = 3 (genel örnek, grubun standardı değil)"
+              language="text"
+              code={`# Örnek geometri optimizasyonu INCAR'ı
 SYSTEM = MoS2_relax
 
 # Elektronik Rahatlama
@@ -159,29 +185,7 @@ NCORE  = 4         # Bir bandı paylaşan çekirdek sayısı; performansa göre 
 LREAL  = Auto      # Gerçek uzay projeksiyonu
 LWAVE  = .FALSE.   # WAVECAR çıktısını disk tasarrufu için kapat
 LCHARG = .TRUE.    # CHGCAR çıktısını al`}
-              />
-            </div>
-          </div>
-
-          {/* Sıra Rabia Hoca'nın grup için önerdiği yöntem (Ekim 2026). ISIF anlamları ve Pulay stresi notu VASP Wiki'nin
-              ISIF ve Pulay stress sayfalarından (30 Eki 2026). */}
-          <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-ink">Relax sırası</h2>
-            <p className="text-sm text-ink-2 leading-relaxed">
-              Hocanın önerdiği sıra: önce <strong>ISIF = 3</strong> ile relax, sonra onun <strong>CONTCAR</strong>&apos;ıyla{' '}
-              <strong>ISIF = 2</strong> ile ikinci bir relax. İki adımı da elle, ayrı klasörlerde gönder.
-            </p>
-            <ol className="list-decimal space-y-2 pl-5 text-sm text-ink-2 leading-relaxed marker:text-ink-3">
-              <li>
-                <strong className="text-ink">ISIF = 3:</strong> atom konumları, hücre şekli ve hücre hacmi birlikte gevşer.
-                Yukarıdaki örnek INCAR bu adım için.
-              </li>
-              <li>
-                <strong className="text-ink">ISIF = 2:</strong> hücre sabit kalır, yalnız atom konumları gevşer. Başlangıç
-                yapısı birinci adımın <strong>CONTCAR</strong>&apos;ı; INCAR, KPOINTS ve POTCAR aynı, yalnız ISIF satırı
-                değişir.
-              </li>
-            </ol>
+            />
             <p className="text-sm text-ink-2 leading-relaxed">
               Birinci adım bittikten sonra, onun klasöründe (örnekte <code className="font-mono">yeni_hesap</code>):
             </p>
