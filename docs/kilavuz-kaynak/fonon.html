@@ -19,6 +19,16 @@
 <h2><span class="no">1</span>Hesap klasöründe olması gerekenler</h2>
 <div class="dosyalar"><span>POSCAR-unitcell</span><span>POSCAR</span><span>POTCAR</span><span>INCAR</span><span>KPOINTS</span><span>band.conf</span><span>walk_std</span><span>phonopy</span><span>phonopy-bandplot</span></div>
 
+<div class="kutu onemli"><span class="etiket">TRUBA'da phonopy</span>
+<p>Fonon hesabına başlamadan önce phonopy kurulu mu bak: <code>ls /arf/home/&lt;kullanıcı&gt;/phonopy-env</code></p>
+<p>Yoksa kendi hesabına kur (arayüzde değil, debug kuyruğunda kısa bir işle):</p>
+<pre class="kod">python3 -m venv /arf/home/&lt;kullanıcı&gt;/phonopy-env
+source /arf/home/&lt;kullanıcı&gt;/phonopy-env/bin/activate
+pip install --only-binary=:all: phonopy</pre>
+<p>Kullanırken: <code>source /arf/home/&lt;kullanıcı&gt;/phonopy-env/bin/activate</code></p>
+<p>Not: <code>--only-binary=:all:</code> yazılmazsa kurulum hata verir (TRUBA'daki Python 3.9).</p>
+</div>
+
 <h2><span class="no">2</span>phonopy VASP-DFPT adımları</h2>
 <p>Aşağıdaki bağlantıdaki adımlar sırayla yapılır:</p>
 <p><a href="https://phonopy.github.io/phonopy/vasp-dfpt.html">https://phonopy.github.io/phonopy/vasp-dfpt.html</a></p>

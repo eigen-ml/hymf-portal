@@ -44,7 +44,7 @@ export const KILAVUZLAR: readonly KilavuzDosyasi[] = [
     dosya: 'fonon.pdf',
     baslik: 'Fonon hesabı (phonopy)',
     aciklama: 'phonopy VASP-DFPT adımları, süper hücre ve band.conf, grubun kullandığı komut sırası.',
-    bilgi: '5 sayfa',
+    bilgi: '6 sayfa',
     tur: 'pdf',
   },
   {
