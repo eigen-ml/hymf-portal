@@ -43,6 +43,8 @@ export interface Profile {
   research_topics: string[];
   scholar_url?: string | null;
   orcid?: string | null;
+  /** Sunumlar sayfası: HYMF Drive'daki kendi sunum klasörünün bağlantısı (20261107000000). */
+  sunum_klasoru?: string | null;
   created_at: string;
 }
 

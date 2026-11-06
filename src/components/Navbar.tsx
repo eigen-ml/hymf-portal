@@ -28,6 +28,7 @@ const anaBaglantilar: Baglanti[] = [
 
 const digerBaglantilar: Baglanti[] = [
   { href: '/gorevler', etiket: 'Görevler' },
+  { href: '/sunumlar', etiket: 'Sunumlar' },
   { href: '/formlar', etiket: 'Formlar' },
   { href: '/kaynaklar', etiket: 'Kaynaklar' },
   { href: '/dersler', etiket: 'Dersler' },
