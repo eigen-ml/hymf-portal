@@ -4,18 +4,18 @@
  * Nerede çalışır: HYMF Google hesabında, bir Google E-Tablo'nun Uzantılar → Apps Script menüsünde.
  *
  * E-Tablo'nun ilk sayfası (başlık satırı 1. satırda):
- *   A: No (01, 02 … katılma sırası; yeni gelen 09, 10 …)   B: Ad Soyad   C: E-posta (kişinin Gmail'i)
+ *   A: No (01, 02 … katılma sırası; yeni gelen 09, 10 …)   B: Ad Soyad
+ *   C: Portal e-postası (sitedeki)   D: Gmail (varsa; düzenleyici yapılır)
  * Çalışınca doldurur:
- *   D: Klasör bağlantısı   E: Siteye yazmak için SQL (Supabase SQL Editor'a yapıştırılır)
+ *   E: Klasör bağlantısı   F: Siteye yazmak için SQL (Supabase SQL Editor'a yapıştırılır)   G: Durum
  *
  * Ne yapar:
  *   - "HYMF Sunumlar" üst klasörünü bulur ya da açar; "bağlantıya sahip herkes görüntüleyebilir" yapar.
- *   - Her satır için "No Ad Soyad" adlı alt klasörü bulur ya da açar, o kişiyi düzenleyici yapar
- *     (Google kişiye "seninle paylaşıldı" e-postası atar).
+ *   - Her satır için "No Ad Soyad" adlı alt klasörü bulur ya da açar; Gmail varsa o kişiyi düzenleyici
+ *     yapar (Google kişiye "seninle paylaşıldı" e-postası atar).
  *   - Tekrar çalıştırmak güvenlidir: var olan klasörü yeniden açmaz, yeni satırları ekler.
  *
- * E sütunundaki SQL, sitedeki e-postayla eşleşir. Portal e-postası Gmail'den farklıysa
- * (ör. @ankara.edu.tr) E'deki e-postayı portal e-postasıyla değiştirin.
+ * F'deki SQL, C'deki portal e-postasıyla eşleşir.
  */
 
 const UST_KLASOR_ADI = 'HYMF Sunumlar';
@@ -26,7 +26,7 @@ function sunumKlasorleriniAc() {
 
   const sayfa = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   const satirlar = sayfa.getDataRange().getValues();
-  sayfa.getRange(1, 4, 1, 2).setValues([['Klasör bağlantısı', 'Site SQL']]);
+  sayfa.getRange(1, 5, 1, 3).setValues([['Klasör bağlantısı', 'Site SQL', 'Durum']]);
 
   for (let i = 1; i < satirlar.length; i++) {
     const no = String(satirlar[i][0]).trim().padStart(2, '0');
@@ -38,14 +38,25 @@ function sunumKlasorleriniAc() {
     const mevcut = ust.getFoldersByName(adi);
     const klasor = mevcut.hasNext() ? mevcut.next() : ust.createFolder(adi);
 
-    const editorler = klasor.getEditors().map((k) => k.getEmail().toLowerCase());
-    if (editorler.indexOf(eposta) === -1) klasor.addEditor(eposta);
+    // C'de Gmail yoksa (ör. @ankara.edu.tr Google hesabı değil) paylaşma atlanır; kişi klasörü açıp
+    // "Erişim iste" der, HYMF hesabı onaylar.
+    const gmail = String(satirlar[i][3] || '').trim().toLowerCase();
+    let durum = 'Gmail yok: kişi erişim isteyecek';
+    if (gmail) {
+      try {
+        const editorler = klasor.getEditors().map((k) => k.getEmail().toLowerCase());
+        if (editorler.indexOf(gmail) === -1) klasor.addEditor(gmail);
+        durum = 'Düzenleyici: ' + gmail;
+      } catch (e) {
+        durum = 'Paylaşılamadı: ' + e.message;
+      }
+    }
 
     const url = klasor.getUrl();
     const sql =
       "update public.profiles set sunum_klasoru = '" + url + "' where lower(email) = '" +
       eposta.replace(/'/g, "''") + "';";
-    sayfa.getRange(i + 1, 4, 1, 2).setValues([[url, sql]]);
+    sayfa.getRange(i + 1, 5, 1, 3).setValues([[url, sql, durum]]);
   }
 
   Logger.log('Üst klasör: ' + ust.getUrl() + '  (Vercel → SUNUM_KLASORU_URL)');
