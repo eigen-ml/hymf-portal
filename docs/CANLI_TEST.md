@@ -52,7 +52,7 @@ Gruba "deneyin, hata görürseniz yazın" demeden önce:
    kendi klasörünü açar. Her satırda "Dosyalar (n)" o klasördeki dosya adlarını açar (en çok 1 dk gecikmeli).
    "Bağlantıyı değiştir" yalnız yöneticide çıkar. Başlıkta "Bütün klasörler" (Vercel `SUNUM_KLASORU_URL`).
 24. **Drive'ım**: "HYMF Drive klasörüm" kutusu kendi klasörünü ve içindeki dosyaları gösterir; link girme alanı yok.
-   Drive'a bir dosya yükle, 1 dk sonra sayfayı yenile, listede görünmeli.
+   Drive'a bir dosya yükle, 1 dk sonra sayfayı yenile, listede görünmeli. Dosyaya tıkla: altta önizleme açılır (PDF, PPTX, resim); "Yeni sekmede aç" Drive'ı açar.
 
 Hata bildiren kişiden üç şey iste: hangi sayfa, ne yaptı, ekranda ne yazdı (ekran görüntüsü).
 
