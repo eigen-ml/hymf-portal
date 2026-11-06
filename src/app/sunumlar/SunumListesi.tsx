@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useId, useState, useTransition } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, ChevronDown } from 'lucide-react';
 import { Panel, Rozet, Button, Uyari, BosDurum, buttonClass, inputSinifi } from '@/components/ui';
+import { DriveDosyaListesi, type DriveDosyasiOzeti } from '@/components/DriveDosyaListesi';
 import { sunumKlasoruKaydet } from './actions';
 
-type Uye = { id: string; ad: string; klasor: string | null };
+type Uye = { id: string; ad: string; klasor: string | null; dosyalar: DriveDosyasiOzeti[] | null };
 
 export function SunumListesi({ uyeler, benId, yonetici }: { uyeler: Uye[]; benId: string; yonetici: boolean }) {
   if (!uyeler.length) return <BosDurum baslik="Henüz üye yok." />;
@@ -17,7 +18,7 @@ export function SunumListesi({ uyeler, benId, yonetici }: { uyeler: Uye[]; benId
     <Panel govdeSinifi="p-0">
       <ul className="divide-y divide-line">
         {sirali.map((u) => (
-          <SunumSatiri key={u.id} uye={u} ben={u.id === benId} duzenleyebilir={u.id === benId || yonetici} />
+          <SunumSatiri key={u.id} uye={u} ben={u.id === benId} duzenleyebilir={yonetici} />
         ))}
       </ul>
     </Panel>
@@ -26,6 +27,7 @@ export function SunumListesi({ uyeler, benId, yonetici }: { uyeler: Uye[]; benId
 
 function SunumSatiri({ uye, ben, duzenleyebilir }: { uye: Uye; ben: boolean; duzenleyebilir: boolean }) {
   const [duzenle, setDuzenle] = useState(false);
+  const [acik, setAcik] = useState(false);
   const [deger, setDeger] = useState(uye.klasor ?? '');
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, baslat] = useTransition();
@@ -64,6 +66,12 @@ function SunumSatiri({ uye, ben, duzenleyebilir }: { uye: Uye; ben: boolean; duz
           ) : (
             <span className="text-sm text-ink-3">Klasör henüz yok</span>
           )}
+          {uye.klasor && (
+            <Button variant="ghost" size="sm" onClick={() => setAcik((a) => !a)} aria-expanded={acik}>
+              {acik ? 'Gizle' : uye.dosyalar ? `Dosyalar (${uye.dosyalar.length})` : 'Dosyalar'}
+              <ChevronDown className={'h-4 w-4 transition-transform ' + (acik ? 'rotate-180' : '')} aria-hidden />
+            </Button>
+          )}
           {duzenleyebilir && !duzenle && (
             <Button variant="ghost" size="sm" onClick={() => setDuzenle(true)}>
               {uye.klasor ? 'Bağlantıyı değiştir' : 'Bağlantı ekle'}
@@ -71,6 +79,7 @@ function SunumSatiri({ uye, ben, duzenleyebilir }: { uye: Uye; ben: boolean; duz
           )}
         </div>
       </div>
+      {acik && <DriveDosyaListesi dosyalar={uye.dosyalar} />}
       {hata && <Uyari tone="tehlike">{hata}</Uyari>}
       {duzenle && (
         <form onSubmit={kaydet} className="flex flex-col gap-2 sm:flex-row sm:items-center">

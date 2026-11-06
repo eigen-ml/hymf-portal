@@ -9,12 +9,12 @@ export type ActionSonucu = { ok: true } | { ok: false; error: string };
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Kişi kendi klasör bağlantısını, yönetici herkesinkini değiştirir. Asıl kural RLS'te (profil_guncelle). */
+/** Klasör bağlantısını yalnız yönetici değiştirir (klasörler HYMF Drive'da merkezden açılır). RLS de korur (profil_guncelle). */
 export async function sunumKlasoruKaydet(kisiId: string, baglanti: string): Promise<ActionSonucu> {
   try {
     const ben = await requireMemberAction();
     if (typeof kisiId !== 'string' || !UUID_REGEX.test(kisiId)) return { ok: false, error: 'Geçersiz kişi.' };
-    if (kisiId !== ben.id && !isAdmin(ben)) return { ok: false, error: 'Yalnız kendi klasörünü değiştirebilirsin.' };
+    if (!isAdmin(ben)) return { ok: false, error: 'Klasör bağlantısını yalnız yönetici değiştirir.' };
 
     const url = typeof baglanti === 'string' ? baglanti.trim() : '';
     if (url && !url.startsWith('https://')) return { ok: false, error: 'Bağlantı https:// ile başlamalı.' };

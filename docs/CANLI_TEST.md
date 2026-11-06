@@ -48,10 +48,11 @@ Gruba "deneyin, hata görürseniz yazın" demeden önce:
    "Daha sonra" kutuyu tarayıcı kapanana kadar gizler. Abone olup sekmeye dönünce kutu kalkar.
 22. **Hoca hesabı**: Yeşim Hoca ve Aybey Hoca hesapları açılınca ilk girişte panodaki kutudan takvimi eklemelerine yardım et; /yonetim'de satırlarında "Takvim: Apple · …" ya da "Google · …" görünmeli.
 
-23. **Sunumlar** (Diğer → Sunumlar, migration `20261107000000_sunum_klasoru.sql` sonrası): kendi satırın en üstte
-   "Sen" rozetiyle. Bağlantı ekle → Drive klasör adresini yapıştır → Kaydet; "Klasörüme yükle" düğmesi klasörü
-   yeni sekmede açmalı. Başka bir üyenin satırında düzenleme düğmesi yalnız yöneticide çıkmalı.
-   Vercel'de `SUNUM_KLASORU_URL` varsa başlıkta "Bütün klasörler" düğmesi görünür.
+23. **Sunumlar** (Diğer → Sunumlar): kendi satırın en üstte "Sen" rozetiyle, "Klasörüme yükle" HYMF Drive'daki
+   kendi klasörünü açar. Her satırda "Dosyalar (n)" o klasördeki dosya adlarını açar (en çok 1 dk gecikmeli).
+   "Bağlantıyı değiştir" yalnız yöneticide çıkar. Başlıkta "Bütün klasörler" (Vercel `SUNUM_KLASORU_URL`).
+24. **Drive'ım**: "HYMF Drive klasörüm" kutusu kendi klasörünü ve içindeki dosyaları gösterir; link girme alanı yok.
+   Drive'a bir dosya yükle, 1 dk sonra sayfayı yenile, listede görünmeli.
 
 Hata bildiren kişiden üç şey iste: hangi sayfa, ne yaptı, ekranda ne yazdı (ekran görüntüsü).
 

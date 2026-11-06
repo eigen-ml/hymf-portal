@@ -1,15 +1,20 @@
-import { SayfaBasligi, BosDurum, Uyari } from '@/components/ui';
+import { SayfaBasligi, BosDurum, Uyari, Panel, buttonClass } from '@/components/ui';
 import { createClient } from '@/lib/supabase/server';
 import { requireMember } from '@/lib/auth/dal';
 import { getCalismaAlaniVerisi } from '@/lib/data/workspaces';
 import { Dosyalar } from '@/components/calisma/Dosyalar';
-import { DriveBaglantisi } from './DriveBaglantisi';
+import { ExternalLink } from 'lucide-react';
+import { DriveDosyaListesi } from '@/components/DriveDosyaListesi';
+import { driveKlasorDosyalari } from '@/lib/data/driveKlasor';
 
 export default async function DrivePage() {
   const ben = await requireMember();
   const sb = await createClient();
 
-  const sonuc = await getCalismaAlaniVerisi(sb, ben.id);
+  const [sonuc, driveDosyalari] = await Promise.all([
+    getCalismaAlaniVerisi(sb, ben.id),
+    driveKlasorDosyalari(ben.sunum_klasoru),
+  ]);
 
   if (sonuc.error) {
     return (
@@ -35,15 +40,35 @@ export default async function DrivePage() {
     <div className="space-y-8">
       <SayfaBasligi
         baslik="Drive'ım"
-        aciklama="Kendi dosyaların. PDF'ler sitede açılır; danışmanın da görebilir."
+        aciklama="Kendi dosyaların: HYMF Drive klasörün ve sitedeki küçük dosyaların."
       />
+      <Panel
+        baslik="HYMF Drive klasörüm"
+        aciklama="Sunumlar ve büyük dosyalar buraya. Yüklediğin her şeyi hoca ve grup görür (Sunumlar sayfası)."
+        eylemler={
+          ben.sunum_klasoru ? (
+            <a href={ben.sunum_klasoru} target="_blank" rel="noopener noreferrer" className={buttonClass({ variant: 'primary', size: 'sm' })}>
+              Klasörüme yükle <ExternalLink className="h-4 w-4" aria-hidden />
+            </a>
+          ) : undefined
+        }
+      >
+        {ben.sunum_klasoru ? (
+          <div className="space-y-2">
+            <DriveDosyaListesi dosyalar={driveDosyalari} />
+            <p className="text-sm text-ink-3">
+              Yüklemek için klasörü aç, dosyayı sürükle bırak. Tarayıcıda bir Google hesabın açık olmalı.
+            </p>
+          </div>
+        ) : (
+          <p className="text-base text-ink-2">Klasörün henüz açılmadı. Grup yöneticisine yaz.</p>
+        )}
+      </Panel>
       <Uyari tone="uyari">
-        <strong>Buraya her şeyi atma.</strong> Site depolaması bütün grup için ortak ve küçük: kişi başı
-        100 MB, dosya başına 10 MB. Burası danışmanının görmesi gereken dosyalar için (tez taslağı, sunum
-        PDF&apos;i, grafik). Hesap çıktısı ya da veri paylaşacaksan yalnız gereken kısmı .txt olarak yükle.
-        Gerisi aşağıdaki kendi Drive klasörüne.
+        <strong>Aşağıdaki site deposu küçük.</strong> Bütün grup için ortak: kişi başı 100 MB, dosya başına
+        10 MB. Danışmanının sitede açması gereken küçük dosyalar için (tez taslağı PDF&apos;i, grafik).
+        Sunum ve büyük dosyalar yukarıdaki Drive klasörüne.
       </Uyari>
-      <DriveBaglantisi workspaceId={veri.workspace.id} driveUrl={veri.workspace.drive_url} />
       <Dosyalar
         workspaceId={veri.workspace.id}
         files={veri.files}
