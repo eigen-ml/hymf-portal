@@ -48,7 +48,7 @@ Gruba "deneyin, hata görürseniz yazın" demeden önce:
    "Daha sonra" kutuyu tarayıcı kapanana kadar gizler. Abone olup sekmeye dönünce kutu kalkar.
 22. **Hoca hesabı**: Yeşim Hoca ve Aybey Hoca hesapları açılınca ilk girişte panodaki kutudan takvimi eklemelerine yardım et; /yonetim'de satırlarında "Takvim: Apple · …" ya da "Google · …" görünmeli.
 
-23. **Sunumlar** (Diğer → Sunumlar): kendi satırın en üstte "Sen" rozetiyle, "Klasörüme yükle" HYMF Drive'daki
+23. **Sunumlar** (Diğer → Sunumlar; Drive'ım'da "Herkesin sunumları" düğmesi): kendi satırın en üstte "Sen" rozetiyle, "Klasörüme yükle" HYMF Drive'daki
    kendi klasörünü açar. Her satırda "Dosyalar (n)" o klasördeki dosya adlarını açar (en çok 1 dk gecikmeli).
    "Bağlantıyı değiştir" yalnız yöneticide çıkar. Başlıkta "Bütün klasörler" (Vercel `SUNUM_KLASORU_URL`).
 24. **Drive'ım**: "HYMF Drive klasörüm" kutusu kendi klasörünü ve içindeki dosyaları gösterir; link girme alanı yok.

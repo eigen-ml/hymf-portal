@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireMember } from '@/lib/auth/dal';
 import { getCalismaAlaniVerisi } from '@/lib/data/workspaces';
 import { Dosyalar } from '@/components/calisma/Dosyalar';
+import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 import { DriveDosyaListesi } from '@/components/DriveDosyaListesi';
 import { driveKlasorDosyalari } from '@/lib/data/driveKlasor';
@@ -41,6 +42,11 @@ export default async function DrivePage() {
       <SayfaBasligi
         baslik="Drive'ım"
         aciklama="Kendi dosyaların: HYMF Drive klasörün ve sitedeki küçük dosyaların."
+        eylemler={
+          <Link href="/sunumlar" className={buttonClass({ variant: 'secondary' })}>
+            Herkesin sunumları
+          </Link>
+        }
       />
       <Panel
         baslik="HYMF Drive klasörüm"
