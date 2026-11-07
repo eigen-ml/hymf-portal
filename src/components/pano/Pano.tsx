@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
-import { SayfaBasligi } from '@/components/ui';
+import { ExternalLink } from 'lucide-react';
+import { SayfaBasligi, buttonClass } from '@/components/ui';
 import { bekliyorMu } from '@/components/gorevler/yardimci';
 import { TAKVIM_KUTUSU_CEREZI, takvimBagliMi } from '@/lib/abonelik';
 import { gorevleriGetir, takvimAboneligiGetir, takvimOgeleri } from '@/lib/data/takvim';
@@ -86,9 +87,22 @@ export async function Pano({ ben }: { ben: Profile }) {
   const benimGorevimVar = (gorevler ?? []).some((g) => g.assignee_id === ben.id && bekliyorMu(g));
   const gorevlerimGoster = benimGorevimVar;
 
+  // Grubun ortak sunum klasörü (HYMF Google hesabında; Vercel'de SUNUM_KLASORU_URL).
+  const sunumArsivi = process.env.SUNUM_KLASORU_URL?.trim();
+
   return (
     <div className="space-y-8">
-      <SayfaBasligi baslik={`Merhaba, ${ilkAd(ben.full_name)}`} aciklama={bugunMetni()} />
+      <SayfaBasligi
+        baslik={`Merhaba, ${ilkAd(ben.full_name)}`}
+        aciklama={bugunMetni()}
+        eylemler={
+          sunumArsivi ? (
+            <a href={sunumArsivi} target="_blank" rel="noopener noreferrer" className={buttonClass({ variant: 'secondary' })}>
+              Sunum arşivi <ExternalLink className="h-4 w-4" aria-hidden />
+            </a>
+          ) : undefined
+        }
+      />
 
       {takvimKutusu && (
         <TakvimEkleKutusu token={takvimKutusu.token} yalnizIndirdi={takvimKutusu.baglanti.sonIstemci === 'tarayici'} />

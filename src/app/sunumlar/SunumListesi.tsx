@@ -4,12 +4,19 @@ import React, { useId, useState, useTransition } from 'react';
 import { ExternalLink, ChevronDown } from 'lucide-react';
 import { Panel, Rozet, Button, Uyari, BosDurum, buttonClass, inputSinifi } from '@/components/ui';
 import { DriveDosyaListesi, type DriveDosyasiOzeti } from '@/components/DriveDosyaListesi';
+import { SunumNotlari, type SunumNotu } from '@/components/SunumNotlari';
 import { sunumKlasoruKaydet } from './actions';
 
-type Uye = { id: string; ad: string; klasor: string | null; dosyalar: DriveDosyasiOzeti[] | null };
+type Uye = {
+  id: string;
+  ad: string;
+  klasor: string | null;
+  dosyalar: DriveDosyasiOzeti[] | null;
+  notlar: SunumNotu[];
+};
 
 export function SunumListesi({ uyeler, benId, yonetici }: { uyeler: Uye[]; benId: string; yonetici: boolean }) {
-  if (!uyeler.length) return <BosDurum baslik="Henüz üye yok." />;
+  if (!uyeler.length) return <BosDurum baslik="Henüz sunum klasörü yok." />;
 
   // Kendi satırın en üstte; gerisi ada göre (listMembers sıralı getirir).
   const sirali = [...uyeler.filter((u) => u.id === benId), ...uyeler.filter((u) => u.id !== benId)];
@@ -46,73 +53,81 @@ function SunumSatiri({ uye, ben, duzenleyebilir }: { uye: Uye; ben: boolean; duz
     });
   };
 
+  const notVar = uye.notlar.length > 0;
+
   return (
-    <li className="space-y-3 px-5 py-4 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="flex min-w-0 items-center gap-2 text-base font-semibold text-ink">
-          <span className="truncate">{uye.ad}</span>
-          {ben && <Rozet tone="notr">Sen</Rozet>}
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          {uye.klasor ? (
-            <a
-              href={uye.klasor}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonClass({ variant: ben ? 'primary' : 'secondary', size: 'sm' })}
-            >
-              {ben ? 'Klasörüme yükle' : 'Klasörü aç'} <ExternalLink className="h-4 w-4" aria-hidden />
-            </a>
-          ) : (
-            <span className="text-sm text-ink-3">Klasör henüz yok</span>
-          )}
-          {uye.klasor && (
-            <Button variant="ghost" size="sm" onClick={() => setAcik((a) => !a)} aria-expanded={acik}>
-              {acik ? 'Gizle' : uye.dosyalar ? `Dosyalar (${uye.dosyalar.length})` : 'Dosyalar'}
-              <ChevronDown className={'h-4 w-4 transition-transform ' + (acik ? 'rotate-180' : '')} aria-hidden />
-            </Button>
-          )}
-          {duzenleyebilir && !duzenle && (
-            <Button variant="ghost" size="sm" onClick={() => setDuzenle(true)}>
-              {uye.klasor ? 'Bağlantıyı değiştir' : 'Bağlantı ekle'}
-            </Button>
-          )}
-        </div>
-      </div>
-      {acik && <DriveDosyaListesi dosyalar={uye.dosyalar} />}
-      {hata && <Uyari tone="tehlike">{hata}</Uyari>}
-      {duzenle && (
-        <form onSubmit={kaydet} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <label htmlFor={inputId} className="sr-only">
-            {uye.ad} sunum klasörü bağlantısı
-          </label>
-          <input
-            id={inputId}
-            type="url"
-            inputMode="url"
-            placeholder="https://drive.google.com/drive/folders/…"
-            value={deger}
-            onChange={(e) => setDeger(e.target.value)}
-            className={inputSinifi + ' flex-1'}
-          />
-          <div className="flex gap-2">
-            <Button type="submit" variant="primary" size="sm" disabled={bekliyor}>
-              {bekliyor ? 'Kaydediliyor…' : 'Kaydet'}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setDuzenle(false);
-                setDeger(uye.klasor ?? '');
-                setHata(null);
-              }}
-            >
-              Vazgeç
-            </Button>
+    <li className={'grid gap-5 px-5 py-4 sm:px-6 ' + (notVar ? 'lg:grid-cols-[minmax(0,1fr)_20rem]' : '')}>
+      <div className="min-w-0 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="flex min-w-0 items-center gap-2 text-base font-semibold text-ink">
+            <span className="truncate">{uye.ad}</span>
+            {ben && <Rozet tone="notr">Sen</Rozet>}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {uye.klasor ? (
+              <a
+                href={uye.klasor}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClass({
+                  variant: ben ? 'primary' : 'secondary',
+                  size: 'sm',
+                })}
+              >
+                {ben ? 'Klasörüme yükle' : 'Klasörü aç'} <ExternalLink className="h-4 w-4" aria-hidden />
+              </a>
+            ) : (
+              <span className="text-sm text-ink-3">Klasör henüz yok</span>
+            )}
+            {uye.klasor && (
+              <Button variant="ghost" size="sm" onClick={() => setAcik((a) => !a)} aria-expanded={acik}>
+                {acik ? 'Gizle' : uye.dosyalar ? `Dosyalar (${uye.dosyalar.length})` : 'Dosyalar'}
+                <ChevronDown className={'h-4 w-4 transition-transform ' + (acik ? 'rotate-180' : '')} aria-hidden />
+              </Button>
+            )}
+            {duzenleyebilir && !duzenle && (
+              <Button variant="ghost" size="sm" onClick={() => setDuzenle(true)}>
+                {uye.klasor ? 'Bağlantıyı değiştir' : 'Bağlantı ekle'}
+              </Button>
+            )}
           </div>
-        </form>
-      )}
+        </div>
+        {acik && <DriveDosyaListesi dosyalar={uye.dosyalar} />}
+        {hata && <Uyari tone="tehlike">{hata}</Uyari>}
+        {duzenle && (
+          <form onSubmit={kaydet} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <label htmlFor={inputId} className="sr-only">
+              {uye.ad} sunum klasörü bağlantısı
+            </label>
+            <input
+              id={inputId}
+              type="url"
+              inputMode="url"
+              placeholder="https://drive.google.com/drive/folders/…"
+              value={deger}
+              onChange={(e) => setDeger(e.target.value)}
+              className={inputSinifi + ' flex-1'}
+            />
+            <div className="flex gap-2">
+              <Button type="submit" variant="primary" size="sm" disabled={bekliyor}>
+                {bekliyor ? 'Kaydediliyor…' : 'Kaydet'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setDuzenle(false);
+                  setDeger(uye.klasor ?? '');
+                  setHata(null);
+                }}
+              >
+                Vazgeç
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+      {notVar && <SunumNotlari kisi={uye.ad} notlar={uye.notlar} />}
     </li>
   );
 }
