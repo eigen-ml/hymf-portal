@@ -177,7 +177,8 @@ SIGMA  = 0.05
 # İyonik Rahatlama
 IBRION = 2         # Eşlenik gradyan algoritması
 ISIF   = 3         # Hücre hacmi ve iyonik pozisyonlar birlikte gevşetilir
-NSW    = 200       # Maksimum iyonik adım sayısı
+LATTICE_CONSTRAINTS = .TRUE. .TRUE. .FALSE.   # 2B: a ve b gevşer, c (vakum) sabit
+NSW   = 200       # Maksimum iyonik adım sayısı
 EDIFFG = -0.01     # İyonik kuvvet yakınsama kriteri (-0.01 eV/Angstrom)
 
 # Performans ve Paralelleştirme
@@ -196,17 +197,99 @@ LCHARG = .TRUE.    # CHGCAR çıktısını al`}
 cp INCAR KPOINTS POTCAR walk_std ../yeni_hesap_isif2/
 cp CONTCAR ../yeni_hesap_isif2/POSCAR
 cd ../yeni_hesap_isif2
-sed -i 's/^\\( *ISIF *= *\\)3/\\12/' INCAR && grep ISIF INCAR`}
+sed -i -e 's/^\\( *ISIF *= *\\)3/\\12/' -e '/^ *LATTICE_CONSTRAINTS/d' INCAR
+grep -E 'ISIF|LATTICE' INCAR`}
             />
             <p className="text-sm text-ink-2 leading-relaxed">
-              Son satır <code className="font-mono">ISIF   = 2</code> göstermeli. Sonra aynı klasörde{' '}
-              <code className="font-mono">sbatch walk_std</code>.
+              Son komut yalnız <code className="font-mono">ISIF   = 2</code> satırını göstermeli. LATTICE_CONSTRAINTS satırı
+              silinir, ISIF = 2&apos;de hücre zaten sabit. Sonra aynı klasörde <code className="font-mono">sbatch walk_std</code>.
             </p>
             <p className="text-sm text-ink-3 leading-relaxed">
               Hücre değişince VASP&apos;ın düzlem dalga tabanı hesap boyunca ilk hücreye göre kalır (Pulay stresi); hesabı yeni
               hücreyle baştan başlatmak tabanı yeniler. Kaynak:{' '}
               <a href="https://www.vasp.at/wiki/index.php/ISIF" target="_blank" rel="noopener noreferrer" className="text-link underline">VASP Wiki ISIF</a>,{' '}
               <a href="https://www.vasp.at/wiki/index.php/Pulay_stress" target="_blank" rel="noopener noreferrer" className="text-link underline">Pulay stress</a>.
+            </p>
+          </div>
+
+          {/* LATTICE_CONSTRAINTS ve Selective dynamics notları VASP Wiki'nin aynı adlı sayfalarından (8 Kas 2026). Vakum
+              kademesi Yeşim Hoca'nın önerisi (30, olmazsa 20 Å). 25 Å'u Ata ara adım olarak ekledi. */}
+          <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-ink">2B yapıda vakum</h2>
+            <p className="text-sm text-ink-2 leading-relaxed">
+              ISIF = 3 hücrenin üç eksenini de gevşetir. 2B yapıda bu c eksenini de kapsar, vakum çöker ya da şişer. Bunu
+              önlemek için INCAR&apos;a şu satır eklenir (yukarıdaki örnekte var):
+            </p>
+            <CodeBlock title="INCAR satırı" language="text" code={`LATTICE_CONSTRAINTS = .TRUE. .TRUE. .FALSE.`} />
+            <p className="text-sm text-ink-2 leading-relaxed">
+              Sıra a, b, c. <code className="font-mono">.FALSE.</code> olan eksen sabit kalır. Burada a ve b gevşer, c
+              (vakum) aynı kalır. 3B (bulk) yapıda bu satırı sil. Relax ile birlikte VASP 6.4.3&apos;ten beri var,
+              6.5.0&apos;dan eski sürümlerde bilinen bir hatası var. Grupta 6.6.0 kurulu.
+            </p>
+            <p className="text-sm text-ink-2 leading-relaxed">
+              <strong className="text-ink">Karıştırma:</strong> POSCAR&apos;daki <code className="font-mono">Selective dynamics</code>{' '}
+              ve atom başına <code className="font-mono">T T F</code> atomları sabitler, hücreyi değil. Vakumu korumaz. Relax&apos;ta
+              atomlar serbest kalsın, POSCAR&apos;a Selective dynamics yazma.
+            </p>
+            <p className="text-sm text-ink-2 leading-relaxed">
+              <strong className="text-ink">Eski yol, vasp_z:</strong> bu etiket gelmeden önce c&apos;yi sabitlemek için VASP&apos;ın
+              kaynak kodu değiştirilip ayrı derlenirdi. Grupta 6.6.0 var, vasp_z gerekmez.
+            </p>
+            <p className="text-sm text-ink-2 leading-relaxed">
+              <strong className="text-ink">Vakum kademesi:</strong> c = 30 Å ile başla. Relax&apos;ta metal–anyon bağı koparsa
+              aynı başlangıç yapısını c = 25 Å ile baştan gönder, o da olmazsa 20 Å. 30 ve 20 Å Yeşim Hoca&apos;nın önerisi,
+              25 Å&apos;u garanti olsun diye arada biz deniyoruz.
+            </p>
+            <p className="text-sm text-ink-3 leading-relaxed">
+              Kaynak:{' '}
+              <a href="https://www.vasp.at/wiki/index.php/LATTICE_CONSTRAINTS" target="_blank" rel="noopener noreferrer" className="text-link underline">VASP Wiki LATTICE_CONSTRAINTS</a>,{' '}
+              <a href="https://www.vasp.at/wiki/index.php/Selective_dynamics" target="_blank" rel="noopener noreferrer" className="text-link underline">Selective dynamics</a>,{' '}
+              <a href="https://www.vasp.at/wiki/index.php/ISIF" target="_blank" rel="noopener noreferrer" className="text-link underline">ISIF</a>.
+            </p>
+          </div>
+
+          {/* Program seçimi VASP Wiki "Setting up an electronic minimization" sayfasından, SOC maliyeti LSORBIT, kolinear
+              spin ISPIN sayfasından (8 Kas 2026). Manyetik düzen sırası grubun çalışma yolu. */}
+          <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-ink">vasp_std, vasp_gam, vasp_ncl</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <tbody className="divide-y divide-line">
+                  <tr>
+                    <td className="py-2 pr-6 align-top font-mono text-ink">vasp_std</td>
+                    <td className="py-2 align-top text-ink-2">
+                      Normal sürüm. Kolinear manyetizma (<code className="font-mono">ISPIN = 2</code>, FM ve AFM) da bununla.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-6 align-top font-mono text-ink">vasp_gam</td>
+                    <td className="py-2 align-top text-ink-2">
+                      Yalnız Γ noktası. KPOINTS&apos;te tek nokta Γ ise kullanılır, büyük süper hücrede std&apos;den hızlı.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-6 align-top font-mono text-ink">vasp_ncl</td>
+                    <td className="py-2 align-top text-ink-2">
+                      Kolinear olmayan spin ve spin-yörünge (<code className="font-mono">LSORBIT</code>). Manyetik anizotropi
+                      için. Küçük hücrede bile çok uzun sürebilir.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="text-sm text-ink-2 leading-relaxed">
+              Relax, manyetik düzen karşılaştırması ve fonon <code className="font-mono">vasp_std</code> ile yapılır.
+            </p>
+            <p className="text-sm text-ink-2 leading-relaxed">
+              <strong className="text-ink">Manyetik düzen:</strong> relax sonrası NM, FM ve AFM enerjileri karşılaştırılır. AFM
+              kazanırsa ISIF = 3 ve ISIF = 2 adımları o düzenin <code className="font-mono">MAGMOM</code>&apos;uyla tekrarlanır.
+              Fonon temel düzende, <code className="font-mono">vasp_std</code> ile.
+            </p>
+            <p className="text-sm text-ink-3 leading-relaxed">
+              Kaynak:{' '}
+              <a href="https://www.vasp.at/wiki/index.php/Setting_up_an_electronic_minimization" target="_blank" rel="noopener noreferrer" className="text-link underline">VASP Wiki, program seçimi</a>,{' '}
+              <a href="https://www.vasp.at/wiki/index.php/ISPIN" target="_blank" rel="noopener noreferrer" className="text-link underline">ISPIN</a>,{' '}
+              <a href="https://www.vasp.at/wiki/index.php/LSORBIT" target="_blank" rel="noopener noreferrer" className="text-link underline">LSORBIT</a>.
             </p>
           </div>
         </div>
