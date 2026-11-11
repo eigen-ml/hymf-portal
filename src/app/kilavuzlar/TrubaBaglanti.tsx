@@ -609,11 +609,16 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
             <CodeBlock
               title="Paketi aç (TRUBA)"
               language="bash"
-              code="cd /arf/scratch/$USER && tar xzf vasp-6.6.0-hymf.tar.gz && ls && ls vasp.6.6.0/bin_cpu"
+              code="cd /arf/scratch/$USER && tar xzf vasp-6.6.0-hymf.tar.gz --warning=no-unknown-keyword && ls && ls vasp.6.6.0/bin_cpu"
             />
             <Gormeli>
               <Kod>pseudoPOT  vasp.6.6.0  vaspkit.1.5.1.linux.x64.tar.gz ...</Kod> ve <Kod>vasp_gam  vasp_ncl  vasp_std</Kod>.
             </Gormeli>
+            <p>
+              Açma birkaç dakika sürebilir, bitene kadar Ctrl-C&apos;ye basma. <Kod>Ignoring unknown extended header keyword</Kod>{' '}
+              satırları görürsen hata değildir, devam eder. <Kod>No such file or directory</Kod> derse arşiv yüklenmemiştir, 6.
+              adıma dön.
+            </p>
             <p>
               Bu kurulumun kendisiydi; VASP artık TRUBA&apos;da. İstersen arşivi silebilirsin:{' '}
               <Kod>rm vasp-6.6.0-hymf.tar.gz</Kod> (TRUBA&apos;da çöp kutusu yok, <Kod>rm</Kod> geri alınmaz).
