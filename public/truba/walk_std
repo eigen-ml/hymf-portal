@@ -1,0 +1,36 @@
+#!/bin/bash
+# walk_std şablonu (HYMF). Değiştirilecek iki yer: KULLANICI_ADINIZ ve VASP_YOLU.
+# Kuyruk ve çekirdek satırlarını kuyruk_sec.sh kendisi ayarlar:  bash kuyruk_sec.sh walk_std -g
+# Elle göndermek için:  sbatch walk_std   (o zaman aşağıdaki orfoz / 112 çekirdek kullanılır)
+#SBATCH -M arf
+#SBATCH -p orfoz
+#SBATCH -A KULLANICI_ADINIZ
+#SBATCH -J hesap
+#SBATCH -N 1
+#SBATCH --ntasks=112
+#SBATCH -c 1
+#SBATCH --time=3-00:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --output=out
+#SBATCH --error=err
+#SBATCH -C weka
+
+echo "SLURM_NTASKS= $SLURM_NTASKS"
+echo "SLURM_NNODES= $SLURM_NNODES"
+echo "SLURM_NODELIST= $SLURM_NODELIST"
+
+. /usr/share/Modules/init/bash
+# VASP'ı derlerken yüklediğin modül. Hocanın betiğindeki:
+module load comp/oneapi/2023
+# VASP'ı bu sitedeki kurulumla (vasp.6.6.0, bin_cpu) kurduysan üst satırın başına # koy, alttaki ikisini aç:
+# module load comp/oneapi/2024
+# module load lib/hdf5/1.14.3-oneapi-2024
+
+ulimit -s unlimited
+ulimit -l unlimited
+export OMP_NUM_THREADS=1
+cd $SLURM_SUBMIT_DIR
+
+# VASP_YOLU: vasp_std'nin bulunduğu klasör, ör. /arf/scratch/KULLANICI_ADINIZ/vasp.6.6.0/bin_cpu
+# Spin-yörünge (ncl) için son satırda vasp_std yerine vasp_ncl yaz.
+mpirun -np $SLURM_NTASKS VASP_YOLU/vasp_std

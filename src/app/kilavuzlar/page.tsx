@@ -44,6 +44,16 @@ export default async function Page() {
         </div>
       ) : (
         <ul className="divide-y divide-line">
+          <li className="px-5 py-4 sm:px-6">
+            <Link href="/kilavuzlar/truba-kuyruk" className="text-lg font-semibold text-ink hover:text-link">
+              TRUBA&apos;da iş gönderme ve kuyruk seçimi
+            </Link>
+            <p className="mt-1 text-sm text-ink-2">
+              Kuyruklar tablosu, işin en erken başlayacağı kuyruğu bulan kuyruk_sec.sh, temiz walk_std şablonu ve fonon bellek
+              hatası notu.
+            </p>
+            <p className="mt-1 text-sm text-ink-3">Sayfa</p>
+          </li>
           {pdfler.map((k) => (
             <li key={k.dosya} className="px-5 py-4 sm:px-6">
               <Link href={`/kilavuzlar/${encodeURIComponent(k.dosya)}`} className="text-lg font-semibold text-ink hover:text-link">

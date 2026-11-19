@@ -788,6 +788,13 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
           Hamsi daha erken çıkarsa işi <Kod>sbatch -p hamsi walk_std</Kod> ile gönder; komuttaki <Kod>-p</Kod> dosyadakinin
           yerine geçer. Barbun&apos;da bir sunucu 40 çekirdek olduğundan <Kod>walk_std</Kod> olduğu gibi oraya sığmaz.
         </p>
+        <p className="text-sm leading-relaxed text-ink-2">
+          Üç kuyruğa birden soran ve çekirdeği kuyruğa göre kendisi ayarlayan betik:{' '}
+          <Link href="/kilavuzlar/truba-kuyruk" className="text-link underline">
+            TRUBA&apos;da iş gönderme ve kuyruk seçimi
+          </Link>
+          .
+        </p>
         <a href={`/kilavuzlar/dosya/${WALK_DOSYA}?indir=1`} download={WALK_DOSYA} className={buttonClass({ variant: 'secondary', size: 'sm' })}>
           <Download className="size-4" aria-hidden="true" />
           walk_std indir
