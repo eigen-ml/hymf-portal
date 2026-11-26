@@ -54,6 +54,15 @@ export default async function Page() {
             </p>
             <p className="mt-1 text-sm text-ink-3">Sayfa</p>
           </li>
+          <li className="px-5 py-4 sm:px-6">
+            <Link href="/kilavuzlar/manyetik-hesap" className="text-lg font-semibold text-ink hover:text-link">
+              2B manyetik malzemede hesap
+            </Link>
+            <p className="mt-1 text-sm text-ink-2">
+              Relaxation, manyetik düzen, fonon, bant, MAE, Wannier90, TB2J ile J ve DMI, magnon, Vampire ile Curie sıcaklığı.
+            </p>
+            <p className="mt-1 text-sm text-ink-3">Sayfa</p>
+          </li>
           {pdfler.map((k) => (
             <li key={k.dosya} className="px-5 py-4 sm:px-6">
               <Link href={`/kilavuzlar/${encodeURIComponent(k.dosya)}`} className="text-lg font-semibold text-ink hover:text-link">

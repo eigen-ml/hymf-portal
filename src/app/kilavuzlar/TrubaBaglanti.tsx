@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Download, ExternalLink, FileText } from 'lucide-react';
 import { CodeBlock } from '@/components/CodeBlock';
 import { useDoldur } from '@/components/KodDegiskenleri';
-import { Rozet, Uyari, buttonClass } from '@/components/ui';
+import { AcilirBolum, Rozet, Uyari, buttonClass } from '@/components/ui';
 import { TRUBA_DOSYALARI } from '@/lib/kilavuz/liste';
 import { KullaniciAdiKutusu } from './KullaniciAdi';
 
@@ -227,15 +227,7 @@ function Kart({ baslik, id, children }: { baslik: string; id?: string; children:
 
 // Varsayılan kapalı ek bilgi: kurulumu yapan kişinin önünü kesmesin.
 function Ek({ baslik, children }: { baslik: string; children: React.ReactNode }) {
-  return (
-    <details className="group rounded-lg border border-line bg-surface">
-      <summary className="cursor-pointer list-none px-6 py-4 text-base font-semibold text-ink marker:hidden">
-        <span className="mr-2 inline-block text-ink-3 transition group-open:rotate-90">›</span>
-        {baslik}
-      </summary>
-      <div className="space-y-4 border-t border-line px-6 py-5">{children}</div>
-    </details>
-  );
+  return <AcilirBolum baslik={baslik}>{children}</AcilirBolum>;
 }
 
 // Düz metin içindeki kullanici_adiniz da girilen adla dolar.
@@ -349,7 +341,14 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
           Aşağıdaki adımları yukarıdan aşağıya, sırayla yap. Linux bilmen gerekmiyor: gri kutulardaki komutu{' '}
           <strong className="text-ink">Kopyala</strong> ile al, söylenen pencereye yapıştır, <strong className="text-ink">Enter</strong>
           &apos;a bas. Her adımın sonunda ne görmen gerektiği yazıyor; görmezsen sonraki adıma geçme, aşağıdaki{' '}
-          <a href="#sorun-giderme" className="text-link underline">Sorun giderme</a>&apos;ye bak.
+          <a
+            href="#sorun-giderme"
+            onClick={() => {
+              const d = document.getElementById('sorun-giderme');
+              if (d instanceof HTMLDetailsElement) d.open = true;
+            }}
+            className="text-link underline"
+          >Sorun giderme</a>&apos;ye bak.
         </p>
         <div className="space-y-2">
           <p className="text-sm font-semibold text-ink">Bilgisayarın</p>
@@ -536,9 +535,7 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
                   aktarım bitince sağ tarafta <Kod>vasp-6.6.0-hymf.tar.gz</Kod> (yaklaşık 300 MB). WinSCP&apos;yi kapatabilirsin;
                   adım 7&apos;den sonrası PowerShell&apos;de.
                 </Gormeli>
-                <details className="rounded-md border border-line">
-                  <summary className="cursor-pointer px-4 py-2 font-medium text-ink">WinSCP kurmadan, PowerShell ile</summary>
-                  <div className="space-y-3 border-t border-line px-4 py-3">
+                <AcilirBolum baslik="WinSCP kurmadan, PowerShell ile" kucuk>
                     <p>
                       PowerShell&apos;e <Kod>scp</Kod> yaz ve bir boşluk bırak (henüz Enter&apos;a basma). Dosya Gezgini&apos;nde{' '}
                       <Kod>vasp-6.6.0-hymf.tar.gz</Kod>&apos;yi bul ve PowerShell penceresinin üstüne sürükleyip bırak; dosyanın
@@ -557,8 +554,7 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
                     <Gormeli>
                       <Kod>100%</Kod> ile biten bir satır.
                     </Gormeli>
-                  </div>
-                </details>
+                  </AcilirBolum>
               </>
             ) : (
               <>
@@ -641,11 +637,7 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
               <Kod>#SBATCH -A kullanici_adiniz</Kod>, son satır <Kod>mpirun ...vasp_std</Kod>, <Kod>PAW_PBE Si 05Jan2001</Kod>,
               satır sayıları 10, 7, 5.
             </Gormeli>
-            <details className="rounded-md border border-line">
-              <summary className="cursor-pointer px-4 py-2 font-medium text-ink">
-                <Kod>job.sh</Kod> ne yapıyor? (merak edersen)
-              </summary>
-              <div className="border-t border-line px-4 py-3">
+            <AcilirBolum baslik={<><Kod>job.sh</Kod> ne yapıyor? (merak edersen)</>} kucuk>
                 {/* Telefonda alt alta, geniş ekranda iki sütun: yatay kaydırma olmasın. */}
                 <dl className="divide-y divide-line">
                   {BETIK_SATIRLARI.map((s) => (
@@ -659,8 +651,7 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
                   Kaynak: TRUBA <Dis href={BETIK}>SLURM Betik Özellikleri</Dis> ve <Dis href={KUYRUK}>ARF Kuyruk Bilgisi</Dis>.{' '}
                   <Kod>-C weka</Kod> ve modül adları grubun denediği betikten.
                 </p>
-              </div>
-            </details>
+              </AcilirBolum>
           </Adim>
 
           <Adim id="calistir" truba>
@@ -821,7 +812,7 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
         </ol>
       </Uyari>
 
-      <Kart baslik="Sorun giderme" id="sorun-giderme">
+      <AcilirBolum baslik="Sorun giderme" ozet="VPN, ssh, sbatch ve modül hataları" id="sorun-giderme">
         <ul className="space-y-3 text-sm leading-relaxed text-ink-2">
           <li>
             <strong className="text-ink">Hangi penceredeyim?</strong> Satırın başı <Kod>[kullanici_adiniz@arf-ui2 ~]$</Kod> ise
@@ -892,7 +883,7 @@ export function TrubaBaglanti({ vaspPaketUrl }: { vaspPaketUrl?: string }) {
             <Dis href={`${TRUBA_DOCS}/0-truba/truba_iletisim.html`}>TRUBA teknik destek</Dis>.
           </li>
         </ul>
-      </Kart>
+      </AcilirBolum>
 
       <Ek baslik="Sık kullanılan komutlar">
         {/* Telefonda alt alta, geniş ekranda üç sütun: yatay kaydırma olmasın. */}

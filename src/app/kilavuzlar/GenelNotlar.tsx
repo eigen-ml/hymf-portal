@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BookOpen, CheckCircle2, Cpu, FileCode, FolderDown, Layers, Network, Send } from 'lucide-react';
 import { CodeBlock } from '@/components/CodeBlock';
+import { AcilirBolum } from '@/components/ui';
 import { GirisDosyalari } from './GirisDosyalari';
 import { KullaniciAdiSaglayici } from './KullaniciAdi';
 import { TrubaBaglanti } from './TrubaBaglanti';
@@ -65,7 +66,11 @@ export function GenelNotlar({
     let istek = 0;
     const kaydir = () => {
       const el = document.getElementById(id);
-      if (el) el.scrollIntoView();
+      if (el) {
+        // Hedef kapalı bir açılır bölümdeyse (ya da kendisi öyleyse) önce aç.
+        for (let d = el.closest('details'); d; d = d.parentElement?.closest('details') ?? null) d.open = true;
+        el.scrollIntoView();
+      }
       else if (++kare < 30) istek = requestAnimationFrame(kaydir);
     };
     kaydir();
@@ -143,8 +148,7 @@ export function GenelNotlar({
 
           {/* Sıra Rabia Hoca'nın grup için önerdiği yöntem (Ekim 2026). ISIF anlamları ve Pulay stresi notu VASP Wiki'nin
               ISIF ve Pulay stress sayfalarından (30 Eki 2026). */}
-          <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-ink">Relax sırası</h2>
+          <AcilirBolum baslik="Relax sırası" ozet="ISIF = 3, sonra ISIF = 2. Örnek INCAR ve ikinci adımın komutları">
             <p className="text-sm text-ink-2 leading-relaxed">
               Hocanın önerdiği sıra: önce <strong>ISIF = 3</strong> ile relax, sonra onun <strong>CONTCAR</strong>&apos;ıyla{' '}
               <strong>ISIF = 2</strong> ile ikinci bir relax. İki adımı da elle, ayrı klasörlerde gönder.
@@ -210,12 +214,11 @@ grep -E 'ISIF|LATTICE' INCAR`}
               <a href="https://www.vasp.at/wiki/index.php/ISIF" target="_blank" rel="noopener noreferrer" className="text-link underline">VASP Wiki ISIF</a>,{' '}
               <a href="https://www.vasp.at/wiki/index.php/Pulay_stress" target="_blank" rel="noopener noreferrer" className="text-link underline">Pulay stress</a>.
             </p>
-          </div>
+          </AcilirBolum>
 
           {/* LATTICE_CONSTRAINTS ve Selective dynamics notları VASP Wiki'nin aynı adlı sayfalarından (8 Kas 2026). Vakum
               kademesi Yeşim Hoca'nın önerisi (30, olmazsa 20 Å). 25 Å'u Ata ara adım olarak ekledi. */}
-          <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-ink">2B yapıda vakum</h2>
+          <AcilirBolum baslik="2B yapıda vakum" ozet="c eksenini sabit tut, vakum 30, olmazsa 25, 20 Å">
             <p className="text-sm text-ink-2 leading-relaxed">
               ISIF = 3 hücrenin üç eksenini de gevşetir. 2B yapıda bu c eksenini de kapsar, vakum çöker ya da şişer. Bunu
               önlemek için INCAR&apos;a şu satır eklenir (yukarıdaki örnekte var):
@@ -246,12 +249,11 @@ grep -E 'ISIF|LATTICE' INCAR`}
               <a href="https://www.vasp.at/wiki/index.php/Selective_dynamics" target="_blank" rel="noopener noreferrer" className="text-link underline">Selective dynamics</a>,{' '}
               <a href="https://www.vasp.at/wiki/index.php/ISIF" target="_blank" rel="noopener noreferrer" className="text-link underline">ISIF</a>.
             </p>
-          </div>
+          </AcilirBolum>
 
           {/* Program seçimi VASP Wiki "Setting up an electronic minimization" sayfasından, SOC maliyeti LSORBIT, kolinear
               spin ISPIN sayfasından (8 Kas 2026). Manyetik düzen sırası grubun çalışma yolu. */}
-          <div className="bg-surface border border-line rounded-lg p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-ink">vasp_std, vasp_gam, vasp_ncl</h2>
+          <AcilirBolum baslik="vasp_std, vasp_gam, vasp_ncl" ozet="Hangi hesap hangi programla">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <tbody className="divide-y divide-line">
@@ -291,7 +293,7 @@ grep -E 'ISIF|LATTICE' INCAR`}
               <a href="https://www.vasp.at/wiki/index.php/ISPIN" target="_blank" rel="noopener noreferrer" className="text-link underline">ISPIN</a>,{' '}
               <a href="https://www.vasp.at/wiki/index.php/LSORBIT" target="_blank" rel="noopener noreferrer" className="text-link underline">LSORBIT</a>.
             </p>
-          </div>
+          </AcilirBolum>
         </div>
       )}
 

@@ -16,3 +16,4 @@ export { ErisimEngellendi } from './ErisimEngellendi';
 export { OrnekVeriNotu } from './OrnekVeriNotu';
 export { MarkaIsareti } from './MarkaIsareti';
 export { GrupLogosu } from './GrupLogosu';
+export { AcilirBolum } from './AcilirBolum';

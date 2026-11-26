@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Download, ExternalLink } from 'lucide-react';
 import { requireMember } from '@/lib/auth/dal';
 import { CodeBlock } from '@/components/CodeBlock';
-import { SayfaBasligi, Uyari, buttonClass } from '@/components/ui';
+import { AcilirBolum, SayfaBasligi, Uyari, buttonClass } from '@/components/ui';
 
 // Kuyruk tablosu TRUBA ARF Kuyruk Bilgisi sayfasından (son güncelleme 24 Ara 2025, 19 Kas 2026'da bakıldı).
 // --mem açıklaması TRUBA SLURM Betik Özellikleri sayfasından; DefMemPerCore'un sayısı orada yazmıyor, o yüzden
@@ -43,10 +43,9 @@ function Bolum({ baslik, id, children }: { baslik: string; id?: string; children
 
 function Acilir({ baslik, children }: { baslik: string; children: React.ReactNode }) {
   return (
-    <details className="rounded-md border border-line">
-      <summary className="cursor-pointer px-4 py-2 font-medium text-ink">{baslik}</summary>
-      <div className="space-y-3 border-t border-line px-4 py-3 text-sm leading-relaxed text-ink-2">{children}</div>
-    </details>
+    <AcilirBolum baslik={baslik} kucuk>
+      {children}
+    </AcilirBolum>
   );
 }
 
